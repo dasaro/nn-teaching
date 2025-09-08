@@ -13,9 +13,9 @@ let preventAutoLabeling = false;
 // Expert view mode for detailed mathematical explanations
 let expertViewMode = false;
 
-// Expert message accumulation system
-let expertMessageLog = [];
-let expertLogActive = false;
+// Message accumulation system (works for both student and expert modes)
+let messageLog = [];
+let messageLogActive = false;
 
 // ============================================================================
 // ACTIVATION FUNCTIONS - Centralized implementations
@@ -294,7 +294,10 @@ function applyExpertConfig() {
     resetWeights();
     
     // Update step info to reflect new configuration
-    updateStepInfo(`⚙️ Expert parameters applied! Network restarted with ${expertConfig.hiddenActivation.replace('_', ' ')} hidden activation and ${expertConfig.learningRate} learning rate. Expert view enabled for detailed mathematical explanations.`);
+    updateStepInfoDual(
+        `⚙️ <strong>Expert Settings Applied!</strong><br>🔧 The neural network was restarted with ${expertConfig.hiddenActivation.replace('_', ' ')} activation and ${expertConfig.learningRate} learning rate. You're now in expert mode!`,
+        `⚙️ <strong>Expert Configuration Applied</strong><br>🔧 Network reinitialized: ${expertConfig.hiddenActivation.replace('_', ' ')} activation, η=${expertConfig.learningRate}. Expert view enabled.`
+    );
     
     // Close expert panel
     closeExpertPanel();
@@ -314,7 +317,14 @@ function toggleExpertViewMode() {
         indicator.className = expertViewMode ? 'view-mode-indicator expert' : 'view-mode-indicator';
     }
     
-    updateStepInfo(`🎓 Expert view ${status}! ${expertViewMode ? 'Detailed mathematical explanations will be shown.' : 'Simplified student explanations will be shown.'}`);
+    updateStepInfoDual(
+        `🎓 <strong>${expertViewMode ? 'Expert' : 'Student'} view ${status}!</strong><br>
+        ${expertViewMode ? '📊 Ready for detailed mathematical explanations with equations and technical details!' : '🌈 Ready for your learning adventure with simple, fun explanations!'}<br>
+        <em>All messages will now be shown in ${expertViewMode ? 'expert' : 'student'} mode.</em>`,
+        `🎓 <strong>${expertViewMode ? 'Expert' : 'Student'} view ${status}!</strong><br>
+        ${expertViewMode ? '📊 Ready for detailed mathematical explanations with equations and technical details!' : '🌈 Ready for your learning adventure with simple, fun explanations!'}<br>
+        <em>All messages will now be shown in ${expertViewMode ? 'expert' : 'student'} mode.</em>`
+    );
     console.log(`Expert view mode: ${status}`);
 }
 
@@ -331,49 +341,54 @@ function updateStepInfoDual(studentMessage, expertMessage = null) {
     const currentStep = document.getElementById('currentStep');
     if (!currentStep) return;
     
-    if (expertViewMode && expertMessage) {
-        // In expert mode, accumulate messages instead of replacing them
-        if (expertLogActive) {
-            expertMessageLog.push({
-                timestamp: new Date().toLocaleTimeString(),
-                message: expertMessage,
-                type: 'calculation'
-            });
-            displayExpertLog();
-        } else {
-            currentStep.innerHTML = expertMessage;
-        }
+    const messageToShow = expertViewMode && expertMessage ? expertMessage : studentMessage;
+    
+    // If message logging is active, accumulate messages
+    if (messageLogActive) {
+        messageLog.push({
+            timestamp: new Date().toLocaleTimeString(),
+            message: messageToShow,
+            type: expertViewMode ? 'expert' : 'student',
+            mode: expertViewMode ? 'Expert' : 'Student'
+        });
+        displayMessageLog();
     } else {
-        currentStep.innerHTML = studentMessage;
+        currentStep.innerHTML = messageToShow;
     }
 }
 
-// Start expert message accumulation
-function startExpertLog() {
-    expertMessageLog = [];
-    expertLogActive = true;
+// Start message accumulation (works for both student and expert)
+function startMessageLog() {
+    messageLog = [];
+    messageLogActive = true;
     const currentStep = document.getElementById('currentStep');
-    currentStep.innerHTML = '<div class="expert-log-container"><div class="expert-log-header">📋 <strong>Expert Calculation Log</strong> (Accumulating...)</div><div id="expertLogContent" class="expert-log-content"></div></div>';
+    const mode = expertViewMode ? 'Expert' : 'Student';
+    const icon = expertViewMode ? '📋' : '🎓';
+    const description = expertViewMode ? 'Mathematical Details' : 'Learning Adventure';
+    currentStep.innerHTML = `<div class="message-log-container"><div class="message-log-header">${icon} <strong>${mode} ${description}</strong> (Recording...)</div><div id="messageLogContent" class="message-log-content"></div></div>`;
 }
 
-// Stop expert message accumulation
-function stopExpertLog() {
-    expertLogActive = false;
-    if (expertMessageLog.length > 0) {
+// Stop message accumulation
+function stopMessageLog() {
+    messageLogActive = false;
+    if (messageLog.length > 0) {
         const currentStep = document.getElementById('currentStep');
-        const finalMessage = '<div class="expert-log-container"><div class="expert-log-header">📋 <strong>Complete Calculation Sequence</strong> ✅</div><div id="expertLogContent" class="expert-log-content">' + 
-            expertMessageLog.map(entry => `<div class="expert-log-entry"><span class="log-timestamp">[${entry.timestamp}]</span> ${entry.message}</div>`).join('') + 
-            '</div><div class="expert-log-footer">🎓 Review complete - all mathematical steps preserved above</div></div>';
+        const mode = messageLog[0]?.mode || 'Student';
+        const icon = mode === 'Expert' ? '📋' : '🎓';
+        const description = mode === 'Expert' ? 'Complete Mathematical Analysis' : 'Complete Learning Adventure';
+        const finalMessage = `<div class="message-log-container"><div class="message-log-header">${icon} <strong>${description}</strong> ✅</div><div id="messageLogContent" class="message-log-content">` + 
+            messageLog.map(entry => `<div class="message-log-entry ${entry.type}"><span class="log-timestamp">[${entry.timestamp}]</span> ${entry.message}</div>`).join('') + 
+            `</div><div class="message-log-footer">${mode === 'Expert' ? '🎓 All mathematical steps preserved above' : '📖 Your complete AI learning story - review at your own pace!'}</div></div>`;
         currentStep.innerHTML = finalMessage;
     }
 }
 
-// Display accumulated expert messages
-function displayExpertLog() {
-    const logContent = document.getElementById('expertLogContent');
-    if (logContent && expertMessageLog.length > 0) {
-        const lastEntry = expertMessageLog[expertMessageLog.length - 1];
-        const entryHtml = `<div class="expert-log-entry"><span class="log-timestamp">[${lastEntry.timestamp}]</span> ${lastEntry.message}</div>`;
+// Display accumulated messages
+function displayMessageLog() {
+    const logContent = document.getElementById('messageLogContent');
+    if (logContent && messageLog.length > 0) {
+        const lastEntry = messageLog[messageLog.length - 1];
+        const entryHtml = `<div class="message-log-entry ${lastEntry.type}"><span class="log-timestamp">[${lastEntry.timestamp}]</span> ${lastEntry.message}</div>`;
         logContent.innerHTML += entryHtml;
         // Auto-scroll to bottom
         logContent.scrollTop = logContent.scrollHeight;
@@ -426,10 +441,13 @@ let autoScrollEnabled = true;
 function clearMessageLog() {
     const messageContent = document.getElementById('currentStep');
     if (messageContent) {
-        messageContent.innerHTML = '🗑️ Messages cleared. Ready for new interactions!';
+        const resetMessage = expertViewMode ? 
+            '🗑️ <strong>Expert Sidebar Cleared</strong><br>📊 All previous mathematical analysis cleared. Ready for new detailed explanations!' :
+            '🗑️ <strong>Student Sidebar Cleared</strong><br>🎓 All previous lessons cleared. Ready for your next learning adventure!';
+        messageContent.innerHTML = resetMessage;
     }
-    expertMessageLog = [];
-    expertLogActive = false;
+    messageLog = [];
+    messageLogActive = false;
 }
 
 // Toggle auto-scroll
@@ -573,13 +591,13 @@ let activations = {
     output: [0, 0]
 };
 
-// Network positions for SVG drawing - optimized for 4 hidden neurons and wider canvas
+// Network positions for SVG drawing - optimized spacing with more vertical room
 const positions = {
-    input: [{x: 80, y: 80}, {x: 80, y: 150}, {x: 80, y: 220}, {x: 80, y: 290}],
+    input: [{x: 80, y: 60}, {x: 80, y: 140}, {x: 80, y: 220}, {x: 80, y: 300}],
     hidden: [
-        {x: 280, y: 100}, {x: 280, y: 160}, {x: 280, y: 220}, {x: 280, y: 280}
+        {x: 280, y: 80}, {x: 280, y: 160}, {x: 280, y: 240}, {x: 280, y: 320}
     ],
-    output: [{x: 480, y: 150}, {x: 480, y: 250}],
+    output: [{x: 480, y: 120}, {x: 480, y: 280}],
     prediction: {x: 650, y: 200} // New prediction column with more space
 };
 
@@ -1529,7 +1547,10 @@ function selectImage(imageType) {
     // Show weights to demonstrate learning persistence
     document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
     
-    updateStepInfo('🖼️ New image selected! The AI still remembers its previous lessons - notice the connection strength numbers didn\'t change. That\'s its "memory" from earlier learning!');
+    updateStepInfoDual(
+        '🖼️ <strong>New Image Selected!</strong><br>🧠 The AI still remembers its previous lessons! Notice the connection strength numbers didn\'t change - that\'s its "memory" from earlier learning!',
+        '🖼️ <strong>Image Changed</strong><br>🧠 Weights preserved from previous training. Network maintains learned parameters.'
+    );
     // Button doesn't exist in compact interface
 }
 
@@ -1645,10 +1666,10 @@ function drawNeurons() {
 
 function drawLabels() {
     const svg = document.getElementById('networkSvg');
-    const labels = [{x: 80, y: 40, text: 'Input Layer'}, 
-                   {x: 280, y: 40, text: 'Hidden Layer'}, 
-                   {x: 480, y: 40, text: 'Output Layer'},
-                   {x: 650, y: 40, text: 'AI Prediction'}];
+    const labels = [{x: 80, y: 15, text: 'Input Layer'}, 
+                   {x: 280, y: 15, text: 'Hidden Layer'}, 
+                   {x: 480, y: 15, text: 'Output Layer'},
+                   {x: 650, y: 15, text: 'AI Prediction'}];
     
     labels.forEach(label => {
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -1958,10 +1979,8 @@ async function runForwardPass() {
         console.log("trueLabel set to:", trueLabel);
     }
     
-    // Start expert logging if in expert mode
-    if (expertViewMode) {
-        startExpertLog();
-    }
+    // Start message logging for detailed step-by-step view
+    startMessageLog();
     
     isAnimating = true;
     document.getElementById('forwardBtn').disabled = true;
@@ -1972,7 +1991,7 @@ async function runForwardPass() {
     document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
     
     updateStepInfoDual(
-        "🧠 Let's watch the AI think! It's about to multiply numbers and add them up to make its guess...",
+        "🧠 <strong>Let's Watch the AI Think!</strong><br>🎬 Time to see how artificial intelligence really works! Like watching a student solve a puzzle, our AI will look at the picture, think about what it sees, and make its best guess. Ready to peek inside an AI brain?",
         `🧠 <strong>Forward Propagation Started</strong><br>
          🔢 Computing network output using current weights:<br>
          ${formatMatrix(weights.inputToHidden, 'W₁ (Input→Hidden)')}<br>
@@ -1984,7 +2003,13 @@ async function runForwardPass() {
     // Step 1: Show input activation
     const forwardStartTime = performance.now();
     updateStepInfoDual(
-        "📥 STEP 1: Converting image features into numbers! Each feature (like size, friendliness) gets a score from 0 to 1.",
+        `📷 <strong>STEP 1: The AI Looks at Our Picture</strong><br>
+        👀 Just like when you look at a photo, the AI examines every detail! Here's what catches its attention:<br>
+        • 🐕 Dog Feature A: <strong>${(activations.input[0] * 100).toFixed(0)}%</strong> strength (maybe ears or shape?)<br>
+        • 🦴 Dog Feature B: <strong>${(activations.input[1] * 100).toFixed(0)}%</strong> strength (maybe fur texture?)<br>
+        • 👁️ Dog Feature C: <strong>${(activations.input[2] * 100).toFixed(0)}%</strong> strength (maybe eyes or nose?)<br>
+        • 🎯 Pattern Match: <strong>${(activations.input[3] * 100).toFixed(0)}%</strong> overall doggy-ness<br>
+        💡 <em>Higher numbers mean 'this looks very dog-like to me!'</em>`,
         `📥 <strong>Input Layer Activation</strong><br>
          ${formatMatrix(activations.input, 'Input Vector x')}
          <div class="op-description">Feature patterns: A=${activations.input[0].toFixed(3)}, B=${activations.input[1].toFixed(3)}, C=${activations.input[2].toFixed(3)}, D=${activations.input[3].toFixed(3)}</div>`
@@ -1993,7 +2018,13 @@ async function runForwardPass() {
     
     // Step 2: Forward propagation to hidden layer
     updateStepInfoDual(
-        "✖️ STEP 2: Now the magic happens! Each hidden neuron multiplies input numbers by connection strengths (weights), then adds them all up!",
+        `🤔 <strong>STEP 2: The AI's Brain Cells Work Together</strong><br>
+        💭 Now comes the magic! The AI's brain cells team up to find bigger patterns, like detectives gathering clues:<br>
+        • 🧠 Brain Cell 1: <strong>${(activations.hidden[0] * 100).toFixed(0)}%</strong> excited (maybe finds 'fluffy texture + right size')<br>
+        • 🧠 Brain Cell 2: <strong>${(activations.hidden[1] * 100).toFixed(0)}%</strong> excited (maybe finds 'pointy ears + wet nose')<br>
+        • 🧠 Brain Cell 3: <strong>${(activations.hidden[2] * 100).toFixed(0)}%</strong> excited (maybe finds 'four legs + tail')<br>
+        • 🧠 Brain Cell 4: <strong>${(activations.hidden[3] * 100).toFixed(0)}%</strong> excited (maybe finds 'friendly face')<br>
+        🎯 <em>Each brain cell is like a specialist detective looking for specific clues!</em>`,
         `✖️ <strong>Hidden Layer Computation</strong><br>
          ${formatOperation("Matrix Multiplication", "h = σ(W₁ᵀ × x)", 
            `[${activations.hidden.map(h => h.toFixed(3)).join(', ')}]`,
@@ -2004,7 +2035,13 @@ async function runForwardPass() {
     
     // Step 3: Forward propagation to output layer
     updateStepInfoDual(
-        "➕ STEP 3: The final decision! Output neurons add up signals from hidden neurons. The strongest signal wins!",
+        `🎯 <strong>STEP 3: The Big Decision Moment!</strong><br>
+        🎭 All the brain cells vote together like a jury making their final decision! Here's how confident each option feels:<br>
+        • 🐕 <strong>"It's definitely a DOG!"</strong> → <strong>${(activations.output[0] * 100).toFixed(1)}%</strong> confident<br>
+        • ❌ <strong>"Nope, NOT a dog!"</strong> → <strong>${(activations.output[1] * 100).toFixed(1)}%</strong> confident<br>
+        <br>🏆 <strong>Final Decision:</strong> ${activations.output[0] > activations.output[1] ? 
+          '🐕 "I\'m pretty sure this is a DOG!" (The dog vote won!)' : 
+          '❌ "I don\'t think this is a dog." (The not-dog vote won!)'}`,
         `➕ <strong>Output Layer Computation</strong><br>
          ${formatOperation("Final Prediction", "y = σ(W₂ᵀ × h)", 
            `[${activations.output.map(o => (o*100).toFixed(1)).join('%, ')}%]`,
@@ -2048,9 +2085,9 @@ async function runForwardPass() {
     document.getElementById('fullDemoBtn').disabled = false;
     isAnimating = false;
     
-    // Stop expert logging if active
-    if (expertViewMode && expertLogActive) {
-        stopExpertLog();
+    // Stop message logging if active
+    if (messageLogActive) {
+        stopMessageLog();
     }
     
     console.log('✅ Forward pass complete - buttons should be enabled:', {
@@ -2063,17 +2100,21 @@ async function runForwardPass() {
 async function runBackwardPass() {
     if (isAnimating || !demoState.forwardCompleted || !trueLabel) {
         if (!demoState.forwardCompleted) {
-            updateStepInfo("⚠️ First watch the AI think! Click 'Watch AI Think' to see the forward pass first.");
+            updateStepInfoDual(
+                "⚠️ <strong>Hold on!</strong><br>👀 First let's watch the AI think! Click 'Watch AI Think' to see how it processes the image.",
+                "⚠️ <strong>Forward Pass Required</strong><br>📈 Execute forward propagation first to generate predictions for learning."
+            );
         } else if (!trueLabel) {
-            updateStepInfo("⚠️ Please tell the AI what the correct answer is by clicking one of the teaching buttons above!");
+            updateStepInfoDual(
+                "⚠️ <strong>Need Your Help!</strong><br>🎯 Please tell the AI what the correct answer is by clicking 'This is a DOG' or 'This is NOT a dog' above!",
+                "⚠️ <strong>Ground Truth Required</strong><br>🎯 Please provide the correct label using the teaching buttons above."
+            );
         }
         return;
     }
     
-    // Start expert logging if in expert mode
-    if (expertViewMode) {
-        startExpertLog();
-    }
+    // Start message logging for detailed step-by-step view
+    startMessageLog();
     
     isAnimating = true;
     document.getElementById('backwardBtn').disabled = true;
@@ -2089,7 +2130,13 @@ async function runBackwardPass() {
     const error = prediction.map((pred, i) => target[i] - pred);
     
     updateStepInfoDual(
-        "📚 Time for the AI to learn! It's comparing its guess with the right answer and figuring out how to do better...",
+        `📚 <strong>LEARNING TIME: Oops, Let's Learn from This!</strong><br>
+        🎯 <strong>The correct answer:</strong> "${trueLabel === 'dog' ? 'DOG' : 'NOT DOG'}"<br>
+        🤖 <strong>What the AI guessed:</strong> "${prediction[0] > prediction[1] ? 'DOG' : 'NOT DOG'}"<br>
+        <br>${prediction[0] > prediction[1] && trueLabel === 'dog' || prediction[0] <= prediction[1] && trueLabel !== 'dog' ? 
+          '✅ <strong>Great job!</strong> The AI got it right! Now let\'s help it become even more confident...' : 
+          '😅 <strong>Learning opportunity!</strong> Everyone makes mistakes - that\'s how we learn!'}<br>
+        🎓 Time to teach our AI to be smarter! Let\'s adjust its brain connections...`,
         `📚 <strong>Backpropagation Started</strong><br>
          🎯 <strong>Step 1: Error Calculation</strong><br>
          Target: [${target.join(', ')}] (${trueLabel === 'dog' ? 'Dog' : 'Not Dog'})<br>
@@ -2102,7 +2149,12 @@ async function runBackwardPass() {
     await sleep(2000);
     
     updateStepInfoDual(
-        "🧮 STEP 1: Calculating how wrong each output neuron was...",
+        `🔍 <strong>STEP 1: Detective Work - What Needs Fixing?</strong><br>
+        💡 The AI examines its two answer brain cells like a detective solving a case:<br>
+        • 🐕 <strong>"Dog" brain cell:</strong> ${error[0] > 0 ? 'needs to be STRONGER 💪 (wasn\'t confident enough!)' : error[0] < 0 ? 'was too EXCITED 😅 (too sure it was a dog!)' : 'was PERFECT ✅'}<br>
+        • ❌ <strong>"Not Dog" brain cell:</strong> ${error[1] > 0 ? 'needs to be STRONGER 💪 (should have spoken up more!)' : error[1] < 0 ? 'was too LOUD 😅 (too sure it wasn\'t a dog!)' : 'was PERFECT ✅'}<br>
+        📏 <strong>Mistake size:</strong> ${Math.abs(error[0]).toFixed(2)} (0 = perfect, bigger = more confused)<br>
+        🎯 Now our AI knows exactly what to improve!`,
         `🧮 <strong>Step 2: Output Layer Gradients</strong><br>
          ${formatOperation("Output Error Gradient", "δₒ = (target - output) ⊙ σ'(zₒ)", 
            `[${error.map(e => e.toFixed(3)).join(', ')}]`,
@@ -2125,7 +2177,13 @@ async function runBackwardPass() {
     }
     
     updateStepInfoDual(
-        "⚡ STEP 2: Figuring out how much each hidden neuron contributed to the mistakes...",
+        `🔍 <strong>STEP 2: Following the Clues Backwards</strong><br>
+        🕵️‍♀️ The AI becomes a detective: "Which brain cells led me astray?" Let's investigate:<br>
+        • 🧠 Brain Cell 1: ${Math.abs(hiddenGradients[0]) > 0.1 ? '🚨 Major suspect! (big influence on mistake)' : '😅 Minor role (small influence)'}<br>
+        • 🧠 Brain Cell 2: ${Math.abs(hiddenGradients[1]) > 0.1 ? '🚨 Major suspect! (big influence on mistake)' : '😅 Minor role (small influence)'}<br>
+        • 🧠 Brain Cell 3: ${Math.abs(hiddenGradients[2]) > 0.1 ? '🚨 Major suspect! (big influence on mistake)' : '😅 Minor role (small influence)'}<br>
+        • 🧠 Brain Cell 4: ${Math.abs(hiddenGradients[3]) > 0.1 ? '🚨 Major suspect! (big influence on mistake)' : '😅 Minor role (small influence)'}<br>
+        🍞 <em>Like following a trail of breadcrumbs, we're tracing the mistake back to its source!</em>`,
         `⚡ <strong>Step 3: Hidden Layer Gradients (Chain Rule)</strong><br>
          ${formatOperation("Hidden Error Gradient", "δₕ = (W₂ᵀ × δₒ) ⊙ σ'(zₕ)", 
            `[${hiddenGradients.map(g => g.toFixed(3)).join(', ')}]`,
@@ -2137,7 +2195,13 @@ async function runBackwardPass() {
     await sleep(2000);
     
     updateStepInfoDual(
-        "🔧 STEP 3: Updating connection strengths based on the errors...",
+        `🎓 <strong>STEP 3: The AI Studies and Improves!</strong><br>
+        🏭 Time for the AI to update its brain! Like a student reviewing their notes after a test:<br>
+        • 📉 <strong>Bad connections</strong> → Turn down the volume (make weaker) 🔇<br>
+        • 📈 <strong>Helpful connections</strong> → Turn up the volume (make stronger) 🔊<br>
+        • 🏃‍♀️ <strong>Learning speed:</strong> ${(expertConfig.learningRate * 100).toFixed(0)}% (how fast it learns from mistakes)<br>
+        💭 <em>"Next time I see something like this, I'll remember this lesson!"</em><br>
+        🏆 <strong>Result:</strong> Our AI just got a little bit smarter!`,
         `🔧 <strong>Step 4: Weight Updates (Gradient Descent)</strong><br>
          ${formatOperation("Weight Update Rule", "W_new = W_old + η × δ × activation", 
            `Learning Rate η = ${expertConfig.learningRate}`,
@@ -2153,12 +2217,12 @@ async function runBackwardPass() {
     performanceMetrics.weightUpdates += (networkConfig.inputSize * networkConfig.hiddenSize) + (networkConfig.hiddenSize * networkConfig.outputSize);
     
     updateStepInfoDual(
-        "🎉 Learning complete! The AI has adjusted its connection strengths (weights). It should be smarter now! Try running 'Watch AI Think' again to see the difference!",
-        `🎉 <strong>Backpropagation Complete!</strong><br>
-         ⏱️ Training time: ${performanceMetrics.backpropTime}ms<br>
-         🔢 Weight updates: ${(networkConfig.inputSize * networkConfig.hiddenSize) + (networkConfig.hiddenSize * networkConfig.outputSize)} total<br>
-         📊 Final loss: ${(0.5 * error.reduce((sum, e) => sum + e*e, 0)).toFixed(4)}<br>
-         🧠 Updated weight matrices:<br>
+        "🎉 <strong>Graduation Day!</strong><br>🎓 Our AI just finished its lesson and updated its brain connections! It's now a little bit smarter than before.<br><br>🔁 <strong>Try it again!</strong> Click 'Watch AI Think' to see how much better it got at recognizing dogs!",
+        `🎓 <strong>Learning Complete!</strong><br>
+         ⏱️ Study time: ${performanceMetrics.backpropTime}ms<br>
+         📝 Brain connections updated: ${(networkConfig.inputSize * networkConfig.hiddenSize) + (networkConfig.hiddenSize * networkConfig.outputSize)} total<br>
+         📊 Mistake size: ${(0.5 * error.reduce((sum, e) => sum + e*e, 0)).toFixed(4)} (smaller is better!)<br>
+         🧠 The AI's improved brain connections:<br>
          ${formatMatrix(weights.inputToHidden, 'W₁ (Input→Hidden) - After Update')}<br>
          ${formatMatrix(weights.hiddenToOutput, 'W₂ (Hidden→Output) - After Update')}<br>
          🎯 <strong>Mathematical Summary:</strong> Used gradient descent to minimize loss function L(W) by computing ∇L and updating weights via W := W - η∇L<br>
@@ -2185,9 +2249,9 @@ async function runBackwardPass() {
     document.getElementById('fullDemoBtn').disabled = false;
     isAnimating = false;
     
-    // Stop expert logging if active
-    if (expertViewMode && expertLogActive) {
-        stopExpertLog();
+    // Stop message logging if active
+    if (messageLogActive) {
+        stopMessageLog();
     }
     
     // Update prediction column after forward pass completes
@@ -2195,14 +2259,12 @@ async function runBackwardPass() {
 }
 
 async function startFullDemo() {
-    // Start expert logging if in expert mode for the full sequence
-    if (expertViewMode) {
-        startExpertLog();
-    }
+    // Start message logging for the full sequence
+    startMessageLog();
     
     // Temporarily disable auto-logging for individual functions
-    const wasExpertLogActive = expertLogActive;
-    expertLogActive = false;
+    const wasMessageLogActive = messageLogActive;
+    messageLogActive = false;
     
     await runForwardPass();
     if (trueLabel && !isAnimating) {
@@ -2210,10 +2272,10 @@ async function startFullDemo() {
         await runBackwardPass();
     }
     
-    // Restore expert logging and stop it to show complete sequence
-    expertLogActive = wasExpertLogActive;
-    if (expertViewMode && expertLogActive) {
-        stopExpertLog();
+    // Restore message logging and stop it to show complete sequence
+    messageLogActive = wasMessageLogActive;
+    if (messageLogActive) {
+        stopMessageLog();
     }
 }
 
@@ -2269,7 +2331,10 @@ async function startDemo() {
         await sleep(2000);
         const backpropStartTime = performance.now();
         highlightSection('backward');
-        updateStepInfo("📚 STEP 4: Time to learn! The AI compares its guess with the right answer and adjusts its connection weights to get better next time.");
+        updateStepInfoDual(
+            "📚 <strong>STEP 4: Learning Time!</strong><br>🎓 Just like when you study for a test, the AI looks at its mistake and figures out how to do better next time. It's like having a really patient teacher help it learn!",
+            "📚 <strong>STEP 4: Backpropagation Learning Phase</strong><br>🔄 Computing gradients and updating weights based on classification error."
+        );
         await animateBackpropagation();
         
         performanceMetrics.backpropTime = Math.round(performance.now() - backpropStartTime);
@@ -2469,7 +2534,12 @@ async function displayResult() {
     const statusEmoji = isCorrect ? '✅' : '❌';
     const statusText = isCorrect ? 'Correct!' : 'Wrong!';
     
-    updateStepInfo(`${statusEmoji} The AI's final answer: "${prediction}" with ${confidence.toFixed(1)}% confidence. ${statusText} ${isCorrect ? 'Great job!' : 'It will learn from this mistake!'}`);
+    updateStepInfoDual(
+        `${statusEmoji} <strong>AI's Final Answer:</strong> "${prediction}" with ${confidence.toFixed(1)}% confidence<br>
+        ${statusText} ${isCorrect ? '🎉 Great job! The AI got it right!' : '📚 The AI will learn from this mistake!'}`,
+        `${statusEmoji} <strong>Classification Result:</strong> "${prediction}" (${confidence.toFixed(1)}% confidence)<br>
+        ${statusText} Accuracy: ${isCorrect ? 'Correct ✓' : 'Incorrect ✗'}`
+    );
     
     // Highlight the prediction result visually (only if element exists)
     const predictionDisplay = document.getElementById('predictionDisplay');
@@ -2511,7 +2581,7 @@ async function animateBackpropagation() {
         epoch: performanceMetrics.epochCount + 1
     };
     
-    // PEDAGOGICAL MAGIC: Force learning even with dead neurons!
+    // Educational enhancement: Ensure visible learning even with weak neurons
     const maxError = Math.max(...outputErrors.map(Math.abs));
     const prediction = activations.output[0] / (activations.output[0] + activations.output[1]);
     const isNearFiftyFifty = Math.abs(prediction - 0.5) < 0.15; // Within 15% of 50/50
@@ -2526,30 +2596,62 @@ async function animateBackpropagation() {
     let needsMagic = false;
     
     if (isNearFiftyFifty || hasSmallGradients || hasDeadNeurons) {
-        // PEDAGOGICAL MAGIC: Force significant learning regardless of math
+        // Educational enhancement: Amplify learning for demonstration purposes
         adaptiveLearningRate = networkConfig.learningRate * 5.0; // Even more aggressive!
         needsMagic = true;
         
         if (hasDeadNeurons && isNearFiftyFifty) {
-            updateStepInfo("⚡ SUPER LEARNING MODE! Dead neurons detected with 50/50 prediction. Using AI magic to force breakthrough learning!");
+            updateStepInfoDual(
+                `🎢 <strong>STEP 3: AI Learning Boost!</strong><br>
+                🎲 The AI is confused (guessing 50/50) AND some brain cells are "asleep"<br>
+                🔋 We're boosting its learning power to wake up those sleepy neurons!<br>
+                💡 Think of it like turning up the brightness on a dim lightbulb!`,
+                `⚡ <strong>BOOST MODE:</strong> Weak neurons detected with confused prediction. Amplifying learning signal for breakthrough training!`
+            );
         } else if (hasDeadNeurons) {
-            updateStepInfo("🔥 NEURON REVIVAL! Some neurons are 'sleeping' - waking them up with extra learning power!");
+            updateStepInfoDual(
+                `😴 <strong>STEP 3: Wake Up Sleepy Brain Cells!</strong><br>
+                💤 Some brain cells are "asleep" (giving weak signals)<br>
+                🔔 We're giving them a gentle nudge to participate more!<br>
+                🌟 Like encouraging a quiet student to speak up in class!`,
+                `🔥 NEURON REVIVAL! Some neurons are 'sleeping' - waking them up with extra learning power!`
+            );
         } else if (isNearFiftyFifty) {
-            updateStepInfo("🚀 CONFUSION BREAKER! 50/50 prediction detected - using teaching magic to push the AI toward a decision!");
+            updateStepInfoDual(
+                `🤔 <strong>STEP 3: Breaking the Confusion!</strong><br>
+                🎯 The AI can't decide (50/50 between dog/not-dog)<br>
+                🎪 We're giving it a helpful push toward the right answer!<br>
+                🧭 Like pointing a lost person in the right direction!`,
+                `🚀 CONFUSION BREAKER! 50/50 prediction detected - using teaching magic to push the AI toward a decision!`
+            );
         } else {
-            updateStepInfo("💪 LEARNING BOOSTER! Small gradients detected - amplifying the learning signal!");
+            updateStepInfoDual(
+                `🔊 <strong>Turning Up the Learning Volume!</strong><br>
+                📻 The AI's learning whispers are too quiet to hear clearly<br>
+                🎚️ We're cranking up the volume so it can learn better!<br>
+                🎧 It's like turning up your headphones when the music is too soft to enjoy!`,
+                `💪 <strong>LEARNING BOOST:</strong> Weak learning signals detected - amplifying for better training!`
+            );
         }
     } else {
-        updateStepInfo("🔄 The AI is like a detective working backwards! It's checking each connection: 'Did this connection help me get the right answer or make me more wrong?'");
+        updateStepInfoDual(
+            `🕵️ <strong>Learning Detective Work!</strong><br>
+            🔍 The AI works backwards like a detective solving a case<br>
+            🤔 For each connection it asks: "Did you help me get the right answer or not?"<br>
+            💪 Helpful connections get stronger, unhelpful ones get weaker - just like building muscle by practicing!`,
+            `🔄 Standard backpropagation: Computing gradients through chain rule to update weights based on error contribution.`
+        );
     }
     
     // Update output to hidden weights with ROBUST gradients
     for (let o = 0; o < networkConfig.outputSize; o++) {
         for (let h = 0; h < networkConfig.hiddenSize; h++) {
             const connection = document.getElementById(`conn-hidden-${h}-output-${o}`);
-            connection.classList.add('backward-pass');
+            if (connection) {
+                connection.classList.add('backward-pass');
+            }
             
-            // PEDAGOGICAL MAGIC gradient update - force learning!
+            // Enhanced gradient update for educational visualization
             let weightUpdate = adaptiveLearningRate * outputErrors[o] * activations.hidden[h];
             
             // DEAD NEURON REVIVAL: Force strong updates regardless of activation
@@ -2583,13 +2685,13 @@ async function animateBackpropagation() {
             }
             // Visual update already handled by applyWeightVisualization above
             
-            // Color code the connection based on update
+            // Color code the connection based on update  
             if (Math.abs(weightUpdate) > 0.01) {
-                connection.classList.add(weightUpdate > 0 ? 'positive' : 'negative');
+                connection.classList.add(weightUpdate > 0 ? 'weight-positive' : 'weight-negative');
             }
             
             await sleep(300);
-            connection.classList.remove('backward-pass', 'positive', 'negative');
+            connection.classList.remove('backward-pass', 'weight-positive', 'weight-negative');
         }
     }
     
@@ -2616,9 +2718,11 @@ async function animateBackpropagation() {
     for (let h = 0; h < networkConfig.hiddenSize; h++) {
         for (let i = 0; i < networkConfig.inputSize; i++) {
             const connection = document.getElementById(`conn-input-${i}-hidden-${h}`);
-            connection.classList.add('backward-pass');
+            if (connection) {
+                connection.classList.add('backward-pass');
+            }
             
-            // PEDAGOGICAL MAGIC gradient update - force learning here too!
+            // Enhanced gradient update for educational visualization
             let weightUpdate = adaptiveLearningRate * hiddenErrors[h] * activations.input[i];
             
             // DEAD NEURON INPUT REVIVAL: Force input connections to wake up neurons
@@ -2654,17 +2758,23 @@ async function animateBackpropagation() {
             
             // Color code the connection
             if (Math.abs(weightUpdate) > 0.02) {
-                connection.classList.add(weightUpdate > 0 ? 'positive' : 'negative');
+                connection.classList.add(weightUpdate > 0 ? 'weight-positive' : 'weight-negative');
             }
             
             await sleep(200);
-            connection.classList.remove('backward-pass', 'positive', 'negative');
+            connection.classList.remove('backward-pass', 'weight-positive', 'weight-negative');
         }
     }
 }
 
 function resetDemo() {
     isAnimating = false;
+    
+    // Clear any accumulated messages to prevent old messages from showing
+    if (messageLogActive) {
+        messageLogActive = false;
+    }
+    messageLog = [];
     
     // Reset demo state
     demoState.forwardCompleted = false;
@@ -2704,20 +2814,32 @@ function resetDemo() {
         document.getElementById(`output-value-${o}`).textContent = '0.00';
     }
     
-    // Reset probability bars and confidence
-    document.getElementById('dogProbBar').style.width = '0%';
-    document.getElementById('notDogProbBar').style.width = '0%';
-    document.getElementById('dogProbValue').textContent = '0%';
-    document.getElementById('notDogProbValue').textContent = '0%';
-    document.getElementById('confidenceFill').style.width = '0%';
-    document.getElementById('confidenceValue').textContent = '0%';
+    // Reset probability bars and confidence (with null checks)
+    const dogProbBar = document.getElementById('dogProbBar');
+    const notDogProbBar = document.getElementById('notDogProbBar');
+    const dogProbValue = document.getElementById('dogProbValue');
+    const notDogProbValue = document.getElementById('notDogProbValue');
+    const confidenceFill = document.getElementById('confidenceFill');
+    const confidenceValue = document.getElementById('confidenceValue');
     
-    // Reset prediction display styling
+    if (dogProbBar) dogProbBar.style.width = '0%';
+    if (notDogProbBar) notDogProbBar.style.width = '0%';
+    if (dogProbValue) dogProbValue.textContent = '0%';
+    if (notDogProbValue) notDogProbValue.textContent = '0%';
+    if (confidenceFill) confidenceFill.style.width = '0%';
+    if (confidenceValue) confidenceValue.textContent = '0%';
+    
+    // Reset prediction display styling (if element exists)
     const predictionDisplay = document.getElementById('predictionDisplay');
-    predictionDisplay.style.borderColor = '#00ccff';
-    predictionDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+    if (predictionDisplay) {
+        predictionDisplay.style.borderColor = '#00ccff';
+        predictionDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+    }
     
-    updateStepInfo('🎮 Ready to explore! Choose "Watch AI Think" to see multiplication and addition, or "Watch AI Learn" to see how it improves. Or try the full demo!');
+    updateStepInfoDual(
+        '🎮 <strong>Ready to Explore!</strong><br>🚀 Choose "Watch AI Think" to see how the AI makes decisions, or "Watch AI Learn" to see how it gets smarter. Try the full demo for the complete experience!',
+        '🎮 <strong>System Ready</strong><br>📊 All network parameters initialized. Ready to demonstrate forward propagation, backpropagation, or full training cycle.'
+    );
     
     // Enable forward pass button
     document.getElementById('forwardBtn').disabled = false;
@@ -2728,14 +2850,7 @@ function resetDemo() {
     }
 }
 
-function updateStepInfo(message) {
-    document.getElementById('currentStep').innerHTML = message;
-    setTimeout(() => {
-        if (autoScrollEnabled) {
-            scrollToBottom();
-        }
-    }, 100);
-}
+// Legacy updateStepInfo function removed - now using updateStepInfoDual for all messages
 
 
 function highlightSection(phase) {
@@ -2829,7 +2944,10 @@ function resetWeights() {
     // Reset demo
     resetDemo();
     
-    updateStepInfo('🔄 Network has been reset! Ready to learn from scratch.');
+    updateStepInfoDual(
+        '🔄 <strong>Network Reset Complete!</strong><br>🌟 The AI\'s brain is now completely fresh and ready to learn! All connections have been randomized and it\'s like having a brand new student ready for their first lesson.',
+        '🔄 <strong>Network Reinitialized</strong><br>📊 All weights randomized to initial state. Ready to begin training from scratch with fresh parameters.'
+    );
     
     // Auto-select appropriate label based on current image
     const currentImageId = document.querySelector('.img-btn.selected').onclick.toString().match(/'([^']+)'/)[1];
@@ -3006,12 +3124,18 @@ function toggleWeightSliders() {
         btn.textContent = '🔧 Exit What If?';
         btn.classList.add('active');
         showWeightSliders();
-        updateStepInfo('🔧 Weight Exploration Mode: Drag sliders to see how different weights affect the AI\'s predictions in real-time!');
+        updateStepInfoDual(
+            '🔧 <strong>Weight Exploration Mode!</strong><br>🎛️ Drag the sliders to see how different brain connections affect the AI\'s decisions. Watch the magic happen in real-time!',
+            '🔧 <strong>Weight Exploration Mode</strong><br>🔊 Interactive weight manipulation enabled. Real-time prediction updates active.'
+        );
     } else {
         btn.textContent = '🔧 What If?';
         btn.classList.remove('active');
         hideWeightSliders();
-        updateStepInfo('🎮 Ready! Pick "Think", "Learn", or "Full Demo"');
+        updateStepInfoDual(
+            '🎮 <strong>Ready to Explore!</strong><br>🚀 Pick "Watch AI Think", "Watch AI Learn", or "Full Demo" to see the neural network in action!',
+            '🎮 <strong>System Ready</strong><br>📈 Select demonstration mode: Forward propagation, Backpropagation, or Complete cycle.'
+        );
     }
 }
 
@@ -4173,7 +4297,15 @@ function runLearningTest() {
     console.log(`📊 USER TRAINING ESTIMATE: Run demo ${trainingRoundsNeeded}-${trainingRoundsNeeded + 1} times to reach 100% accuracy`);
     
     // Update UI with test results  
-    updateStepInfo(`🧪 Test Results: ${(finalAccuracy*100).toFixed(1)}% accuracy after ${epoch} epochs. Estimated: Run demo ${trainingRoundsNeeded}-${trainingRoundsNeeded + 1} times for 100% accuracy! ${finalAccuracy === 1.0 ? '🎉 PERFECT' : finalAccuracy >= 0.8 ? '✅ GOOD' : '❌ POOR'}`);
+    updateStepInfoDual(
+        `🧪 <strong>Test Results:</strong> ${(finalAccuracy*100).toFixed(1)}% accuracy after ${epoch} training rounds!<br>
+        📈 <strong>Estimate:</strong> Run demo ${trainingRoundsNeeded}-${trainingRoundsNeeded + 1} times for 100% accuracy!<br>
+        ${finalAccuracy === 1.0 ? '🎉 PERFECT - The AI is now a pro!' : finalAccuracy >= 0.8 ? '✅ GOOD - The AI is getting smart!' : '❌ NEEDS MORE PRACTICE - Keep training!'}`,
+        `🧪 <strong>Training Assessment:</strong><br>
+        📊 Final Accuracy: ${(finalAccuracy*100).toFixed(1)}% (${epoch} epochs)<br>
+        📈 Estimated Rounds for 100%: ${trainingRoundsNeeded}-${trainingRoundsNeeded + 1}<br>
+        🎯 Status: ${finalAccuracy === 1.0 ? 'OPTIMAL' : finalAccuracy >= 0.8 ? 'GOOD' : 'SUBOPTIMAL'}`
+    );
     
     // Redraw network with updated weights
     drawNetwork();
@@ -4338,11 +4470,64 @@ function applyConvergenceBoost(trainingState, trainingConfig) {
     
 }
 
+// Auto-Training Animation Control Functions
+function startTrainingAnimation() {
+    const networkArea = document.querySelector('.network-area');
+    const statusElement = document.createElement('div');
+    statusElement.className = 'training-status';
+    statusElement.innerHTML = `
+        <div class="spinner"></div>
+        <span>AI Training...</span>
+    `;
+    
+    networkArea.classList.add('training');
+    networkArea.appendChild(statusElement);
+    
+    console.log('🎨 Training animation started');
+}
+
+function updateTrainingAnimation(epoch, accuracy) {
+    const statusElement = document.querySelector('.training-status');
+    if (statusElement) {
+        statusElement.innerHTML = `
+            <div class="spinner"></div>
+            <span>Epoch ${epoch} • ${(accuracy * 100).toFixed(1)}%</span>
+        `;
+    }
+}
+
+function stopTrainingAnimation(success = true) {
+    const networkArea = document.querySelector('.network-area');
+    const statusElement = document.querySelector('.training-status');
+    
+    if (statusElement) {
+        statusElement.innerHTML = `
+            <span style="color: ${success ? '#10b981' : '#ef4444'};">${success ? '✅ Complete!' : '⚠️ Stopped'}</span>
+        `;
+        
+        setTimeout(() => {
+            networkArea.classList.remove('training');
+            if (statusElement && statusElement.parentNode) {
+                statusElement.parentNode.removeChild(statusElement);
+            }
+        }, 2000);
+    }
+    
+    console.log(`🎨 Training animation ${success ? 'completed' : 'stopped'}`);
+}
+
 // COMPLETELY NEW SIMPLE TRAINING ALGORITHM
 async function trainToPerfection() {
     if (isAnimating) return;
     console.log('🔄 NEW SIMPLE TRAINING ALGORITHM');
-    updateStepInfo('🎯 Starting simple training algorithm...');
+    
+    // Start the training animation
+    startTrainingAnimation();
+    
+    updateStepInfoDual(
+        '🎯 <strong>Starting Auto-Training!</strong><br>🚀 The AI will now practice with different examples to get smarter. Watch as it learns!',
+        '🎯 <strong>Auto-Training Initiated</strong><br>📊 Beginning batch training with multiple examples to improve network accuracy.'
+    );
     
     // IMPORTANT: Save current user's image and label state before training
     const originalCurrentImage = currentImage;
@@ -4411,7 +4596,13 @@ async function trainToPerfection() {
                 console.log(`  ${ex.label}: ${output.toFixed(3)} → ${predicted} (${actual}) ${correct}`);
             });
             
-            updateStepInfo(`🔄 Epoch ${epoch}: ${(accuracy*100).toFixed(1)}% accuracy`);
+            updateStepInfoDual(
+                `🔄 <strong>Training Progress - Round ${epoch}</strong><br>🎯 Current accuracy: ${(accuracy*100).toFixed(1)}% - The AI is getting ${accuracy >= 0.8 ? 'really smart' : accuracy >= 0.5 ? 'better' : 'started'}!`,
+                `🔄 <strong>Epoch ${epoch}</strong><br>📊 Accuracy: ${(accuracy*100).toFixed(1)}% | Loss: ${((1-accuracy)*100).toFixed(1)}%`
+            );
+            
+            // Update training animation with current progress
+            updateTrainingAnimation(epoch, accuracy);
             
             // Update visual representation of weights during training
             refreshAllConnectionVisuals();
@@ -4422,7 +4613,13 @@ async function trainToPerfection() {
             
             if (accuracy >= 1.0) {
                 console.log(`🎉 Perfect accuracy achieved in ${epoch} epochs!`);
-                updateStepInfo(`🏆 Training Complete! 100% accuracy in ${epoch} epochs`);
+                updateStepInfoDual(
+                    `🏆 <strong>Perfect Training Complete!</strong><br>🎉 The AI achieved 100% accuracy in just ${epoch} rounds! It's now a master at recognizing dogs!`,
+                    `🏆 <strong>Training Complete</strong><br>📊 100% accuracy achieved in ${epoch} epochs. Optimal convergence reached.`
+                );
+                
+                // Stop training animation with success
+                stopTrainingAnimation(true);
                 
                 // IMPORTANT: Restore user's original image and label state after early completion
                 console.log(`🔄 Restoring original state: image=${originalCurrentImage}, label=${originalTrueLabel}`);
@@ -4460,8 +4657,14 @@ async function trainToPerfection() {
     }
     
     const finalAccuracy = testSimpleBinaryAccuracy(trainingData);
-    updateStepInfo(`✅ Training Complete: ${(finalAccuracy*100).toFixed(1)}% accuracy`);
+    updateStepInfoDual(
+        `✅ <strong>Auto-Training Finished!</strong><br>🎓 Final result: ${(finalAccuracy*100).toFixed(1)}% accuracy! ${finalAccuracy >= 0.9 ? '🌟 Excellent performance!' : finalAccuracy >= 0.7 ? '👍 Good progress!' : '📚 Needs more practice!'}`,
+        `✅ <strong>Training Session Complete</strong><br>📊 Final Accuracy: ${(finalAccuracy*100).toFixed(1)}%`
+    );
     console.log(`Final accuracy: ${(finalAccuracy*100).toFixed(1)}%`);
+    
+    // Stop training animation
+    stopTrainingAnimation(finalAccuracy >= 0.8);
     
     // IMPORTANT: Restore user's original image and label state after training
     console.log(`🔄 Restoring original state: image=${originalCurrentImage}, label=${originalTrueLabel}`);

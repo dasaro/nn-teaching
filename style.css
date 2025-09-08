@@ -4,8 +4,8 @@
     box-sizing: border-box;
 }
 
-/* Expert Log Styles */
-.expert-log-container {
+/* Message Log Styles - Unified for Student and Expert */
+.message-log-container {
     background: #fefce8;
     border: 2px solid #eab308;
     border-radius: 8px;
@@ -15,7 +15,12 @@
     flex-direction: column;
 }
 
-.expert-log-header {
+.message-log-container.student {
+    background: #f0f9ff;
+    border-color: #3b82f6;
+}
+
+.message-log-header {
     background: #eab308;
     color: white;
     padding: 8px 12px;
@@ -23,31 +28,51 @@
     font-size: 14px;
 }
 
-.expert-log-content {
+.message-log-container.student .message-log-header {
+    background: #3b82f6;
+}
+
+.message-log-content {
     padding: 12px;
     overflow-y: auto;
     flex-grow: 1;
     max-height: 320px;
-    font-family: 'Courier New', monospace;
     font-size: 12px;
     line-height: 1.5;
 }
 
-.expert-log-entry {
+.message-log-entry {
     margin-bottom: 12px;
     padding: 8px;
-    background: #fffbeb;
-    border-left: 3px solid #f59e0b;
     border-radius: 4px;
 }
 
+.message-log-entry.expert {
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    font-family: 'Courier New', monospace;
+}
+
+.message-log-entry.student {
+    background: #eff6ff;
+    border-left: 3px solid #3b82f6;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 .log-timestamp {
-    color: #92400e;
     font-weight: bold;
     font-size: 11px;
 }
 
-.expert-log-footer {
+.message-log-entry.expert .log-timestamp {
+    color: #92400e;
+}
+
+.message-log-entry.student .log-timestamp {
+    color: #1e40af;
+}
+
+.message-log-footer {
     background: #f3f4f6;
     color: #6b7280;
     padding: 8px 12px;
@@ -380,11 +405,56 @@ body {
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
-    padding: 15px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    min-height: 520px;
+    overflow: visible;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* Training State Styling - Minimal */
+.network-area.training {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.15);
+}
+
+.training .neuron {
+    animation: trainingPulse 3s ease-in-out infinite;
+}
+
+.training .connection-line {
+    animation: connectionTraining 2.5s linear infinite;
+}
+
+/* Training Status Overlay - Minimal */
+.training-status {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(16, 185, 129, 0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+    z-index: 10;
+    opacity: 0.9;
+}
+
+.training-status .spinner {
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border-top: 1.5px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
 /* Right Sidebar - System Messages */
@@ -724,9 +794,9 @@ body {
 }
 
 .connection-line.forward-pass {
-    stroke: #f59e0b;
-    stroke-width: 3;
-    opacity: 1;
+    stroke: #f59e0b !important;
+    stroke-width: 4 !important;
+    opacity: 1 !important;
     animation: forwardFlow 0.8s ease-in-out;
 }
 
@@ -746,9 +816,9 @@ body {
 }
 
 .connection-line.backward-pass {
-    stroke: #ef4444;
-    stroke-width: 3;
-    opacity: 1;
+    stroke: #ef4444 !important;
+    stroke-width: 4 !important;
+    opacity: 1 !important;
     animation: backwardFlow 0.8s ease-in-out;
 }
 
@@ -770,11 +840,12 @@ body {
 }
 
 .layer-label {
-    fill: #475569;
-    font-size: 12px;
-    font-weight: 600;
+    fill: #334155;
+    font-size: 14px;
+    font-weight: 700;
     text-anchor: middle;
     dominant-baseline: central;
+    letter-spacing: 0.5px;
 }
 
 /* Tutorial highlights */
@@ -863,6 +934,52 @@ body {
     }
 }
 
+/* Auto-Training Animations */
+@keyframes trainingGlow {
+    0%, 100% { 
+        background-position: 0% 50%;
+        opacity: 0.7;
+    }
+    50% { 
+        background-position: 100% 50%;
+        opacity: 1.0;
+    }
+}
+
+@keyframes trainingPulse {
+    0%, 100% { 
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px #10b981);
+    }
+    50% { 
+        transform: scale(1.02);
+        filter: drop-shadow(0 0 4px #10b981);
+    }
+}
+
+@keyframes connectionTraining {
+    0% { 
+        stroke-dasharray: 4 4;
+        stroke-dashoffset: 0;
+        opacity: 0.8;
+    }
+    100% { 
+        stroke-dasharray: 4 4;
+        stroke-dashoffset: 8;
+        opacity: 0.8;
+    }
+}
+
+@keyframes statusFloat {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
+    50% { transform: translate(-50%, -50%) translateY(-3px); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 .flow-dot {
     /* Ensure smooth linear movement - no animations or transforms */
     opacity: 1;
@@ -901,7 +1018,8 @@ body {
     
     #networkSvg {
         width: 100%;
-        height: 300px;
+        height: 480px;
+        min-height: 480px;
     }
 }
 
@@ -1745,6 +1863,19 @@ body {
 
 .weight-negative {
     color: #dc2626 !important;
+}
+
+/* Connection color coding for backward pass */
+.connection-line.weight-positive {
+    stroke: #10b981 !important;
+    stroke-width: 4 !important;
+    filter: drop-shadow(0 0 3px #10b981);
+}
+
+.connection-line.weight-negative {
+    stroke: #f87171 !important;
+    stroke-width: 4 !important;
+    filter: drop-shadow(0 0 3px #f87171);
 }
 
 /* Ensure changes are visible but not overwhelming */
