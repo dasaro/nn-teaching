@@ -19,8 +19,8 @@ let messageLogActive = false;
 
 // Internationalization helper function
 function t(key, replacements = []) {
-    if (typeof i18n !== 'undefined') {
-        return i18n.t(key, replacements);
+    if (typeof window.i18n !== 'undefined') {
+        return window.i18n.t(key, replacements);
     }
     // Fallback if i18n is not loaded yet
     return key;

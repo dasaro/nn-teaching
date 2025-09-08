@@ -1,6 +1,8 @@
 // Internationalization system for Neural Network Visualization App
 
-class NeuralNetworkI18n {
+// Prevent duplicate declarations
+if (typeof window.NeuralNetworkI18n === 'undefined') {
+    window.NeuralNetworkI18n = class {
     constructor() {
         this.currentLanguage = 'en'; // Default language
         this.translations = {};
@@ -140,18 +142,25 @@ class NeuralNetworkI18n {
     getAvailableLanguages() {
         return Object.keys(this.translations);
     }
-}
+    }; // End of class definition
+} // End of if statement
 
-// Create global i18n instance
-const i18n = new NeuralNetworkI18n();
+// Create global i18n instance (only if it doesn't exist)
+if (typeof window.i18n === 'undefined') {
+    window.i18n = new window.NeuralNetworkI18n();
+}
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
-    await i18n.init();
-    console.log('🌐 I18n system initialized');
+    if (window.i18n) {
+        await window.i18n.init();
+        console.log('🌐 I18n system initialized');
+    }
 });
 
 // Language change handler
 function changeLanguage(language) {
-    i18n.setLanguage(language);
+    if (window.i18n) {
+        window.i18n.setLanguage(language);
+    }
 }
