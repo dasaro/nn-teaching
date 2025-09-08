@@ -1410,11 +1410,16 @@ function selectImage(imageType) {
         document.getElementById(`output-value-${o}`).textContent = '0.00';
     }
     
-    // Reset probability bars
-    document.getElementById('dogProbBar').style.width = '0%';
-    document.getElementById('notDogProbBar').style.width = '0%';
-    document.getElementById('dogProbValue').textContent = '0%';
-    document.getElementById('notDogProbValue').textContent = '0%';
+    // Reset probability bars (only if they exist)
+    const dogProbBar = document.getElementById('dogProbBar');
+    const notDogProbBar = document.getElementById('notDogProbBar');
+    const dogProbValue = document.getElementById('dogProbValue');
+    const notDogProbValue = document.getElementById('notDogProbValue');
+    
+    if (dogProbBar) dogProbBar.style.width = '0%';
+    if (notDogProbBar) notDogProbBar.style.width = '0%';
+    if (dogProbValue) dogProbValue.textContent = '0%';
+    if (notDogProbValue) notDogProbValue.textContent = '0%';
     
     // True label is now pre-selected in createImage function, so don't clear it
     
