@@ -73,7 +73,9 @@ if (typeof window.NeuralNetworkI18n === 'undefined') {
         let result = text;
         replacements.forEach((replacement, index) => {
             const placeholder = `{${index}}`;
-            result = result.replace(new RegExp(placeholder, 'g'), replacement);
+            // Escape special regex characters in the placeholder
+            const escapedPlaceholder = placeholder.replace(/[{}]/g, '\\$&');
+            result = result.replace(new RegExp(escapedPlaceholder, 'g'), replacement);
         });
         return result;
     }
