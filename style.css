@@ -99,7 +99,7 @@ body {
 /* COMPACT Three-column layout - no scrolling! */
 .app-layout {
     display: grid;
-    grid-template-columns: 220px 1fr 280px;
+    grid-template-columns: 220px 1fr 350px;
     gap: 15px;
     flex: 1;
     min-height: 0;

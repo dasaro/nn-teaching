@@ -573,14 +573,14 @@ let activations = {
     output: [0, 0]
 };
 
-// Network positions for SVG drawing - optimized for 4 hidden neurons
+// Network positions for SVG drawing - optimized for 4 hidden neurons and wider canvas
 const positions = {
     input: [{x: 80, y: 80}, {x: 80, y: 150}, {x: 80, y: 220}, {x: 80, y: 290}],
     hidden: [
-        {x: 250, y: 100}, {x: 250, y: 160}, {x: 250, y: 220}, {x: 250, y: 280}
+        {x: 280, y: 100}, {x: 280, y: 160}, {x: 280, y: 220}, {x: 280, y: 280}
     ],
-    output: [{x: 420, y: 150}, {x: 420, y: 250}],
-    prediction: {x: 580, y: 200} // New prediction column
+    output: [{x: 480, y: 150}, {x: 480, y: 250}],
+    prediction: {x: 650, y: 200} // New prediction column with more space
 };
 
 // Initialize the app
