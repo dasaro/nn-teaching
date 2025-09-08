@@ -1,5 +1,6 @@
 // Italian localization file
-const it = {
+window.i18nLocales = window.i18nLocales || {};
+window.i18nLocales.it = {
     // Main header
     "app.title": "🧠 Come l'AI Riconosce le Immagini",
     "app.subtitle": "Guarda una rete neurale imparare a identificare oggetti passo dopo passo! Così funzionano i moderni sistemi AI come il riconoscimento di immagini.",

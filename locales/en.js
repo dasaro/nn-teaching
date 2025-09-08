@@ -1,5 +1,6 @@
 // English localization file - Original authentic text from the application
-const en = {
+window.i18nLocales = window.i18nLocales || {};
+window.i18nLocales.en = {
     // Main header
     "app.title": "🧠 How AI Recognizes Images",
     "app.subtitle": "Watch a neural network learn to identify objects step by step! This is how modern AI systems like image recognition work.",

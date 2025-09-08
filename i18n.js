@@ -25,31 +25,30 @@ class I18n {
     // Load translation files dynamically
     async loadTranslations() {
         try {
-            // Load translation files by including script tags
-            const languages = ['en', 'it'];
-            
-            for (const lang of languages) {
-                if (!window[lang]) {
-                    // Create script tag to load language file
-                    const script = document.createElement('script');
-                    script.src = `locales/${lang}.js`;
-                    script.async = false;
-                    document.head.appendChild(script);
-                    
-                    // Wait for script to load
-                    await new Promise((resolve, reject) => {
-                        script.onload = resolve;
-                        script.onerror = reject;
-                    });
-                }
-                this.translations[lang] = window[lang];
+            // Translation files should load themselves into window.i18nLocales
+            // Just wait a moment for them to load if not already available
+            if (!window.i18nLocales) {
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
             
-            console.log('✅ Translations loaded:', Object.keys(this.translations));
+            if (window.i18nLocales) {
+                this.translations = window.i18nLocales;
+                console.log('✅ Translations loaded:', Object.keys(this.translations));
+            } else {
+                throw new Error('No translations found in window.i18nLocales');
+            }
         } catch (error) {
             console.error('❌ Failed to load translations:', error);
             // Fallback to English if loading fails
             this.currentLanguage = 'en';
+            // Create minimal fallback translations
+            this.translations = {
+                en: {
+                    "app.title": "🧠 How AI Recognizes Images",
+                    "app.subtitle": "Watch a neural network learn to identify objects step by step!",
+                    "system.ready": "🎮 Ready! Pick \"Think\", \"Learn\", or \"Full Demo\""
+                }
+            };
         }
     }
     
