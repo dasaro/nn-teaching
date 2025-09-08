@@ -1646,9 +1646,9 @@ function drawNeurons() {
 function drawLabels() {
     const svg = document.getElementById('networkSvg');
     const labels = [{x: 80, y: 40, text: 'Input Layer'}, 
-                   {x: 250, y: 40, text: 'Hidden Layer'}, 
-                   {x: 420, y: 40, text: 'Output Layer'},
-                   {x: 580, y: 40, text: 'AI Prediction'}];
+                   {x: 280, y: 40, text: 'Hidden Layer'}, 
+                   {x: 480, y: 40, text: 'Output Layer'},
+                   {x: 650, y: 40, text: 'AI Prediction'}];
     
     labels.forEach(label => {
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
