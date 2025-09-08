@@ -1833,7 +1833,7 @@ async function runForwardPass() {
     // Failsafe: Ensure trueLabel is set based on current image
     if (!trueLabel) {
         console.log("trueLabel was null, setting it based on currentImage");
-        const correctLabel = (currentImage === 'dog1' || currentImage === 'dog2') ? 'dog' : 'not-dog';
+        const correctLabel = currentImage.startsWith('dog') ? 'dog' : 'not-dog';
         setTrueLabel(correctLabel);
         console.log("trueLabel set to:", trueLabel);
     }
@@ -1922,6 +1922,12 @@ async function runForwardPass() {
     document.getElementById('forwardBtn').disabled = false;
     document.getElementById('fullDemoBtn').disabled = false;
     isAnimating = false;
+    
+    console.log('✅ Forward pass complete - buttons should be enabled:', {
+        forwardBtn: !document.getElementById('forwardBtn').disabled,
+        fullDemoBtn: !document.getElementById('fullDemoBtn').disabled,
+        backwardBtn: !document.getElementById('backwardBtn').disabled
+    });
 }
 
 async function runBackwardPass() {
@@ -1989,7 +1995,7 @@ async function startDemo() {
     // Failsafe: Ensure trueLabel is set based on current image
     if (!trueLabel) {
         console.log("trueLabel was null, setting it based on currentImage");
-        const correctLabel = (currentImage === 'dog1' || currentImage === 'dog2') ? 'dog' : 'not-dog';
+        const correctLabel = currentImage.startsWith('dog') ? 'dog' : 'not-dog';
         setTrueLabel(correctLabel);
         console.log("trueLabel set to:", trueLabel);
     }
@@ -2192,22 +2198,30 @@ async function displayResult() {
     const notDogProb = activations.output[1] * 100;
     const confidence = Math.abs(dogProb - 50); // Distance from 50% = confidence
     
-    // Update probability bars
+    // Update probability bars (only if they exist - they were removed in recent update)
     const dogBar = document.getElementById('dogProbBar');
     const notDogBar = document.getElementById('notDogProbBar');
     
-    dogBar.style.width = `${dogProb}%`;
-    notDogBar.style.width = `${notDogProb}%`;
+    if (dogBar && notDogBar) {
+        dogBar.style.width = `${dogProb}%`;
+        notDogBar.style.width = `${notDogProb}%`;
+    }
     
-    // Update confidence meter
+    // Update confidence meter (only if it exists)
     const confidenceFill = document.getElementById('confidenceFill');
     const confidenceValue = document.getElementById('confidenceValue');
-    confidenceFill.style.width = `${confidence * 2}%`; // Scale to 0-100%
-    confidenceValue.textContent = `${confidence.toFixed(1)}%`;
+    if (confidenceFill && confidenceValue) {
+        confidenceFill.style.width = `${confidence * 2}%`; // Scale to 0-100%
+        confidenceValue.textContent = `${confidence.toFixed(1)}%`;
+    }
     
-    // Update percentage text
-    document.getElementById('dogProbValue').textContent = `${dogProb.toFixed(1)}%`;
-    document.getElementById('notDogProbValue').textContent = `${notDogProb.toFixed(1)}%`;
+    // Update percentage text (only if elements exist)
+    const dogProbValue = document.getElementById('dogProbValue');
+    const notDogProbValue = document.getElementById('notDogProbValue');
+    if (dogProbValue && notDogProbValue) {
+        dogProbValue.textContent = `${dogProb.toFixed(1)}%`;
+        notDogProbValue.textContent = `${notDogProb.toFixed(1)}%`;
+    }
     
     const prediction = dogProb > notDogProb ? 'CANINE' : 'NON-CANINE';
     const isCorrect = (prediction === 'CANINE' && trueLabel === 'dog') || (prediction === 'NON-CANINE' && trueLabel === 'not-dog');
@@ -4190,6 +4204,12 @@ async function trainToPerfection() {
                         setTrueLabel(originalTrueLabel);
                     }
                     preventAutoLabeling = false;
+                    
+                    // Ensure buttons are properly enabled after restoration
+                    document.getElementById('forwardBtn').disabled = false;
+                    document.getElementById('fullDemoBtn').disabled = false;
+                    document.getElementById('backwardBtn').disabled = true;
+                    
                     console.log(`✅ Restoration complete: image=${currentImage}, label=${trueLabel}`);
                 }, 100);
                 
@@ -4223,6 +4243,12 @@ async function trainToPerfection() {
             setTrueLabel(originalTrueLabel);
         }
         preventAutoLabeling = false;
+        
+        // Ensure buttons are properly enabled after restoration
+        document.getElementById('forwardBtn').disabled = false;
+        document.getElementById('fullDemoBtn').disabled = false;
+        document.getElementById('backwardBtn').disabled = true;
+        
         console.log(`✅ Restoration complete: image=${currentImage}, label=${trueLabel}`);
     }, 100);
     
