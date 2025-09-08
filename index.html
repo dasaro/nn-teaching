@@ -90,9 +90,23 @@
                 <svg id="networkSvg" width="700" height="380">
                     <!-- Network will be drawn here -->
                 </svg>
-                
-                
-                <div class="current-step" id="currentStep">🎮 Ready! Pick "Think", "Learn", or "Full Demo"</div>
+            </div>
+            
+            <!-- Right Sidebar - System Messages -->
+            <div class="right-sidebar">
+                <div class="sidebar-header">
+                    <h3>📋 System Messages</h3>
+                    <div class="view-mode-indicator" id="viewModeIndicator">
+                        👁️ Student View
+                    </div>
+                </div>
+                <div class="message-content" id="currentStep">
+                    🎮 Ready! Pick "Think", "Learn", or "Full Demo"
+                </div>
+                <div class="sidebar-controls">
+                    <button class="sidebar-btn" onclick="clearMessageLog()">🗑️ Clear</button>
+                    <button class="sidebar-btn" onclick="toggleAutoScroll()">📜 Auto-scroll</button>
+                </div>
             </div>
         </div>
     </div>

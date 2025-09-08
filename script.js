@@ -306,6 +306,14 @@ function applyExpertConfig() {
 function toggleExpertViewMode() {
     expertViewMode = !expertViewMode;
     const status = expertViewMode ? 'enabled' : 'disabled';
+    
+    // Update view mode indicator in sidebar
+    const indicator = document.getElementById('viewModeIndicator');
+    if (indicator) {
+        indicator.textContent = expertViewMode ? '🎓 Expert View' : '👁️ Student View';
+        indicator.className = expertViewMode ? 'view-mode-indicator expert' : 'view-mode-indicator';
+    }
+    
     updateStepInfo(`🎓 Expert view ${status}! ${expertViewMode ? 'Detailed mathematical explanations will be shown.' : 'Simplified student explanations will be shown.'}`);
     console.log(`Expert view mode: ${status}`);
 }
@@ -406,6 +414,55 @@ function formatOperation(operation, inputs, result, description) {
 
 // ============================================================================
 // END DUAL-MODE MESSAGING SYSTEM  
+// ============================================================================
+
+// ============================================================================
+// RIGHT SIDEBAR FUNCTIONALITY
+// ============================================================================
+
+let autoScrollEnabled = true;
+
+// Clear message log
+function clearMessageLog() {
+    const messageContent = document.getElementById('currentStep');
+    if (messageContent) {
+        messageContent.innerHTML = '🗑️ Messages cleared. Ready for new interactions!';
+    }
+    expertMessageLog = [];
+    expertLogActive = false;
+}
+
+// Toggle auto-scroll
+function toggleAutoScroll() {
+    autoScrollEnabled = !autoScrollEnabled;
+    const button = event.target;
+    button.textContent = autoScrollEnabled ? '📜 Auto-scroll' : '📜 Manual';
+    button.title = autoScrollEnabled ? 'Disable auto-scroll' : 'Enable auto-scroll';
+    
+    if (autoScrollEnabled) {
+        scrollToBottom();
+    }
+}
+
+// Auto-scroll to bottom of messages
+function scrollToBottom() {
+    if (!autoScrollEnabled) return;
+    
+    const messageContent = document.getElementById('currentStep');
+    if (messageContent) {
+        messageContent.scrollTop = messageContent.scrollHeight;
+    }
+}
+
+// Enhanced updateStepInfoDual to handle sidebar scrolling
+const originalUpdateStepInfoDual = updateStepInfoDual;
+updateStepInfoDual = function(studentMessage, expertMessage = null) {
+    originalUpdateStepInfoDual(studentMessage, expertMessage);
+    setTimeout(scrollToBottom, 100);
+};
+
+// ============================================================================
+// END RIGHT SIDEBAR FUNCTIONALITY  
 // ============================================================================
 
 // Tutorial system
@@ -2673,7 +2730,11 @@ function resetDemo() {
 
 function updateStepInfo(message) {
     document.getElementById('currentStep').innerHTML = message;
-    
+    setTimeout(() => {
+        if (autoScrollEnabled) {
+            scrollToBottom();
+        }
+    }, 100);
 }
 
 
