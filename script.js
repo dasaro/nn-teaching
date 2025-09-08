@@ -2421,6 +2421,10 @@ function resetDemo() {
     // Reset demo state
     demoState.forwardCompleted = false;
     demoState.hasResults = false;
+    
+    // Properly reset all button states
+    document.getElementById('forwardBtn').disabled = false;
+    document.getElementById('fullDemoBtn').disabled = false;
     document.getElementById('backwardBtn').disabled = true;
     
     // Reset all neuron states
@@ -4174,7 +4178,7 @@ async function trainToPerfection() {
                 trueLabel = originalTrueLabel;
                 activations.input = originalInputActivations;
                 
-                // Prevent auto-labeling during restoration
+                // Prevent auto-labeling during restoration (SET BEFORE selectImage!)
                 preventAutoLabeling = true;
                 
                 // Update UI to reflect restored state
@@ -4207,7 +4211,7 @@ async function trainToPerfection() {
     trueLabel = originalTrueLabel;
     activations.input = originalInputActivations;
     
-    // Prevent auto-labeling during restoration
+    // Prevent auto-labeling during restoration (SET BEFORE selectImage!)
     preventAutoLabeling = true;
     
     // Update UI to reflect restored state
