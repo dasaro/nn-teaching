@@ -523,7 +523,7 @@ body {
 
 .connection-line {
     stroke: #cbd5e1;
-    stroke-width: 1.5;
+    /* stroke-width controlled by JavaScript for weight visualization */
     transition: all 0.3s ease;
     opacity: 0.8;
 }

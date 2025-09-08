@@ -332,6 +332,11 @@ function initializeNetwork() {
     
     console.log('✅ Network initialized with small random weights for stable learning');
     console.log('🔧 ==========================================');
+    
+    // Make new weights visible immediately (if network is already drawn)
+    if (document.getElementById('networkSvg').children.length > 0) {
+        refreshAllConnectionVisuals();
+    }
 }
 
 // Comprehensive weight initialization debugging
@@ -1070,7 +1075,6 @@ function drawNetwork() {
     drawPrediction();
     
     // Update visual properties based on current values
-    updateConnectionThickness();
     updateNeuronColors();
     updatePrediction();
 }
@@ -1558,6 +1562,9 @@ async function runBackwardPass() {
     // Keep weight values visible after training
     document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
     
+    // Make weight changes visible immediately
+    refreshAllConnectionVisuals();
+    
     // Reset state to allow another forward pass
     demoState.forwardCompleted = false;
     demoState.hasResults = false;
@@ -1642,6 +1649,9 @@ async function startDemo() {
         
         // Keep weight values visible after training
         document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
+        
+        // Make weight changes visible immediately
+        refreshAllConnectionVisuals();
     } else {
         updateStepInfo("💡 Tip: Select the correct answer above to see how the AI learns from its mistakes!");
     }
@@ -1667,7 +1677,6 @@ async function animateInputActivation() {
     
     // Update visual properties based on activations
     updateNeuronColors();
-    updateConnectionThickness();
 }
 
 async function animateForwardPropagation() {
@@ -1718,7 +1727,6 @@ async function animateForwardPropagation() {
         
         // Update visual properties
         updateNeuronColors();
-        updateConnectionThickness();
         
         clearSubNetworkHighlights();
         await sleep(400);
@@ -1787,7 +1795,6 @@ async function animateOutputComputation() {
     
     // Final visual update
     updateNeuronColors();
-    updateConnectionThickness();
 }
 
 async function displayResult() {
@@ -2106,43 +2113,6 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms * (11 - animationSpeed) / 10));
 }
 
-function updateConnectionThickness() {
-    console.log('=== UPDATING CONNECTION THICKNESS ===');
-    
-    // Update input to hidden connections based on weight magnitude
-    for (let i = 0; i < networkConfig.inputSize; i++) {
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
-            const line = document.getElementById(`conn-input-${i}-hidden-${h}`);
-            if (line) {
-                const weight = weights.inputToHidden[h][i];
-                const weightMagnitude = Math.abs(weight);
-                // VERY aggressive scaling to make differences obvious
-                const thickness = Math.max(3, Math.min(15, weightMagnitude * 10 + 3));
-                line.style.strokeWidth = thickness + 'px'; // Use style instead of setAttribute
-                console.log(`Input-Hidden ${i}-${h}: Weight=${weight.toFixed(2)}, Thickness=${thickness}px`);
-            } else {
-                console.log(`Line not found: conn-input-${i}-hidden-${h}`);
-            }
-        }
-    }
-    
-    // Update hidden to output connections based on weight magnitude
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        for (let o = 0; o < networkConfig.outputSize; o++) {
-            const line = document.getElementById(`conn-hidden-${h}-output-${o}`);
-            if (line) {
-                const weight = weights.hiddenToOutput[o][h];
-                const weightMagnitude = Math.abs(weight);
-                // VERY aggressive scaling
-                const thickness = Math.max(3, Math.min(15, weightMagnitude * 10 + 3));
-                line.style.strokeWidth = thickness + 'px'; // Use style instead of setAttribute
-                console.log(`Hidden-Output ${h}-${o}: Weight=${weight.toFixed(2)}, Thickness=${thickness}px`);
-            } else {
-                console.log(`Line not found: conn-hidden-${h}-output-${o}`);
-            }
-        }
-    }
-}
 
 function updateNeuronColors() {
     console.log('=== UPDATING NEURON COLORS ===');
@@ -2223,6 +2193,9 @@ function resetWeights() {
     if (debugConsoleVisible) {
         updateDebugConsole();
     }
+    
+    // Make weight changes visible immediately
+    refreshAllConnectionVisuals();
 }
 
 // Standard neural network weight visualization
@@ -2230,30 +2203,30 @@ function applyWeightVisualization(lineElement, weight) {
     const absWeight = Math.abs(weight);
     const maxWeight = 3; // Our slider range
     
-    // Standard academic color scheme: Blue for positive, Red for negative
+    // Red-Gray-Green color scheme: Red for negative, Gray for minimal, Green for positive
     let color;
     if (Math.abs(weight) < 0.05) {
-        // Very weak connections - light gray
-        color = '#d1d5db';
+        // Very weak connections - visible medium gray
+        color = '#9ca3af';
     } else if (weight > 0) {
-        // Positive weights: Blue gradient (lighter to darker based on strength)
+        // Positive weights: Gray to Green gradient (lighter to darker based on strength)
         const intensity = Math.min(absWeight / maxWeight, 1);
-        const blueValue = Math.floor(59 + intensity * (29 - 59)); // From #3b82f6 to #1d4ed8
-        const greenValue = Math.floor(130 + intensity * (78 - 130));
-        const redValue = Math.floor(246 + intensity * (29 - 246));
+        const redValue = Math.floor(156 + intensity * (34 - 156)); // From #9ca3af to #22c55e
+        const greenValue = Math.floor(163 + intensity * (197 - 163));
+        const blueValue = Math.floor(175 + intensity * (94 - 175));
         color = `rgb(${redValue}, ${greenValue}, ${blueValue})`;
     } else {
-        // Negative weights: Red gradient (lighter to darker based on strength)  
+        // Negative weights: Gray to Red gradient (lighter to darker based on strength)  
         const intensity = Math.min(absWeight / maxWeight, 1);
-        const redValue = Math.floor(248 + intensity * (185 - 248)); // From #f87171 to #b91c1c
-        const greenValue = Math.floor(113 + intensity * (28 - 113));
-        const blueValue = Math.floor(113 + intensity * (28 - 113));
+        const redValue = Math.floor(156 + intensity * (220 - 156)); // From #9ca3af to #dc2626
+        const greenValue = Math.floor(163 + intensity * (38 - 163));
+        const blueValue = Math.floor(175 + intensity * (38 - 175));
         color = `rgb(${redValue}, ${greenValue}, ${blueValue})`;
     }
     
-    // Subtle thickness variation (industry standard: 1.5x to 2.5x range max)
-    const baseThickness = 2;
-    const maxThicknessFactor = 1.8; // Much more conservative
+    // Moderate thickness variation for clear visual feedback
+    const baseThickness = 1.5;
+    const maxThicknessFactor = 3; // More noticeable range: 1.5px to 4.5px
     const thickness = baseThickness + (absWeight / maxWeight) * maxThicknessFactor;
     
     // Opacity as primary importance indicator
@@ -2261,14 +2234,23 @@ function applyWeightVisualization(lineElement, weight) {
     const maxOpacity = 0.95;
     const opacity = minOpacity + (absWeight / maxWeight) * (maxOpacity - minOpacity);
     
-    // Apply visual properties (no dashed lines - standard approach)
-    lineElement.setAttribute('stroke', color);
-    lineElement.setAttribute('stroke-width', thickness.toFixed(1));
-    lineElement.setAttribute('opacity', opacity.toFixed(2));
-    lineElement.setAttribute('stroke-dasharray', 'none'); // Always solid lines
+    // Apply visual properties using inline styles for higher CSS specificity
+    lineElement.style.stroke = color;
+    lineElement.style.strokeWidth = thickness.toFixed(1) + 'px';
+    lineElement.style.opacity = opacity.toFixed(2);
+    lineElement.style.strokeDasharray = 'none'; // Always solid lines
 }
 
-function addWeightTooltip(lineElement, weight, connectionLabel) {
+function addWeightTooltip(lineElement, initialWeight, connectionLabel) {
+    // Store connection info in data attributes for dynamic lookup
+    const connectionInfo = connectionLabel.split(' → ');
+    const fromPart = connectionInfo[0];
+    const toPart = connectionInfo[1];
+    
+    lineElement.setAttribute('data-connection-label', connectionLabel);
+    lineElement.setAttribute('data-from', fromPart);
+    lineElement.setAttribute('data-to', toPart);
+    
     // Create tooltip element if it doesn't exist
     let tooltip = document.getElementById('weightTooltip');
     if (!tooltip) {
@@ -2280,10 +2262,13 @@ function addWeightTooltip(lineElement, weight, connectionLabel) {
     
     // Add mouse event listeners
     lineElement.addEventListener('mouseenter', (e) => {
+        // Get current weight value from the weights object
+        const currentWeight = getCurrentWeightForConnection(connectionLabel);
+        
         tooltip.innerHTML = `
             <div class="tooltip-connection">${connectionLabel}</div>
-            <div class="tooltip-weight">Weight: <strong>${weight.toFixed(2)}</strong></div>
-            <div class="tooltip-effect">${weight > 0 ? '✓ Positive influence' : weight < -0.1 ? '✗ Negative influence' : '○ Minimal effect'}</div>
+            <div class="tooltip-weight">Weight: <strong>${currentWeight.toFixed(2)}</strong></div>
+            <div class="tooltip-effect">${currentWeight > 0 ? '✓ Positive influence' : currentWeight < -0.1 ? '✗ Negative influence' : '○ Minimal effect'}</div>
         `;
         tooltip.style.display = 'block';
         
@@ -2302,6 +2287,65 @@ function addWeightTooltip(lineElement, weight, connectionLabel) {
         tooltip.style.left = (e.clientX + 10) + 'px';
         tooltip.style.top = (e.clientY - 10) + 'px';
     });
+}
+
+// Helper function to get current weight for a connection based on its label
+function getCurrentWeightForConnection(connectionLabel) {
+    // Parse the connection label to extract indices
+    // Format examples: "Input A → Hidden H1", "Hidden H1 → Dog", "Hidden H2 → Not Dog"
+    
+    if (connectionLabel.includes('Input') && connectionLabel.includes('Hidden')) {
+        // Input to Hidden connection
+        const inputMatch = connectionLabel.match(/Input ([ABCD])/);
+        const hiddenMatch = connectionLabel.match(/Hidden H(\d+)/);
+        
+        if (inputMatch && hiddenMatch) {
+            const inputIndex = ['A', 'B', 'C', 'D'].indexOf(inputMatch[1]);
+            const hiddenIndex = parseInt(hiddenMatch[1]) - 1; // Convert to 0-based
+            return weights.inputToHidden[hiddenIndex][inputIndex];
+        }
+    } else if (connectionLabel.includes('Hidden') && (connectionLabel.includes('Dog') || connectionLabel.includes('Not Dog'))) {
+        // Hidden to Output connection
+        const hiddenMatch = connectionLabel.match(/Hidden H(\d+)/);
+        const isDogOutput = connectionLabel.includes('Dog') && !connectionLabel.includes('Not Dog');
+        
+        if (hiddenMatch) {
+            const hiddenIndex = parseInt(hiddenMatch[1]) - 1; // Convert to 0-based
+            const outputIndex = isDogOutput ? 0 : 1;
+            return weights.hiddenToOutput[outputIndex][hiddenIndex];
+        }
+    }
+    
+    // Fallback: return 0 if parsing fails
+    console.warn(`Could not parse connection label: ${connectionLabel}`);
+    return 0;
+}
+
+// Helper function to refresh all connection visuals immediately
+function refreshAllConnectionVisuals() {
+    // Update all input to hidden connections
+    for (let h = 0; h < networkConfig.hiddenSize; h++) {
+        for (let i = 0; i < networkConfig.inputSize; i++) {
+            const connectionId = `conn-input-${i}-hidden-${h}`;
+            const connection = document.getElementById(connectionId);
+            if (connection) {
+                const weight = weights.inputToHidden[h][i];
+                applyWeightVisualization(connection, weight);
+            }
+        }
+    }
+    
+    // Update all hidden to output connections
+    for (let o = 0; o < networkConfig.outputSize; o++) {
+        for (let h = 0; h < networkConfig.hiddenSize; h++) {
+            const connectionId = `conn-hidden-${h}-output-${o}`;
+            const connection = document.getElementById(connectionId);
+            if (connection) {
+                const weight = weights.hiddenToOutput[o][h];
+                applyWeightVisualization(connection, weight);
+            }
+        }
+    }
 }
 
 // Weight slider functionality
@@ -2438,7 +2482,6 @@ function createWeightControl(fromLayer, fromIndex, toIndex, currentWeight) {
         const newWeight = parseFloat(e.target.value);
         updateWeight(fromLayer, fromIndex, toIndex, newWeight);
         valueDisplay.textContent = newWeight.toFixed(2);
-        updateConnectionAppearance(fromLayer, fromIndex, toIndex, newWeight);
         
         // Recalculate predictions in real-time
         if (activations.input.some(val => val > 0)) {
@@ -2461,9 +2504,9 @@ function highlightConnection(fromLayer, fromIndex, toIndex, highlight) {
     const connection = document.getElementById(connectionId);
     if (connection) {
         if (highlight) {
-            connection.setAttribute('stroke', '#FFD700');
-            connection.setAttribute('stroke-width', '4');
-            connection.setAttribute('opacity', '1');
+            connection.style.stroke = '#FFD700';
+            connection.style.strokeWidth = '4px';
+            connection.style.opacity = '1';
         } else {
             // Reset to weight-based appearance
             const weight = fromLayer === 'input' 
@@ -2548,14 +2591,8 @@ function hideWeightSliders() {
         panel.remove();
     }
     
-    // Reset connection appearance
-    const svg = document.getElementById('networkSvg');
-    const connections = svg.querySelectorAll('[id^="conn-"]');
-    connections.forEach(connection => {
-        connection.setAttribute('stroke', '#666');
-        connection.setAttribute('opacity', '0.6');
-        connection.setAttribute('stroke-width', '2');
-    });
+    // Reset connections to proper weight-based visualization
+    refreshAllConnectionVisuals();
 }
 
 // Comprehensive feature representation debugging
@@ -3710,6 +3747,9 @@ async function trainToPerfection() {
             
             updateStepInfo(`🔄 Epoch ${epoch}: ${(accuracy*100).toFixed(1)}% accuracy`);
             
+            // Update visual representation of weights during training
+            refreshAllConnectionVisuals();
+            
             if (accuracy > bestAccuracy) {
                 bestAccuracy = accuracy;
             }
@@ -3717,6 +3757,7 @@ async function trainToPerfection() {
             if (accuracy >= 1.0) {
                 console.log(`🎉 Perfect accuracy achieved in ${epoch} epochs!`);
                 updateStepInfo(`🏆 Training Complete! 100% accuracy in ${epoch} epochs`);
+                refreshAllConnectionVisuals(); // Make weight changes visible immediately
                 return;
             }
         }
@@ -3727,6 +3768,7 @@ async function trainToPerfection() {
     const finalAccuracy = testSimpleBinaryAccuracy(trainingData);
     updateStepInfo(`✅ Training Complete: ${(finalAccuracy*100).toFixed(1)}% accuracy`);
     console.log(`Final accuracy: ${(finalAccuracy*100).toFixed(1)}%`);
+    refreshAllConnectionVisuals(); // Make weight changes visible immediately
 }
 
 // Simple binary forward propagation (single output: probability of being a dog)
