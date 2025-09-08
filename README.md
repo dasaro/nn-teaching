@@ -2,19 +2,30 @@
 
 An educational neural network visualization tool that demonstrates how AI learns to classify images through forward propagation and backpropagation.
 
+## 🌟 **[▶️ RUN DIRECTLY IN BROWSER](https://dasaro.github.io/nn-teaching/)** 
+
+Click the link above to instantly run the app - no download or setup required!
+
 ## ✨ Features
 
-- **Visual Learning**: Watch the neural network learn in real-time with animated weight updates
-- **Pedagogical Design**: Simplified 4-neuron network optimized for educational purposes
-- **Offline Ready**: All images embedded locally - no internet connection required
-- **Interactive Controls**: Adjust learning speed and explore different training examples
-- **Weight Change Visualization**: See exactly how weights change during learning (e.g., "0.6 (+0.1)")
+- **🎓 Dual-Mode Learning**: Student view (simple explanations) + Expert view (detailed mathematical operations)
+- **🔬 Expert Panel**: Configure activation functions, learning rates, momentum, regularization
+- **⚙️ What If? Mode**: Interactive weight sliders to explore parameter effects
+- **🧠 Visual Learning**: Watch the neural network learn in real-time with animated weight updates
+- **📊 Mathematical Displays**: See actual matrix operations, equations, and computation times
+- **🎮 Pedagogical Design**: Simplified 4-neuron network optimized for educational purposes
+- **🌐 Offline Ready**: All images embedded locally - no internet connection required
+- **🔧 Weight Visualization**: Dynamic red-gray-green color scheme based on connection strength
 
 ## 🚀 Quick Start
 
-1. **Open the app**: Simply open `index.html` in any modern web browser
-2. **No setup required**: No dependencies, build process, or server needed
-3. **Works offline**: All images and resources are included locally
+### Option 1: Run Online (Recommended)
+**[Click here to run instantly](https://dasaro.github.io/nn-teaching/)** - No download needed!
+
+### Option 2: Run Locally  
+1. **Clone/Download**: Download this repository
+2. **Open**: Simply open `index.html` in any modern web browser
+3. **No setup required**: No dependencies, build process, or server needed
 
 ## 📁 File Structure
 

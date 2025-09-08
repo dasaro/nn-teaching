@@ -44,17 +44,25 @@
                 
                 <!-- Main Controls -->
                 <div class="main-controls">
+                    <!-- Primary Learning Actions -->
                     <div class="action-buttons">
                         <button id="forwardBtn" onclick="runForwardPass()" class="action-btn think-btn" disabled title="See how the AI processes the image">🧠 Think</button>
                         <button id="backwardBtn" onclick="runBackwardPass()" class="action-btn learn-btn" disabled title="Watch the AI learn from its mistake">📚 Learn</button>
                         <button id="fullDemoBtn" onclick="startFullDemo()" class="action-btn demo-btn" title="Complete thinking + learning process">🚀 Full Demo</button>
                     </div>
                     
-                    <div class="control-buttons">
-                        <button id="trainBtn" onclick="trainToPerfection()" class="control-btn" title="Instantly train to perfect accuracy">🎯 Auto-Train</button>
-                        <button id="resetWeightsBtn" onclick="resetWeights()" class="control-btn" title="Reset the AI's memory">🔄 Reset</button>
-                        <button id="whatIfBtn" onclick="toggleWeightSliders()" class="control-btn" title="Explore how changing weights affects predictions">🔧 What If?</button>
-                        <button id="pixelViewerBtn" onclick="openPixelViewer()" class="control-btn" title="Learn how images become numbers">🔍 Pixels</button>
+                    <!-- Training Controls -->
+                    <div class="training-buttons">
+                        <button id="trainBtn" onclick="trainToPerfection()" class="training-btn auto-train-btn" title="Instantly train to perfect accuracy">🎯 Auto-Train</button>
+                        <button id="resetWeightsBtn" onclick="resetWeights()" class="training-btn reset-btn" title="Reset the AI's memory">🔄 Reset</button>
+                    </div>
+                    
+                    <!-- Advanced Tools -->
+                    <div class="tool-buttons">
+                        <button id="whatIfBtn" onclick="toggleWeightSliders()" class="tool-btn" title="Explore how changing weights affects predictions">🔧 What If?</button>
+                        <button id="expertViewBtn" onclick="toggleExpertViewMode()" class="tool-btn" title="Toggle detailed mathematical explanations">🎓 Expert View</button>
+                        <button id="expertPanelBtn" onclick="toggleExpertPanel()" class="tool-btn" title="Advanced neural network parameters">⚙️ Config</button>
+                        <button id="pixelViewerBtn" onclick="openPixelViewer()" class="tool-btn" title="Learn how images become numbers">🔍 Pixels</button>
                     </div>
                 </div>
                 
@@ -82,13 +90,9 @@
                 <svg id="networkSvg" width="700" height="380">
                     <!-- Network will be drawn here -->
                 </svg>
-                <div class="current-step" id="currentStep">🎮 Ready! Pick "Think", "Learn", or "Full Demo"</div>
-            </div>
-            
-            <!-- Right Panel - Results -->
-            <div class="right-panel">
-                <div class="results-section">
-                    <h3>🎯 AI's Guess</h3>
+                
+                <!-- Integrated Results Display -->
+                <div class="integrated-results">
                     <div class="prediction-display" id="predictionDisplay">
                         <div class="prob-bar dog-bar">
                             <span class="prob-label">Dog</span>
@@ -101,22 +105,9 @@
                             <span class="prob-value" id="notDogProbValue">0%</span>
                         </div>
                     </div>
-                    <div class="confidence-meter">
-                        <div class="confidence-label">Confidence:</div>
-                        <div class="confidence-bar">
-                            <div class="confidence-fill" id="confidenceFill"></div>
-                        </div>
-                        <div class="confidence-value" id="confidenceValue">0%</div>
-                    </div>
                 </div>
                 
-                <div class="legend-compact">
-                    <h4>🔗 How it works:</h4>
-                    <p><strong>📥 Input:</strong> Abstract features (A, B, C, D)</p>
-                    <p><strong>🧠 Hidden:</strong> Combines features using math</p>
-                    <p><strong>🎯 Output:</strong> Final decision (Dog vs Not Dog)</p>
-                    <p><strong>🔢 Numbers:</strong> Connection weights = AI's memory</p>
-                </div>
+                <div class="current-step" id="currentStep">🎮 Ready! Pick "Think", "Learn", or "Full Demo"</div>
             </div>
         </div>
     </div>
@@ -189,6 +180,111 @@
                         <h3>💡 The Big Idea</h3>
                         <p>Computers can't "see" images like we do. They only understand numbers! So we convert every image into a grid of numbers representing brightness. The AI learns patterns in these numbers to recognize different objects.</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expert Panel Modal -->
+    <div id="expertPanelModal" class="modal" style="display: none;">
+        <div class="modal-content expert-panel-content">
+            <div class="modal-header">
+                <h2>⚙️ Expert Neural Network Parameters</h2>
+                <button class="modal-close" onclick="closeExpertPanel()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="expert-panel-grid">
+                    <!-- Activation Functions Section -->
+                    <div class="expert-section">
+                        <h3>🧠 Activation Functions</h3>
+                        <div class="param-group">
+                            <label>Hidden Layer Activation:</label>
+                            <select id="hiddenActivation" onchange="updateExpertConfig('hiddenActivation', this.value)">
+                                <option value="leaky_relu">Leaky ReLU</option>
+                                <option value="sigmoid">Sigmoid</option>
+                                <option value="tanh">Tanh</option>
+                            </select>
+                        </div>
+                        <div class="param-group">
+                            <label>Output Layer Activation:</label>
+                            <select id="outputActivation" onchange="updateExpertConfig('outputActivation', this.value)">
+                                <option value="softmax">Softmax</option>
+                                <option value="sigmoid">Sigmoid</option>
+                            </select>
+                        </div>
+                        <div class="param-group">
+                            <label>Leaky ReLU Alpha:</label>
+                            <input type="range" id="leakyReLUAlpha" min="0.01" max="0.3" step="0.01" value="0.1" 
+                                   onchange="updateExpertConfig('leakyReLUAlpha', parseFloat(this.value))">
+                            <span id="leakyReLUAlphaValue">0.1</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Training Parameters Section -->
+                    <div class="expert-section">
+                        <h3>📚 Training Parameters</h3>
+                        <div class="param-group">
+                            <label>Learning Rate:</label>
+                            <input type="range" id="learningRateSlider" min="0.001" max="1.0" step="0.001" value="0.1" 
+                                   onchange="updateExpertConfig('learningRate', parseFloat(this.value))">
+                            <span id="learningRateValue">0.1</span>
+                        </div>
+                        <div class="param-group">
+                            <label>Momentum:</label>
+                            <input type="range" id="momentumSlider" min="0.0" max="0.99" step="0.01" value="0.0" 
+                                   onchange="updateExpertConfig('momentum', parseFloat(this.value))">
+                            <span id="momentumValue">0.0</span>
+                        </div>
+                        <div class="param-group">
+                            <label>L2 Regularization:</label>
+                            <input type="range" id="l2RegSlider" min="0.0" max="0.01" step="0.0001" value="0.0" 
+                                   onchange="updateExpertConfig('l2Regularization', parseFloat(this.value))">
+                            <span id="l2RegValue">0.0</span>
+                        </div>
+                        <div class="param-group">
+                            <label>Max Epochs:</label>
+                            <input type="range" id="maxEpochsSlider" min="10" max="500" step="10" value="100" 
+                                   onchange="updateExpertConfig('maxEpochs', parseInt(this.value))">
+                            <span id="maxEpochsValue">100</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Settings Section -->
+                    <div class="expert-section">
+                        <h3>🎛️ Advanced Settings</h3>
+                        <div class="param-group">
+                            <label>
+                                <input type="checkbox" id="adaptiveLearningRate" 
+                                       onchange="updateExpertConfig('adaptiveLearningRate', this.checked)"> 
+                                Adaptive Learning Rate
+                            </label>
+                        </div>
+                        <div class="param-group">
+                            <label>Batch Size:</label>
+                            <input type="range" id="batchSizeSlider" min="1" max="8" step="1" value="1" 
+                                   onchange="updateExpertConfig('batchSize', parseInt(this.value))">
+                            <span id="batchSizeValue">1</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Network Architecture (Read-Only) -->
+                    <div class="expert-section readonly-section">
+                        <h3>🏗️ Network Architecture (Read-Only)</h3>
+                        <div class="param-group">
+                            <label>Input Size: <span id="inputSizeDisplay">4</span></label>
+                        </div>
+                        <div class="param-group">
+                            <label>Hidden Size: <span id="hiddenSizeDisplay">4</span></label>
+                        </div>
+                        <div class="param-group">
+                            <label>Output Size: <span id="outputSizeDisplay">2</span></label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="expert-actions">
+                    <button onclick="resetExpertDefaults()" class="expert-btn">🔄 Reset to Defaults</button>
+                    <button onclick="applyExpertConfig()" class="expert-btn expert-btn-primary">✅ Apply & Restart Network</button>
                 </div>
             </div>
         </div>

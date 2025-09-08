@@ -7,6 +7,361 @@ let debugConsoleVisible = false;
 let currentConsoleTab = 'weights';
 let gradientHistory = [];
 
+// Flag to prevent auto-labeling during restoration
+let preventAutoLabeling = false;
+
+// Expert view mode for detailed mathematical explanations
+let expertViewMode = false;
+
+// ============================================================================
+// ACTIVATION FUNCTIONS - Centralized implementations
+// ============================================================================
+
+// Sigmoid activation function
+function sigmoid(x) {
+    return 1 / (1 + Math.exp(-Math.max(-500, Math.min(500, x)))); // Prevent overflow
+}
+
+// Sigmoid derivative
+function sigmoidDerivative(x) {
+    const s = sigmoid(x);
+    return s * (1 - s);
+}
+
+// Leaky ReLU activation function
+function leakyReLU(x, alpha = 0.1) {
+    return x > 0 ? x : alpha * x;
+}
+
+// Leaky ReLU derivative
+function leakyReLUDerivative(x, alpha = 0.1) {
+    return x > 0 ? 1 : alpha;
+}
+
+// Tanh activation function (wrapper for consistency)
+function tanhActivation(x) {
+    return Math.tanh(x);
+}
+
+// Tanh derivative
+function tanhDerivative(x) {
+    const t = Math.tanh(x);
+    return 1 - t * t;
+}
+
+// Softmax activation function
+function softmax(values) {
+    const maxVal = Math.max(...values);
+    const expVals = values.map(val => Math.exp(Math.min(val - maxVal, 700))); // Prevent overflow
+    const sumExp = expVals.reduce((sum, val) => sum + val, 0);
+    return expVals.map(val => val / sumExp);
+}
+
+// ============================================================================
+// END ACTIVATION FUNCTIONS
+// ============================================================================
+
+// ============================================================================
+// UTILITY FUNCTIONS - Centralized calculations
+// ============================================================================
+
+// Centralized accuracy calculation for binary classification
+function calculateBinaryAccuracy(predictedProbability, isDogActual) {
+    const predictedIsDog = predictedProbability > 0.5;
+    return predictedIsDog === isDogActual;
+}
+
+// Calculate accuracy for a dataset
+function calculateDatasetAccuracy(dataset, getOutputFunction) {
+    let correct = 0;
+    for (const example of dataset) {
+        const output = getOutputFunction(example.input);
+        const dogProb = Array.isArray(output) ? output[0] : output;
+        if (calculateBinaryAccuracy(dogProb, example.isDog)) {
+            correct++;
+        }
+    }
+    return correct / dataset.length;
+}
+
+// ============================================================================
+// END UTILITY FUNCTIONS
+// ============================================================================
+
+// ============================================================================
+// CENTRALIZED PARAMETER CONFIGURATION
+// ============================================================================
+
+// Expert-configurable parameters
+const expertConfig = {
+    // Activation functions
+    hiddenActivation: 'leaky_relu', // 'leaky_relu', 'sigmoid', 'tanh'
+    outputActivation: 'softmax',    // 'softmax', 'sigmoid'
+    
+    // Training parameters
+    learningRate: 0.1,
+    momentum: 0.0,
+    l2Regularization: 0.0,
+    
+    // Network architecture (read-only for stability)
+    inputSize: 4,
+    hiddenSize: 4,
+    outputSize: 2,
+    
+    // Activation function parameters
+    leakyReLUAlpha: 0.1,
+    
+    // Training behavior
+    adaptiveLearningRate: false,
+    batchSize: 1, // For future batch training
+    maxEpochs: 100,
+};
+
+// Function to get activation function based on config
+function getActivationFunction(layer) {
+    if (layer === 'hidden') {
+        switch (expertConfig.hiddenActivation) {
+            case 'leaky_relu': return leakyReLU;
+            case 'sigmoid': return sigmoid;
+            case 'tanh': return tanhActivation;
+            default: return leakyReLU;
+        }
+    } else if (layer === 'output') {
+        switch (expertConfig.outputActivation) {
+            case 'softmax': return softmax;
+            case 'sigmoid': return sigmoid;
+            default: return softmax;
+        }
+    }
+}
+
+// Function to get activation derivative based on config
+function getActivationDerivative(layer) {
+    if (layer === 'hidden') {
+        switch (expertConfig.hiddenActivation) {
+            case 'leaky_relu': return (x) => leakyReLUDerivative(x, expertConfig.leakyReLUAlpha);
+            case 'sigmoid': return sigmoidDerivative;
+            case 'tanh': return tanhDerivative;
+            default: return (x) => leakyReLUDerivative(x, expertConfig.leakyReLUAlpha);
+        }
+    }
+}
+
+// Apply expert config to legacy networkConfig for compatibility
+function syncExpertConfigToLegacy() {
+    networkConfig.learningRate = expertConfig.learningRate;
+    networkConfig.inputSize = expertConfig.inputSize;
+    networkConfig.hiddenSize = expertConfig.hiddenSize;
+    networkConfig.outputSize = expertConfig.outputSize;
+}
+
+// ============================================================================
+// END PARAMETER CONFIGURATION
+// ============================================================================
+
+// ============================================================================
+// EXPERT PANEL FUNCTIONALITY
+// ============================================================================
+
+// Expert panel state
+let expertPanelVisible = false;
+
+// Toggle Expert Panel
+function toggleExpertPanel() {
+    const modal = document.getElementById('expertPanelModal');
+    if (expertPanelVisible) {
+        closeExpertPanel();
+    } else {
+        openExpertPanel();
+    }
+}
+
+// Open Expert Panel
+function openExpertPanel() {
+    const modal = document.getElementById('expertPanelModal');
+    modal.style.display = 'flex';
+    expertPanelVisible = true;
+    
+    // Initialize UI with current expert config values
+    initializeExpertPanelUI();
+}
+
+// Close Expert Panel
+function closeExpertPanel() {
+    const modal = document.getElementById('expertPanelModal');
+    modal.style.display = 'none';
+    expertPanelVisible = false;
+}
+
+// Initialize Expert Panel UI with current values
+function initializeExpertPanelUI() {
+    // Activation functions
+    document.getElementById('hiddenActivation').value = expertConfig.hiddenActivation;
+    document.getElementById('outputActivation').value = expertConfig.outputActivation;
+    
+    // Training parameters
+    document.getElementById('learningRateSlider').value = expertConfig.learningRate;
+    document.getElementById('learningRateValue').textContent = expertConfig.learningRate.toFixed(3);
+    
+    document.getElementById('momentumSlider').value = expertConfig.momentum;
+    document.getElementById('momentumValue').textContent = expertConfig.momentum.toFixed(2);
+    
+    document.getElementById('l2RegSlider').value = expertConfig.l2Regularization;
+    document.getElementById('l2RegValue').textContent = expertConfig.l2Regularization.toFixed(4);
+    
+    document.getElementById('maxEpochsSlider').value = expertConfig.maxEpochs;
+    document.getElementById('maxEpochsValue').textContent = expertConfig.maxEpochs;
+    
+    // Activation function parameters
+    document.getElementById('leakyReLUAlpha').value = expertConfig.leakyReLUAlpha;
+    document.getElementById('leakyReLUAlphaValue').textContent = expertConfig.leakyReLUAlpha.toFixed(2);
+    
+    // Advanced settings
+    document.getElementById('adaptiveLearningRate').checked = expertConfig.adaptiveLearningRate;
+    
+    document.getElementById('batchSizeSlider').value = expertConfig.batchSize;
+    document.getElementById('batchSizeValue').textContent = expertConfig.batchSize;
+    
+    // Network architecture (read-only)
+    document.getElementById('inputSizeDisplay').textContent = expertConfig.inputSize;
+    document.getElementById('hiddenSizeDisplay').textContent = expertConfig.hiddenSize;
+    document.getElementById('outputSizeDisplay').textContent = expertConfig.outputSize;
+}
+
+// Update Expert Config
+function updateExpertConfig(parameter, value) {
+    expertConfig[parameter] = value;
+    
+    // Update corresponding display values
+    switch (parameter) {
+        case 'learningRate':
+            document.getElementById('learningRateValue').textContent = value.toFixed(3);
+            break;
+        case 'momentum':
+            document.getElementById('momentumValue').textContent = value.toFixed(2);
+            break;
+        case 'l2Regularization':
+            document.getElementById('l2RegValue').textContent = value.toFixed(4);
+            break;
+        case 'maxEpochs':
+            document.getElementById('maxEpochsValue').textContent = value;
+            break;
+        case 'leakyReLUAlpha':
+            document.getElementById('leakyReLUAlphaValue').textContent = value.toFixed(2);
+            break;
+        case 'batchSize':
+            document.getElementById('batchSizeValue').textContent = value;
+            break;
+    }
+    
+    console.log(`Expert parameter updated: ${parameter} = ${value}`);
+}
+
+// Reset Expert Panel to Defaults
+function resetExpertDefaults() {
+    expertConfig.hiddenActivation = 'leaky_relu';
+    expertConfig.outputActivation = 'softmax';
+    expertConfig.learningRate = 0.1;
+    expertConfig.momentum = 0.0;
+    expertConfig.l2Regularization = 0.0;
+    expertConfig.leakyReLUAlpha = 0.1;
+    expertConfig.adaptiveLearningRate = false;
+    expertConfig.batchSize = 1;
+    expertConfig.maxEpochs = 100;
+    
+    // Refresh UI
+    initializeExpertPanelUI();
+    
+    console.log('Expert parameters reset to defaults');
+}
+
+// Apply Expert Configuration and Restart Network
+function applyExpertConfig() {
+    console.log('🔧 Applying expert configuration...');
+    console.log('Expert Config:', expertConfig);
+    
+    // Enable expert view mode when expert panel is used
+    expertViewMode = true;
+    
+    // Sync to legacy networkConfig for compatibility
+    syncExpertConfigToLegacy();
+    
+    // Reset and reinitialize network with new parameters
+    resetWeights();
+    
+    // Update step info to reflect new configuration
+    updateStepInfo(`⚙️ Expert parameters applied! Network restarted with ${expertConfig.hiddenActivation.replace('_', ' ')} hidden activation and ${expertConfig.learningRate} learning rate. Expert view enabled for detailed mathematical explanations.`);
+    
+    // Close expert panel
+    closeExpertPanel();
+    
+    console.log('✅ Expert configuration applied successfully');
+}
+
+// Toggle Expert View Mode
+function toggleExpertViewMode() {
+    expertViewMode = !expertViewMode;
+    const status = expertViewMode ? 'enabled' : 'disabled';
+    updateStepInfo(`🎓 Expert view ${status}! ${expertViewMode ? 'Detailed mathematical explanations will be shown.' : 'Simplified student explanations will be shown.'}`);
+    console.log(`Expert view mode: ${status}`);
+}
+
+// ============================================================================
+// END EXPERT PANEL FUNCTIONALITY
+// ============================================================================
+
+// ============================================================================
+// DUAL-MODE MESSAGING SYSTEM
+// ============================================================================
+
+// Centralized message system for student vs expert explanations
+function updateStepInfoDual(studentMessage, expertMessage = null) {
+    const currentStep = document.getElementById('currentStep');
+    if (!currentStep) return;
+    
+    if (expertViewMode && expertMessage) {
+        currentStep.innerHTML = expertMessage;
+    } else {
+        currentStep.innerHTML = studentMessage;
+    }
+}
+
+// Mathematical explanation helpers for expert mode
+function formatMatrix(matrix, name) {
+    let html = `<div class="math-matrix"><strong>${name}:</strong><br>`;
+    if (Array.isArray(matrix[0])) {
+        // 2D matrix
+        html += '[';
+        matrix.forEach((row, i) => {
+            html += '[' + row.map(val => val.toFixed(3)).join(', ') + ']';
+            if (i < matrix.length - 1) html += '<br> ';
+        });
+        html += ']';
+    } else {
+        // 1D vector
+        html += '[' + matrix.map(val => val.toFixed(3)).join(', ') + ']';
+    }
+    html += '</div>';
+    return html;
+}
+
+function formatOperation(operation, inputs, result, description) {
+    return `
+        <div class="math-operation">
+            <div class="op-title">🔢 <strong>${operation}</strong></div>
+            <div class="op-description">${description}</div>
+            <div class="op-calculation">
+                <strong>Input:</strong> ${inputs}<br>
+                <strong>Result:</strong> <span class="result-highlight">${result}</span>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================================================
+// END DUAL-MODE MESSAGING SYSTEM  
+// ============================================================================
+
 // Tutorial system
 let tutorialStep = 0;
 let tutorialActive = false;
@@ -435,40 +790,40 @@ function setVisualFeaturesAndLabel(imageType) {
     switch(imageType) {
         case 'dog1':
             updateInputActivations([0.9, 0.9, 0.1, 0.1]); // Dog pattern: HIGH-HIGH-LOW-LOW
-            setTrueLabel('dog');
+            if (!preventAutoLabeling) setTrueLabel('dog');
             break;
         case 'dog2':
             updateInputActivations([0.8, 0.7, 0.2, 0.3]); // Dog pattern: HIGH-HIGH-LOW-LOW (with variation)
-            setTrueLabel('dog');
+            if (!preventAutoLabeling) setTrueLabel('dog');
             break;
         case 'dog3':
             updateInputActivations([0.7, 0.8, 0.3, 0.2]); // Dog pattern: HIGH-HIGH-LOW-LOW (with variation)
-            setTrueLabel('dog');
+            if (!preventAutoLabeling) setTrueLabel('dog');
             break;
         case 'cat':
             updateInputActivations([0.1, 0.9, 0.1, 0.9]); // Non-dog pattern: LOW-HIGH-LOW-HIGH
-            setTrueLabel('not-dog');
+            if (!preventAutoLabeling) setTrueLabel('not-dog');
             break;
         case 'bird':
             updateInputActivations([0.2, 0.8, 0.3, 0.7]); // Non-dog pattern: LOW-HIGH-LOW-HIGH (with variation)
-            setTrueLabel('not-dog');
+            if (!preventAutoLabeling) setTrueLabel('not-dog');
             break;
         case 'car':
             updateInputActivations([0.3, 0.7, 0.2, 0.8]); // Non-dog pattern: LOW-HIGH-LOW-HIGH (with variation)
-            setTrueLabel('not-dog');
+            if (!preventAutoLabeling) setTrueLabel('not-dog');
             break;
         case 'tree':
             updateInputActivations([0.9, 0.1, 0.9, 0.1]); // Non-dog pattern: HIGH-LOW-HIGH-LOW
-            setTrueLabel('not-dog');
+            if (!preventAutoLabeling) setTrueLabel('not-dog');
             break;
         case 'fish':
             updateInputActivations([0.8, 0.2, 0.7, 0.3]); // Non-dog pattern: HIGH-LOW-HIGH-LOW (with variation)
-            setTrueLabel('not-dog');
+            if (!preventAutoLabeling) setTrueLabel('not-dog');
             break;
         default:
             console.error('Unknown image type:', imageType);
             updateInputActivations([0.1, 0.1, 0.1, 0.1]);
-            setTrueLabel('not-dog');
+            if (!preventAutoLabeling) setTrueLabel('not-dog');
     }
     console.log('🎯 Abstract patterns set for', imageType, '- [Pattern A, Pattern B, Pattern C, Pattern D]:', activations.input);
     console.log('🎯 Pattern type:', imageType.startsWith('dog') ? 'DOG (HIGH-HIGH-LOW-LOW variants)' : 'NON-DOG (alternating patterns)');
@@ -1491,21 +1846,46 @@ async function runForwardPass() {
     // Show current weight values at start
     document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
     
-    updateStepInfo("🧠 Let's watch the AI think! It's about to multiply numbers and add them up to make its guess...");
+    updateStepInfoDual(
+        "🧠 Let's watch the AI think! It's about to multiply numbers and add them up to make its guess...",
+        `🧠 <strong>Forward Propagation Started</strong><br>
+         🔢 Computing network output using current weights:<br>
+         ${formatMatrix(weights.inputToHidden, 'W₁ (Input→Hidden)')}<br>
+         ${formatMatrix(weights.hiddenToOutput, 'W₂ (Hidden→Output)')}`
+    );
     highlightSection('forward');
     await sleep(1000);
     
     // Step 1: Show input activation
     const forwardStartTime = performance.now();
-    updateStepInfo("📥 STEP 1: Converting image features into numbers! Each feature (like size, friendliness) gets a score from 0 to 1.");
+    updateStepInfoDual(
+        "📥 STEP 1: Converting image features into numbers! Each feature (like size, friendliness) gets a score from 0 to 1.",
+        `📥 <strong>Input Layer Activation</strong><br>
+         ${formatMatrix(activations.input, 'Input Vector x')}
+         <div class="op-description">Feature patterns: A=${activations.input[0].toFixed(3)}, B=${activations.input[1].toFixed(3)}, C=${activations.input[2].toFixed(3)}, D=${activations.input[3].toFixed(3)}</div>`
+    );
     await animateInputActivation();
     
     // Step 2: Forward propagation to hidden layer
-    updateStepInfo("✖️ STEP 2: Now the magic happens! Each hidden neuron multiplies input numbers by connection strengths (weights), then adds them all up!");
+    updateStepInfoDual(
+        "✖️ STEP 2: Now the magic happens! Each hidden neuron multiplies input numbers by connection strengths (weights), then adds them all up!",
+        `✖️ <strong>Hidden Layer Computation</strong><br>
+         ${formatOperation("Matrix Multiplication", "h = σ(W₁ᵀ × x)", 
+           `[${activations.hidden.map(h => h.toFixed(3)).join(', ')}]`,
+           `For each hidden neuron i: h[i] = ${expertConfig.hiddenActivation}(Σⱼ W₁[i,j] × x[j])`)}
+         Current activation function: <strong>${expertConfig.hiddenActivation.replace('_', ' ').toUpperCase()}</strong>`
+    );
     await animateForwardPropagation();
     
     // Step 3: Forward propagation to output layer
-    updateStepInfo("➕ STEP 3: The final decision! Output neurons add up signals from hidden neurons. The strongest signal wins!");
+    updateStepInfoDual(
+        "➕ STEP 3: The final decision! Output neurons add up signals from hidden neurons. The strongest signal wins!",
+        `➕ <strong>Output Layer Computation</strong><br>
+         ${formatOperation("Final Prediction", "y = σ(W₂ᵀ × h)", 
+           `[${activations.output.map(o => (o*100).toFixed(1)).join('%, ')}%]`,
+           `For each output j: y[j] = ${expertConfig.outputActivation}(Σᵢ W₂[j,i] × h[i])`)}
+         Output activation: <strong>${expertConfig.outputActivation.toUpperCase()}</strong>`
+    );
     await animateOutputComputation();
     
     performanceMetrics.forwardPassTime = Math.round(performance.now() - forwardStartTime);
@@ -1520,9 +1900,22 @@ async function runForwardPass() {
     // Enable backward pass if we have the correct answer
     if (trueLabel) {
         document.getElementById('backwardBtn').disabled = false;
-        updateStepInfo("🎉 Thinking complete! The AI made its guess. Now click 'Watch AI Learn' to see how it can improve from mistakes!");
+        updateStepInfoDual(
+            "🎉 Thinking complete! The AI made its guess. Now click 'Learn' to see how it can improve from mistakes!",
+            `🎯 <strong>Forward Pass Complete!</strong><br>
+             ⏱️ Computation time: ${performanceMetrics.forwardPassTime}ms<br>
+             📊 Final output: [${activations.output.map(o => (o*100).toFixed(1)).join('%, ')}%]<br>
+             🎯 Prediction: <strong>${activations.output[0] > activations.output[1] ? 'DOG' : 'NOT DOG'}</strong><br>
+             📈 Confidence: ${Math.abs((activations.output[0] - activations.output[1]) * 100).toFixed(1)}%<br>
+             🎓 Ready for backpropagation with target: <strong>${trueLabel.toUpperCase()}</strong>`
+        );
     } else {
-        updateStepInfo("🎉 Thinking complete! Set the correct answer above, then click 'Watch AI Learn' to see how the AI improves!");
+        updateStepInfoDual(
+            "🎉 Thinking complete! Set the correct answer above, then click 'Learn' to see how the AI improves!",
+            `🎯 <strong>Forward Pass Complete!</strong><br>
+             📊 Network output: [${activations.output.map(o => (o*100).toFixed(1)).join('%, ')}%]<br>
+             ⚠️ Need target label for backpropagation training`
+        );
     }
     
     highlightSection('none');
@@ -1711,7 +2104,7 @@ async function animateForwardPropagation() {
         await sleep(500);
         
         // Apply Leaky ReLU activation (prevents dead neurons)
-        activations.hidden[h] = sum > 0 ? sum : 0.1 * sum;
+        activations.hidden[h] = leakyReLU(sum);
         
         // Update neuron
         const neuron = document.getElementById(`hidden-neuron-${h}`);
@@ -1771,10 +2164,7 @@ async function animateOutputComputation() {
     }
     
     // Apply softmax
-    const maxVal = Math.max(...activations.output);
-    const expVals = activations.output.map(val => Math.exp(val - maxVal));
-    const sumExp = expVals.reduce((a, b) => a + b, 0);
-    activations.output = expVals.map(val => val / sumExp);
+    activations.output = softmax(activations.output);
     
     // Update prediction column after output is computed
     updatePrediction();
@@ -1963,7 +2353,7 @@ async function animateBackpropagation() {
             error += outputErrors[o] * weights.hiddenToOutput[o][h];
         }
         // Leaky ReLU derivative: 1 if hidden activation > 0, 0.1 otherwise
-        hiddenErrors[h] = activations.hidden[h] > 0 ? error : 0.1 * error;
+        hiddenErrors[h] = error * leakyReLUDerivative(activations.hidden[h]);
     }
     
     gradientInfo.hiddenGradients = [...hiddenErrors];
@@ -2561,22 +2951,38 @@ function updateConnectionAppearance(fromLayer, fromIndex, toIndex, weight) {
 }
 
 function recalculateNetwork() {
-    // Recalculate hidden layer activations
+    // Recalculate hidden layer activations using expert-configured activation function
+    const hiddenActivationFn = getActivationFunction('hidden');
     for (let h = 0; h < networkConfig.hiddenSize; h++) {
         let sum = 0;
         for (let i = 0; i < networkConfig.inputSize; i++) {
             sum += activations.input[i] * weights.inputToHidden[h][i];
         }
-        activations.hidden[h] = sigmoid(sum);
+        activations.hidden[h] = hiddenActivationFn(sum);
     }
     
-    // Recalculate output layer activations
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        let sum = 0;
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
-            sum += activations.hidden[h] * weights.hiddenToOutput[o][h];
+    // Recalculate output layer activations based on expert configuration
+    if (expertConfig.outputActivation === 'softmax') {
+        // Calculate raw outputs first, then apply softmax
+        const rawOutputs = [];
+        for (let o = 0; o < networkConfig.outputSize; o++) {
+            let sum = 0;
+            for (let h = 0; h < networkConfig.hiddenSize; h++) {
+                sum += activations.hidden[h] * weights.hiddenToOutput[o][h];
+            }
+            rawOutputs[o] = sum;
         }
-        activations.output[o] = sigmoid(sum);
+        // Apply softmax activation
+        activations.output = softmax(rawOutputs);
+    } else {
+        // Use sigmoid for each output independently
+        for (let o = 0; o < networkConfig.outputSize; o++) {
+            let sum = 0;
+            for (let h = 0; h < networkConfig.hiddenSize; h++) {
+                sum += activations.hidden[h] * weights.hiddenToOutput[o][h];
+            }
+            activations.output[o] = sigmoid(sum);
+        }
     }
     
     // Update visual displays
@@ -2652,7 +3058,7 @@ function predictActivationPatterns(inputValues) {
         for (let i = 0; i < networkConfig.inputSize; i++) {
             sum += inputValues[i] * weights.inputToHidden[h][i];
         }
-        predictedHidden[h] = sum > 0 ? sum : 0.1 * sum; // Leaky ReLU
+        predictedHidden[h] = leakyReLU(sum); // Leaky ReLU
     }
     
     console.log(`  Predicted hidden activations: [${predictedHidden.map(v => v.toFixed(3)).join(', ')}]`);
@@ -2679,10 +3085,7 @@ function predictActivationPatterns(inputValues) {
     console.log(`  Predicted raw outputs: [${predictedOutputs.map(v => v.toFixed(3)).join(', ')}]`);
     
     // Apply softmax for final prediction
-    const maxVal = Math.max(...predictedOutputs);
-    const expVals = predictedOutputs.map(v => Math.exp(v - maxVal));
-    const sumExp = expVals.reduce((sum, val) => sum + val, 0);
-    const softmaxOutputs = expVals.map(val => val / sumExp);
+    const softmaxOutputs = softmax(predictedOutputs);
     
     console.log(`  Final probabilities: [${softmaxOutputs.map(v => (v*100).toFixed(1) + '%').join(', ')}]`);
     
@@ -2710,7 +3113,7 @@ function forwardPropagationSilent(inputValues, debugMode = false) {
         for (let i = 0; i < networkConfig.inputSize; i++) {
             sum += activations.input[i] * weights.inputToHidden[h][i];
         }
-        activations.hidden[h] = sum > 0 ? sum : 0.1 * sum; // Leaky ReLU activation
+        activations.hidden[h] = leakyReLU(sum); // Leaky ReLU activation
         
         // Check for NaN
         if (isNaN(activations.hidden[h])) {
@@ -2894,7 +3297,7 @@ function backpropagationSilent(target, debugMode = false) {
             error += outputErrors[o] * weights.hiddenToOutput[o][h];
         }
         // Leaky ReLU derivative: 1 if hidden activation > 0, 0.1 otherwise
-        hiddenErrors[h] = activations.hidden[h] > 0 ? error : 0.1 * error;
+        hiddenErrors[h] = error * leakyReLUDerivative(activations.hidden[h]);
         
         // Check for NaN
         if (isNaN(hiddenErrors[h])) {
@@ -3685,6 +4088,13 @@ async function trainToPerfection() {
     console.log('🔄 NEW SIMPLE TRAINING ALGORITHM');
     updateStepInfo('🎯 Starting simple training algorithm...');
     
+    // IMPORTANT: Save current user's image and label state before training
+    const originalCurrentImage = currentImage;
+    const originalTrueLabel = trueLabel;
+    const originalInputActivations = [...activations.input];
+    
+    console.log(`💾 Saved original state: image=${originalCurrentImage}, label=${originalTrueLabel}`);
+    
     // Create training dataset with all 8 image types
     const imageTypes = ['dog1', 'dog2', 'dog3', 'cat', 'bird', 'car', 'tree', 'fish'];
     const trainingData = [];
@@ -3757,6 +4167,28 @@ async function trainToPerfection() {
             if (accuracy >= 1.0) {
                 console.log(`🎉 Perfect accuracy achieved in ${epoch} epochs!`);
                 updateStepInfo(`🏆 Training Complete! 100% accuracy in ${epoch} epochs`);
+                
+                // IMPORTANT: Restore user's original image and label state after early completion
+                console.log(`🔄 Restoring original state: image=${originalCurrentImage}, label=${originalTrueLabel}`);
+                currentImage = originalCurrentImage;
+                trueLabel = originalTrueLabel;
+                activations.input = originalInputActivations;
+                
+                // Prevent auto-labeling during restoration
+                preventAutoLabeling = true;
+                
+                // Update UI to reflect restored state
+                selectImage(originalCurrentImage);
+                
+                // Wait a moment for async image loading, then restore label and re-enable auto-labeling
+                setTimeout(() => {
+                    if (originalTrueLabel) {
+                        setTrueLabel(originalTrueLabel);
+                    }
+                    preventAutoLabeling = false;
+                    console.log(`✅ Restoration complete: image=${currentImage}, label=${trueLabel}`);
+                }, 100);
+                
                 refreshAllConnectionVisuals(); // Make weight changes visible immediately
                 return;
             }
@@ -3768,6 +4200,28 @@ async function trainToPerfection() {
     const finalAccuracy = testSimpleBinaryAccuracy(trainingData);
     updateStepInfo(`✅ Training Complete: ${(finalAccuracy*100).toFixed(1)}% accuracy`);
     console.log(`Final accuracy: ${(finalAccuracy*100).toFixed(1)}%`);
+    
+    // IMPORTANT: Restore user's original image and label state after training
+    console.log(`🔄 Restoring original state: image=${originalCurrentImage}, label=${originalTrueLabel}`);
+    currentImage = originalCurrentImage;
+    trueLabel = originalTrueLabel;
+    activations.input = originalInputActivations;
+    
+    // Prevent auto-labeling during restoration
+    preventAutoLabeling = true;
+    
+    // Update UI to reflect restored state
+    selectImage(originalCurrentImage);
+    
+    // Wait a moment for async image loading, then restore label and re-enable auto-labeling
+    setTimeout(() => {
+        if (originalTrueLabel) {
+            setTrueLabel(originalTrueLabel);
+        }
+        preventAutoLabeling = false;
+        console.log(`✅ Restoration complete: image=${currentImage}, label=${trueLabel}`);
+    }, 100);
+    
     refreshAllConnectionVisuals(); // Make weight changes visible immediately
 }
 
@@ -3780,7 +4234,7 @@ function simpleBinaryForward(input) {
         for (let i = 0; i < networkConfig.inputSize; i++) {
             sum += input[i] * weights.inputToHidden[h][i];
         }
-        hidden[h] = Math.tanh(sum); // Use tanh activation (-1 to 1)
+        hidden[h] = tanhActivation(sum); // Use tanh activation (-1 to 1)
     }
     
     // Hidden to output (single output)
@@ -3816,8 +4270,7 @@ function simpleBinaryBackward(input, output, target, learningRate) {
     for (let h = 0; h < networkConfig.hiddenSize; h++) {
         const error = outputError * weights.hiddenToOutput[0][h];
         // tanh derivative: 1 - tanh²(x)
-        const tanhDerivative = 1 - (activations.hidden[h] * activations.hidden[h]);
-        hiddenErrors[h] = error * tanhDerivative;
+        hiddenErrors[h] = error * tanhDerivative(activations.hidden[h]);
     }
     
     // Update input to hidden weights
@@ -3869,7 +4322,7 @@ function backpropagationWithMomentum(target, learningRate, momentum, momentumInp
             error += outputErrors[o] * weights.hiddenToOutput[o][h];
         }
         // Leaky ReLU derivative
-        hiddenErrors[h] = activations.hidden[h] > 0 ? error : 0.1 * error;
+        hiddenErrors[h] = error * leakyReLUDerivative(activations.hidden[h]);
     }
     
     // Update input-to-hidden weights with momentum
