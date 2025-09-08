@@ -1,4 +1,4 @@
-// English localization file
+// English localization file - Original authentic text from the application
 const en = {
     // Main header
     "app.title": "🧠 How AI Recognizes Images",
@@ -92,7 +92,7 @@ const en = {
     "tutorial.next": "Next →",
     "tutorial.skip": "Skip",
     
-    // Forward pass messages - Student view
+    // Forward pass messages - Student view (authentic original text)
     "forward.student.start": "🧠 <strong>Let's Watch the AI Think!</strong><br>🎬 Time to see how artificial intelligence really works! Like watching a student solve a puzzle, our AI will look at the picture, think about what it sees, and make its best guess. Ready to peek inside an AI brain?",
     "forward.student.step1": "📷 <strong>STEP 1: The AI Looks at Our Picture</strong><br>👀 Just like when you look at a photo, the AI examines every detail! Here's what catches its attention:<br>• 🐕 Dog Feature A: <strong>{0}%</strong> strength (maybe ears or shape?)<br>• 🦴 Dog Feature B: <strong>{1}%</strong> strength (maybe fur texture?)<br>• 👁️ Dog Feature C: <strong>{2}%</strong> strength (maybe eyes or nose?)<br>• 🎯 Pattern Match: <strong>{3}%</strong> overall doggy-ness<br>💡 <em>Higher numbers mean 'this looks very dog-like to me!'</em>",
     "forward.student.step2": "🤔 <strong>STEP 2: The AI's Brain Cells Work Together</strong><br>💭 Now comes the magic! The AI's brain cells team up to find bigger patterns, like detectives gathering clues:<br>• 🧠 Brain Cell 1: <strong>{0}%</strong> excited (maybe finds 'fluffy texture + right size')<br>• 🧠 Brain Cell 2: <strong>{1}%</strong> excited (maybe finds 'pointy ears + wet nose')<br>• 🧠 Brain Cell 3: <strong>{2}%</strong> excited (maybe finds 'four legs + tail')<br>• 🧠 Brain Cell 4: <strong>{3}%</strong> excited (maybe finds 'friendly face')<br>🎯 <em>Each brain cell is like a specialist detective looking for specific clues!</em>",
@@ -106,7 +106,7 @@ const en = {
     "forward.expert.step3": "➕ <strong>Output Layer Computation</strong><br>{0}",
     "forward.expert.result": "🎯 <strong>Forward Pass Complete</strong><br>⏱️ Computation time: {0}ms<br>📊 Final prediction: {1}<br>🔢 Raw outputs: [{2}]",
     
-    // Backward pass messages - Student view
+    // Backward pass messages - Student view (authentic original text)
     "backward.student.start": "📚 <strong>LEARNING TIME: Oops, Let's Learn from This!</strong><br>🎯 <strong>The correct answer:</strong> \"{0}\"<br>🤖 <strong>What the AI guessed:</strong> \"{1}\"<br><br>{2}<br>🎓 Time to teach our AI to be smarter! Let's adjust its brain connections...",
     "backward.student.step1": "🔍 <strong>STEP 1: Detective Work - What Needs Fixing?</strong><br>💡 The AI examines its two answer brain cells like a detective solving a case:<br>• 🐕 <strong>\"Dog\" brain cell:</strong> {0}<br>• ❌ <strong>\"Not Dog\" brain cell:</strong> {1}<br>📏 <strong>Mistake size:</strong> {2} (0 = perfect, bigger = more confused)<br>🎯 Now our AI knows exactly what to improve!",
     "backward.student.step2": "🔍 <strong>STEP 2: Following the Clues Backwards</strong><br>🕵️‍♀️ The AI becomes a detective: \"Which brain cells led me astray?\" Let's investigate:<br>• 🧠 Brain Cell 1: {0}<br>• 🧠 Brain Cell 2: {1}<br>• 🧠 Brain Cell 3: {2}<br>• 🧠 Brain Cell 4: {3}<br>🍞 <em>Like following a trail of breadcrumbs, we're tracing the mistake back to its source!</em>",
@@ -120,14 +120,14 @@ const en = {
     "backward.expert.step3": "🔧 <strong>Step 4: Weight Updates (Gradient Descent)</strong><br>{0}",
     "backward.expert.complete": "🎓 <strong>Learning Complete!</strong><br>⏱️ Study time: {0}ms<br>📝 Brain connections updated: {1} total<br>📊 Mistake size: {2} (smaller is better!)<br>🧠 The AI's improved brain connections:<br>{3}<br>{4}<br>🎯 <strong>Mathematical Summary:</strong> Used gradient descent to minimize loss function L(W) by computing ∇L and updating weights via W := W - η∇L<br>📈 <strong>Next steps:</strong> Run forward pass to observe improved predictions",
     
-    // Common messages
+    // Common messages (authentic original text)
     "messages.needForward": "⚠️ <strong>Hold on!</strong><br>👀 First let's watch the AI think! Click 'Watch AI Think' to see how it processes the image.",
     "messages.needLabel": "⚠️ <strong>Need Your Help!</strong><br>🎯 Please tell the AI what the correct answer is by clicking 'This is a DOG' or 'This is NOT a dog' above!",
     "messages.newImageSelected": "🖼️ <strong>New Image Selected!</strong><br>🧠 The AI still remembers its previous lessons! Notice the connection strength numbers didn't change - that's its \"memory\" from earlier learning!",
     "messages.correctAnswer": "✅ <strong>Great job!</strong> The AI got it right! Now let's help it become even more confident...",
     "messages.wrongAnswer": "😅 <strong>Learning opportunity!</strong> Everyone makes mistakes - that's how we learn!",
     
-    // View mode messages
+    // View mode messages (authentic original text)
     "viewMode.studentEnabled": "🎓 <strong>Student view enabled!</strong><br>🌈 Ready for your learning adventure with simple, fun explanations!<br><em>All messages will now be shown in student mode.</em>",
     "viewMode.expertEnabled": "🎓 <strong>Expert view enabled!</strong><br>📊 Ready for detailed mathematical explanations with equations and technical details!<br><em>All messages will now be shown in expert mode.</em>",
     
@@ -139,7 +139,7 @@ const en = {
     "log.cleared.student": "🗑️ <strong>Student Sidebar Cleared</strong><br>🎓 All previous lessons cleared. Ready for your next learning adventure!",
     "log.cleared.expert": "🗑️ <strong>Expert Sidebar Cleared</strong><br>📊 All previous mathematical analysis cleared. Ready for new detailed explanations!",
     
-    // Training states
+    // Training states (authentic original text)
     "training.superLearning": "🎢 <strong>STEP 3: AI Learning Boost!</strong><br>🎲 The AI is confused (guessing 50/50) AND some brain cells are \"asleep\"<br>🔋 We're boosting its learning power to wake up those sleepy neurons!<br>💡 Think of it like turning up the brightness on a dim lightbulb!",
     "training.boostMode": "⚡ <strong>BOOST MODE:</strong> Weak neurons detected with confused prediction. Amplifying learning signal for breakthrough learning!"
 };
