@@ -1,0 +1,29 @@
+# Development and backup files
+*_backup.*
+*.backup
+*~
+.DS_Store
+
+# Development tools
+debug_*.js
+test_*.html
+serve.*
+update_*.py
+generate_*.py
+new_*.js
+
+# Build artifacts
+*_base64.txt
+node_modules/
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store
