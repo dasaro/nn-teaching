@@ -13,6 +13,10 @@ let preventAutoLabeling = false;
 // Expert view mode for detailed mathematical explanations
 let expertViewMode = false;
 
+// Expert message accumulation system
+let expertMessageLog = [];
+let expertLogActive = false;
+
 // ============================================================================
 // ACTIVATION FUNCTIONS - Centralized implementations
 // ============================================================================
@@ -320,9 +324,51 @@ function updateStepInfoDual(studentMessage, expertMessage = null) {
     if (!currentStep) return;
     
     if (expertViewMode && expertMessage) {
-        currentStep.innerHTML = expertMessage;
+        // In expert mode, accumulate messages instead of replacing them
+        if (expertLogActive) {
+            expertMessageLog.push({
+                timestamp: new Date().toLocaleTimeString(),
+                message: expertMessage,
+                type: 'calculation'
+            });
+            displayExpertLog();
+        } else {
+            currentStep.innerHTML = expertMessage;
+        }
     } else {
         currentStep.innerHTML = studentMessage;
+    }
+}
+
+// Start expert message accumulation
+function startExpertLog() {
+    expertMessageLog = [];
+    expertLogActive = true;
+    const currentStep = document.getElementById('currentStep');
+    currentStep.innerHTML = '<div class="expert-log-container"><div class="expert-log-header">📋 <strong>Expert Calculation Log</strong> (Accumulating...)</div><div id="expertLogContent" class="expert-log-content"></div></div>';
+}
+
+// Stop expert message accumulation
+function stopExpertLog() {
+    expertLogActive = false;
+    if (expertMessageLog.length > 0) {
+        const currentStep = document.getElementById('currentStep');
+        const finalMessage = '<div class="expert-log-container"><div class="expert-log-header">📋 <strong>Complete Calculation Sequence</strong> ✅</div><div id="expertLogContent" class="expert-log-content">' + 
+            expertMessageLog.map(entry => `<div class="expert-log-entry"><span class="log-timestamp">[${entry.timestamp}]</span> ${entry.message}</div>`).join('') + 
+            '</div><div class="expert-log-footer">🎓 Review complete - all mathematical steps preserved above</div></div>';
+        currentStep.innerHTML = finalMessage;
+    }
+}
+
+// Display accumulated expert messages
+function displayExpertLog() {
+    const logContent = document.getElementById('expertLogContent');
+    if (logContent && expertMessageLog.length > 0) {
+        const lastEntry = expertMessageLog[expertMessageLog.length - 1];
+        const entryHtml = `<div class="expert-log-entry"><span class="log-timestamp">[${lastEntry.timestamp}]</span> ${lastEntry.message}</div>`;
+        logContent.innerHTML += entryHtml;
+        // Auto-scroll to bottom
+        logContent.scrollTop = logContent.scrollHeight;
     }
 }
 
@@ -1855,6 +1901,11 @@ async function runForwardPass() {
         console.log("trueLabel set to:", trueLabel);
     }
     
+    // Start expert logging if in expert mode
+    if (expertViewMode) {
+        startExpertLog();
+    }
+    
     isAnimating = true;
     document.getElementById('forwardBtn').disabled = true;
     document.getElementById('fullDemoBtn').disabled = true;
@@ -1940,6 +1991,11 @@ async function runForwardPass() {
     document.getElementById('fullDemoBtn').disabled = false;
     isAnimating = false;
     
+    // Stop expert logging if active
+    if (expertViewMode && expertLogActive) {
+        stopExpertLog();
+    }
+    
     console.log('✅ Forward pass complete - buttons should be enabled:', {
         forwardBtn: !document.getElementById('forwardBtn').disabled,
         fullDemoBtn: !document.getElementById('fullDemoBtn').disabled,
@@ -1955,6 +2011,11 @@ async function runBackwardPass() {
             updateStepInfo("⚠️ Please tell the AI what the correct answer is by clicking one of the teaching buttons above!");
         }
         return;
+    }
+    
+    // Start expert logging if in expert mode
+    if (expertViewMode) {
+        startExpertLog();
     }
     
     isAnimating = true;
@@ -1990,15 +2051,35 @@ async function runBackwardPass() {
     document.getElementById('fullDemoBtn').disabled = false;
     isAnimating = false;
     
+    // Stop expert logging if active
+    if (expertViewMode && expertLogActive) {
+        stopExpertLog();
+    }
+    
     // Update prediction column after forward pass completes
     updatePrediction();
 }
 
 async function startFullDemo() {
+    // Start expert logging if in expert mode for the full sequence
+    if (expertViewMode) {
+        startExpertLog();
+    }
+    
+    // Temporarily disable auto-logging for individual functions
+    const wasExpertLogActive = expertLogActive;
+    expertLogActive = false;
+    
     await runForwardPass();
     if (trueLabel && !isAnimating) {
         await sleep(2000);
         await runBackwardPass();
+    }
+    
+    // Restore expert logging and stop it to show complete sequence
+    expertLogActive = wasExpertLogActive;
+    if (expertViewMode && expertLogActive) {
+        stopExpertLog();
     }
 }
 
