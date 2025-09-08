@@ -977,7 +977,8 @@ function setVisualFeaturesAndLabel(imageType) {
 
 function createImage(imageType) {
     const canvas = document.getElementById('inputImage');
-    const ctx = canvas.getContext('2d');
+    // Optimize canvas for frequent getImageData operations
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     
     // Clear canvas with loading state
     ctx.fillStyle = '#f0f8ff';
@@ -5712,7 +5713,7 @@ function closePixelViewer() {
 
 function drawOriginalImage() {
     const canvas = document.getElementById('originalImageCanvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     
     // Clear canvas with gradient background
     const gradient = ctx.createLinearGradient(0, 0, 140, 140);
@@ -5833,7 +5834,7 @@ function extractPixelValues(imageData) {
 
 function drawInteractivePixelGrid() {
     const canvas = document.getElementById('pixelGridCanvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     
     // Clear canvas with gradient background
     const gradient = ctx.createLinearGradient(0, 0, 140, 140);
