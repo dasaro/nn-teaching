@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Network Learning Demo</title>
+    <title data-i18n="document.title">Neural Network Learning Demo</title>
     <link rel="stylesheet" href="style.css">
     <script src="i18n.js"></script>
 </head>
@@ -85,10 +85,10 @@
                 <!-- Tutorial overlay -->
                 <div id="tutorialStep" class="tutorial-overlay" style="display: none;">
                     <div class="tutorial-content">
-                        <div class="tutorial-title" id="tutorialTitle">Step 1</div>
+                        <div class="tutorial-title" id="tutorialTitle"><span data-i18n="tutorial.step">Step</span> <span id="tutorialStepNumber">1</span></div>
                         <div class="tutorial-text" id="tutorialText">Welcome!</div>
                         <div class="tutorial-actions">
-                            <button id="tutorialNextBtn" onclick="nextTutorialStep()" class="tutorial-next">Next →</button>
+                            <button id="tutorialNextBtn" onclick="nextTutorialStep()" class="tutorial-next" data-i18n="tutorial.nextArrow">Next →</button>
                             <button id="tutorialSkipBtn" onclick="skipTutorial()" class="tutorial-skip">Skip</button>
                         </div>
                     </div>
@@ -209,16 +209,16 @@
                         <div class="param-group">
                             <label data-i18n="expertPanel.hiddenActivation">Hidden Layer Activation:</label>
                             <select id="hiddenActivation" onchange="updateExpertConfig('hiddenActivation', this.value)">
-                                <option value="leaky_relu">Leaky ReLU</option>
-                                <option value="sigmoid">Sigmoid</option>
-                                <option value="tanh">Tanh</option>
+                                <option value="leaky_relu" data-i18n="activation.leakyRelu">Leaky ReLU</option>
+                                <option value="sigmoid" data-i18n="activation.sigmoid">Sigmoid</option>
+                                <option value="tanh" data-i18n="activation.tanh">Tanh</option>
                             </select>
                         </div>
                         <div class="param-group">
                             <label data-i18n="expertPanel.outputActivation">Output Layer Activation:</label>
                             <select id="outputActivation" onchange="updateExpertConfig('outputActivation', this.value)">
-                                <option value="softmax">Softmax</option>
-                                <option value="sigmoid">Sigmoid</option>
+                                <option value="softmax" data-i18n="activation.softmax">Softmax</option>
+                                <option value="sigmoid" data-i18n="activation.sigmoid">Sigmoid</option>
                             </select>
                         </div>
                         <div class="param-group">
@@ -280,13 +280,13 @@
                     <div class="expert-section readonly-section">
                         <h3 data-i18n="expertPanel.networkArchitecture">🏗️ Network Architecture (Read-Only)</h3>
                         <div class="param-group">
-                            <label>Input Size: <span id="inputSizeDisplay">4</span></label>
+                            <label><span data-i18n="expertPanel.inputSize">Input Size:</span> <span id="inputSizeDisplay">4</span></label>
                         </div>
                         <div class="param-group">
-                            <label>Hidden Size: <span id="hiddenSizeDisplay">4</span></label>
+                            <label><span data-i18n="expertPanel.hiddenSize">Hidden Size:</span> <span id="hiddenSizeDisplay">4</span></label>
                         </div>
                         <div class="param-group">
-                            <label>Output Size: <span id="outputSizeDisplay">2</span></label>
+                            <label><span data-i18n="expertPanel.outputSize">Output Size:</span> <span id="outputSizeDisplay">2</span></label>
                         </div>
                     </div>
                 </div>

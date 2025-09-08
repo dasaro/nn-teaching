@@ -26,8 +26,11 @@ function t(key, replacements = []) {
     return key;
 }
 
-// Listen for language changes and update view mode indicator
+// Listen for language changes and update dynamic content
 document.addEventListener('languageChanged', function(event) {
+    // Update document title
+    document.title = t('document.title');
+    
     // Update view mode indicator when language changes
     const indicator = document.getElementById('viewModeIndicator');
     if (indicator) {
@@ -36,9 +39,11 @@ document.addEventListener('languageChanged', function(event) {
     
     // Update current step message if it's the default ready message
     const currentStep = document.getElementById('currentStep');
-    if (currentStep && currentStep.textContent.includes('Ready!')) {
+    if (currentStep && (currentStep.textContent.includes('Ready!') || currentStep.textContent.includes('Pronto!'))) {
         currentStep.textContent = t('system.ready');
     }
+    
+    console.log(`🌐 Dynamic content updated for language: ${event.detail.language}`);
 });
 
 // ============================================================================
@@ -719,7 +724,7 @@ function displayActivations() {
 function displayGradients() {
     const display = document.getElementById('gradientsDisplay');
     if (gradientHistory.length === 0) {
-        display.innerHTML = '<em>No gradient data available. Run training to see gradient flow.</em>';
+        display.innerHTML = `<em>${t('whatIf.noGradientData')}</em>`;
         return;
     }
     
@@ -3187,12 +3192,12 @@ function createWeightEditingPanel() {
     // Input to Hidden section
     const inputSection = document.createElement('div');
     inputSection.className = 'weight-section';
-    inputSection.innerHTML = '<h4>📥 Input → Hidden Connections</h4>';
+    inputSection.innerHTML = `<h4>${t('whatIf.inputToHidden')}</h4>`;
     
     for (let h = 0; h < networkConfig.hiddenSize; h++) {
         const hiddenGroup = document.createElement('div');
         hiddenGroup.className = 'weight-group';
-        hiddenGroup.innerHTML = `<h5>To Hidden Neuron H${h + 1}</h5>`;
+        hiddenGroup.innerHTML = `<h5>${t('whatIf.toHiddenNeuron', [h + 1])}</h5>`;
         
         for (let i = 0; i < networkConfig.inputSize; i++) {
             const weightControl = createWeightControl('input', i, h, weights.inputToHidden[h][i]);
@@ -3205,12 +3210,12 @@ function createWeightEditingPanel() {
     // Hidden to Output section
     const outputSection = document.createElement('div');
     outputSection.className = 'weight-section';
-    outputSection.innerHTML = '<h4>📤 Hidden → Output Connections</h4>';
+    outputSection.innerHTML = `<h4>${t('whatIf.hiddenToOutput')}</h4>`;
     
     for (let o = 0; o < networkConfig.outputSize; o++) {
         const outputGroup = document.createElement('div');
         outputGroup.className = 'weight-group';
-        outputGroup.innerHTML = `<h5>To ${o === 0 ? 'Dog' : 'Not Dog'} Output</h5>`;
+        outputGroup.innerHTML = `<h5>${o === 0 ? t('whatIf.toDogOutput') : t('whatIf.toNotDogOutput')}</h5>`;
         
         for (let h = 0; h < networkConfig.hiddenSize; h++) {
             const weightControl = createWeightControl('hidden', h, o, weights.hiddenToOutput[o][h]);

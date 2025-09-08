@@ -1,6 +1,6 @@
 // Internationalization system for Neural Network Visualization App
 
-class I18n {
+class NeuralNetworkI18n {
     constructor() {
         this.currentLanguage = 'en'; // Default language
         this.translations = {};
@@ -143,7 +143,7 @@ class I18n {
 }
 
 // Create global i18n instance
-const i18n = new I18n();
+const i18n = new NeuralNetworkI18n();
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {

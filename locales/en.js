@@ -142,5 +142,60 @@ window.i18nLocales.en = {
     
     // Training states (authentic original text)
     "training.superLearning": "🎢 <strong>STEP 3: AI Learning Boost!</strong><br>🎲 The AI is confused (guessing 50/50) AND some brain cells are \"asleep\"<br>🔋 We're boosting its learning power to wake up those sleepy neurons!<br>💡 Think of it like turning up the brightness on a dim lightbulb!",
-    "training.boostMode": "⚡ <strong>BOOST MODE:</strong> Weak neurons detected with confused prediction. Amplifying learning signal for breakthrough learning!"
+    "training.boostMode": "⚡ <strong>BOOST MODE:</strong> Weak neurons detected with confused prediction. Amplifying learning signal for breakthrough learning!",
+    
+    // Document title
+    "document.title": "Neural Network Learning Demo",
+    
+    // Activation function options
+    "activation.leakyRelu": "Leaky ReLU",
+    "activation.sigmoid": "Sigmoid", 
+    "activation.tanh": "Tanh",
+    "activation.softmax": "Softmax",
+    
+    // Tutorial elements
+    "tutorial.step1": "Step 1",
+    "tutorial.nextArrow": "Next →",
+    
+    // What If dialog
+    "whatIf.title": "🔧 Weight Explorer",
+    "whatIf.description": "Experiment with connection weights to see how they affect predictions!",
+    "whatIf.inputToHidden": "📥 Input → Hidden Connections",
+    "whatIf.hiddenToOutput": "📤 Hidden → Output Connections", 
+    "whatIf.toHiddenNeuron": "To Hidden Neuron H{0}",
+    "whatIf.toDogOutput": "To Dog Output",
+    "whatIf.toNotDogOutput": "To Not Dog Output",
+    "whatIf.noGradientData": "No gradient data available. Run training to see gradient flow.",
+    
+    // Weight strength descriptions
+    "weights.veryStrong": "Very Strong",
+    "weights.strong": "Strong", 
+    "weights.medium": "Medium",
+    "weights.weak": "Weak",
+    "weights.veryWeak": "Very Weak",
+    "weights.inhibitory": "Inhibitory",
+    
+    // Training status messages
+    "training.epoch": "Epoch {0}",
+    "training.loss": "Loss: {0}",
+    "training.accuracy": "Accuracy: {0}%",
+    "training.timeRemaining": "~{0}s remaining",
+    "training.converged": "Converged! 🎉",
+    "training.completed": "Training completed successfully!",
+    
+    // Error messages
+    "error.loadingFailed": "Failed to load neural network",
+    "error.trainingFailed": "Training failed to converge",
+    "error.invalidInput": "Invalid input provided",
+    
+    // Speed control
+    "speed.label": "Animation Speed",
+    "speed.slow": "Slow",
+    "speed.fast": "Fast",
+    
+    // Dynamic messages that appear in JavaScript
+    "js.recording": "Recording...",
+    "js.complete": "Complete",
+    "js.calculating": "Calculating...",
+    "js.updating": "Updating weights..."
 };

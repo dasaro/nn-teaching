@@ -142,5 +142,60 @@ window.i18nLocales.it = {
     
     // Training states
     "training.superLearning": "🎢 <strong>PASSO 3: Potenziamento Apprendimento AI!</strong><br>🎲 L'AI è confusa (indovina 50/50) E alcune cellule cerebrali sono \"addormentate\"<br>🔋 Stiamo potenziando il suo potere di apprendimento per svegliare quei neuroni assonnati!<br>💡 Pensalo come alzare la luminosità su una lampadina fioca!",
-    "training.boostMode": "⚡ <strong>MODALITÀ POTENZIAMENTO:</strong> Neuroni deboli rilevati con predizione confusa. Amplificando segnale di apprendimento per apprendimento rivoluzionario!"
+    "training.boostMode": "⚡ <strong>MODALITÀ POTENZIAMENTO:</strong> Neuroni deboli rilevati con predizione confusa. Amplificando segnale di apprendimento per apprendimento rivoluzionario!",
+    
+    // Document title
+    "document.title": "Demo di Apprendimento Rete Neurale",
+    
+    // Activation function options
+    "activation.leakyRelu": "ReLU Leaky",
+    "activation.sigmoid": "Sigmoide", 
+    "activation.tanh": "Tanh",
+    "activation.softmax": "Softmax",
+    
+    // Tutorial elements
+    "tutorial.step1": "Passo 1",
+    "tutorial.nextArrow": "Avanti →",
+    
+    // What If dialog
+    "whatIf.title": "🔧 Esploratore Pesi",
+    "whatIf.description": "Sperimenta con i pesi delle connessioni per vedere come influenzano le predizioni!",
+    "whatIf.inputToHidden": "📥 Connessioni Input → Nascosto",
+    "whatIf.hiddenToOutput": "📤 Connessioni Nascosto → Output", 
+    "whatIf.toHiddenNeuron": "Al Neurone Nascosto H{0}",
+    "whatIf.toDogOutput": "All'Output Cane",
+    "whatIf.toNotDogOutput": "All'Output Non Cane",
+    "whatIf.noGradientData": "Dati del gradiente non disponibili. Esegui l'addestramento per vedere il flusso del gradiente.",
+    
+    // Weight strength descriptions
+    "weights.veryStrong": "Molto Forte",
+    "weights.strong": "Forte", 
+    "weights.medium": "Medio",
+    "weights.weak": "Debole",
+    "weights.veryWeak": "Molto Debole",
+    "weights.inhibitory": "Inibitorio",
+    
+    // Training status messages
+    "training.epoch": "Epoca {0}",
+    "training.loss": "Perdita: {0}",
+    "training.accuracy": "Accuratezza: {0}%",
+    "training.timeRemaining": "~{0}s rimanenti",
+    "training.converged": "Convergenza raggiunta! 🎉",
+    "training.completed": "Addestramento completato con successo!",
+    
+    // Error messages
+    "error.loadingFailed": "Impossibile caricare la rete neurale",
+    "error.trainingFailed": "L'addestramento non è riuscito a convergere",
+    "error.invalidInput": "Input non valido fornito",
+    
+    // Speed control
+    "speed.label": "Velocità Animazione",
+    "speed.slow": "Lento",
+    "speed.fast": "Veloce",
+    
+    // Dynamic messages that appear in JavaScript
+    "js.recording": "Registrando...",
+    "js.complete": "Completo",
+    "js.calculating": "Calcolando...",
+    "js.updating": "Aggiornando pesi..."
 };
