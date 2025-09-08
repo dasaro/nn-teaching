@@ -2026,7 +2026,68 @@ async function runBackwardPass() {
     const backpropStartTime = performance.now();
     highlightSection('backward');
     
-    updateStepInfo("📚 Time for the AI to learn! It's comparing its guess with the right answer and figuring out how to do better...");
+    // Calculate target values for detailed explanations
+    const target = trueLabel === 'dog' ? [1, 0] : [0, 1];
+    const prediction = activations.output;
+    const error = prediction.map((pred, i) => target[i] - pred);
+    
+    updateStepInfoDual(
+        "📚 Time for the AI to learn! It's comparing its guess with the right answer and figuring out how to do better...",
+        `📚 <strong>Backpropagation Started</strong><br>
+         🎯 <strong>Step 1: Error Calculation</strong><br>
+         Target: [${target.join(', ')}] (${trueLabel === 'dog' ? 'Dog' : 'Not Dog'})<br>
+         Predicted: [${prediction.map(p => p.toFixed(3)).join(', ')}]<br>
+         Error: [${error.map(e => e.toFixed(3)).join(', ')}]<br>
+         📊 Loss Function: L = ½Σ(target - predicted)²<br>
+         Current Loss: <strong>${(0.5 * error.reduce((sum, e) => sum + e*e, 0)).toFixed(4)}</strong>`
+    );
+    
+    await sleep(2000);
+    
+    updateStepInfoDual(
+        "🧮 STEP 1: Calculating how wrong each output neuron was...",
+        `🧮 <strong>Step 2: Output Layer Gradients</strong><br>
+         ${formatOperation("Output Error Gradient", "δₒ = (target - output) ⊙ σ'(zₒ)", 
+           `[${error.map(e => e.toFixed(3)).join(', ')}]`,
+           `For softmax: δₒ[i] = target[i] - softmax(zₒ)[i]`)}
+         🔢 These gradients tell us how much each output neuron contributed to the error`
+    );
+    
+    await sleep(2000);
+    
+    // Calculate actual hidden gradients for expert view
+    const hiddenGradients = [];
+    for (let h = 0; h < networkConfig.hiddenSize; h++) {
+        let gradient = 0;
+        for (let o = 0; o < networkConfig.outputSize; o++) {
+            gradient += weights.hiddenToOutput[o][h] * error[o];
+        }
+        // Apply activation derivative (for leaky ReLU or current activation function)
+        const activationDerivative = activations.hidden[h] > 0 ? 1 : expertConfig.leakyReLUAlpha;
+        hiddenGradients[h] = gradient * activationDerivative;
+    }
+    
+    updateStepInfoDual(
+        "⚡ STEP 2: Figuring out how much each hidden neuron contributed to the mistakes...",
+        `⚡ <strong>Step 3: Hidden Layer Gradients (Chain Rule)</strong><br>
+         ${formatOperation("Hidden Error Gradient", "δₕ = (W₂ᵀ × δₒ) ⊙ σ'(zₕ)", 
+           `[${hiddenGradients.map(g => g.toFixed(3)).join(', ')}]`,
+           `Chain rule: δₕ[j] = Σᵢ(W₂[i,j] × δₒ[i]) × σ'(zₕ[j])<br>Using ${expertConfig.hiddenActivation} activation derivative`)}
+         🔗 This propagates the error backwards through the network using the chain rule of calculus<br>
+         📐 Each hidden gradient shows how much that neuron contributed to the final error`
+    );
+    
+    await sleep(2000);
+    
+    updateStepInfoDual(
+        "🔧 STEP 3: Updating connection strengths based on the errors...",
+        `🔧 <strong>Step 4: Weight Updates (Gradient Descent)</strong><br>
+         ${formatOperation("Weight Update Rule", "W_new = W_old + η × δ × activation", 
+           `Learning Rate η = ${expertConfig.learningRate}`,
+           `Hidden→Output: ΔW₂[i,j] = η × δₒ[i] × h[j]<br>Input→Hidden: ΔW₁[j,k] = η × δₕ[j] × x[k]`)}
+         📈 Positive gradients increase weights, negative gradients decrease them<br>
+         🎯 This minimizes the error function using gradient descent optimization`
+    );
     
     await animateBackpropagation();
     
@@ -2034,7 +2095,23 @@ async function runBackwardPass() {
     performanceMetrics.epochCount++;
     performanceMetrics.weightUpdates += (networkConfig.inputSize * networkConfig.hiddenSize) + (networkConfig.hiddenSize * networkConfig.outputSize);
     
-    updateStepInfo("🎉 Learning complete! The AI has adjusted its connection strengths (weights). It should be smarter now! Try running 'Watch AI Think' again to see the difference!");
+    updateStepInfoDual(
+        "🎉 Learning complete! The AI has adjusted its connection strengths (weights). It should be smarter now! Try running 'Watch AI Think' again to see the difference!",
+        `🎉 <strong>Backpropagation Complete!</strong><br>
+         ⏱️ Training time: ${performanceMetrics.backpropTime}ms<br>
+         🔢 Weight updates: ${(networkConfig.inputSize * networkConfig.hiddenSize) + (networkConfig.hiddenSize * networkConfig.outputSize)} total<br>
+         📊 Final loss: ${(0.5 * error.reduce((sum, e) => sum + e*e, 0)).toFixed(4)}<br>
+         🧠 Updated weight matrices:<br>
+         ${formatMatrix(weights.inputToHidden, 'W₁ (Input→Hidden) - After Update')}<br>
+         ${formatMatrix(weights.hiddenToOutput, 'W₂ (Hidden→Output) - After Update')}<br>
+         🎯 <strong>Mathematical Summary:</strong> Used gradient descent to minimize loss function L(W) by computing ∇L and updating weights via W := W - η∇L<br>
+         📚 <strong>Backpropagation Algorithm:</strong><br>
+         &nbsp;&nbsp;1️⃣ Compute loss: L = ½||target - predicted||²<br>
+         &nbsp;&nbsp;2️⃣ Calculate output gradients: δₒ = ∂L/∂output<br>
+         &nbsp;&nbsp;3️⃣ Propagate gradients backwards: δₕ = (W₂ᵀδₒ) ⊙ σ'(zₕ)<br>
+         &nbsp;&nbsp;4️⃣ Update weights: W := W + η(δ ⊗ activations)<br>
+         &nbsp;&nbsp;5️⃣ Repeat until convergence ✨`
+    );
     
     // Keep weight values visible after training
     document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
