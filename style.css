@@ -100,12 +100,53 @@ body {
 }
 
 .main-header {
-    text-align: center;
     background: white;
     padding: 15px;
     border-radius: 12px;
     margin-bottom: 10px;
     box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-content {
+    text-align: center;
+    flex-grow: 1;
+}
+
+.language-selector-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.language-selector-container label {
+    font-size: 0.75em;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.language-selector-container select {
+    padding: 4px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.8em;
+    color: #374151;
+    cursor: pointer;
+    min-width: 100px;
+}
+
+.language-selector-container select:hover {
+    border-color: #9ca3af;
+}
+
+.language-selector-container select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .main-header h1 {

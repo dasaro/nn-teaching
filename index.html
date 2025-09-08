@@ -5,12 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neural Network Learning Demo</title>
     <link rel="stylesheet" href="style.css">
+    <script src="i18n.js"></script>
 </head>
 <body>
     <div class="container">
         <header class="main-header">
-            <h1>🧠 How AI Recognizes Images</h1>
-            <p>Watch a neural network learn to identify objects step by step! This is how modern AI systems like image recognition work.</p>
+            <div class="header-content">
+                <h1 data-i18n="app.title">🧠 How AI Recognizes Images</h1>
+                <p data-i18n="app.subtitle">Watch a neural network learn to identify objects step by step! This is how modern AI systems like image recognition work.</p>
+            </div>
+            <div class="language-selector-container">
+                <label for="languageSelector" data-i18n="language.selector">🌐 Language</label>
+                <select id="languageSelector" onchange="changeLanguage(this.value)">
+                    <option value="en" data-i18n="language.english">English</option>
+                    <option value="it" data-i18n="language.italian">Italiano</option>
+                </select>
+            </div>
         </header>
         
         <div class="app-layout">
@@ -18,7 +28,7 @@
             <div class="left-panel">
                 <!-- Image & Controls in one compact section -->
                 <div class="compact-section">
-                    <h3>📸 Image & Controls</h3>
+                    <h3 data-i18n="controls.image.title">📸 Image & Controls</h3>
                     <canvas id="inputImage" width="140" height="140"></canvas>
                     <div class="image-selector">
                         <button class="img-btn selected" onclick="selectImage('dog1')">🐕</button>
@@ -33,12 +43,12 @@
                     
                     <!-- Compact teaching buttons -->
                     <div class="compact-teaching">
-                        <label>🎓 Correct Answer:</label>
+                        <label data-i18n="controls.teaching.title">🎓 Correct Answer:</label>
                         <div class="label-buttons">
-                            <button id="labelDog" class="label-btn" onclick="setTrueLabel('dog')">🐕 Dog</button>
-                            <button id="labelNotDog" class="label-btn" onclick="setTrueLabel('not-dog')">❌ Not Dog</button>
+                            <button id="labelDog" class="label-btn" onclick="setTrueLabel('dog')" data-i18n="controls.teaching.dog">🐕 Dog</button>
+                            <button id="labelNotDog" class="label-btn" onclick="setTrueLabel('not-dog')" data-i18n="controls.teaching.notdog">❌ Not Dog</button>
                         </div>
-                        <div class="selected-label" id="selectedLabel">Auto-selected</div>
+                        <div class="selected-label" id="selectedLabel" data-i18n="controls.teaching.autoselected">Auto-selected</div>
                     </div>
                 </div>
                 
@@ -46,23 +56,23 @@
                 <div class="main-controls">
                     <!-- Primary Learning Actions -->
                     <div class="action-buttons">
-                        <button id="forwardBtn" onclick="runForwardPass()" class="action-btn think-btn" disabled title="See how the AI processes the image">🧠 Think</button>
-                        <button id="backwardBtn" onclick="runBackwardPass()" class="action-btn learn-btn" disabled title="Watch the AI learn from its mistake">📚 Learn</button>
-                        <button id="fullDemoBtn" onclick="startFullDemo()" class="action-btn demo-btn" title="Complete thinking + learning process">🚀 Full Demo</button>
+                        <button id="forwardBtn" onclick="runForwardPass()" class="action-btn think-btn" disabled data-i18n="buttons.think" data-i18n-tooltip="buttons.think.tooltip" title="See how the AI processes the image">🧠 Think</button>
+                        <button id="backwardBtn" onclick="runBackwardPass()" class="action-btn learn-btn" disabled data-i18n="buttons.learn" data-i18n-tooltip="buttons.learn.tooltip" title="Watch the AI learn from its mistake">📚 Learn</button>
+                        <button id="fullDemoBtn" onclick="startFullDemo()" class="action-btn demo-btn" data-i18n="buttons.fullDemo" data-i18n-tooltip="buttons.fullDemo.tooltip" title="Complete thinking + learning process">🚀 Full Demo</button>
                     </div>
                     
                     <!-- Training Controls -->
                     <div class="training-buttons">
-                        <button id="trainBtn" onclick="trainToPerfection()" class="training-btn auto-train-btn" title="Instantly train to perfect accuracy">🎯 Auto-Train</button>
-                        <button id="resetWeightsBtn" onclick="resetWeights()" class="training-btn reset-btn" title="Reset the AI's memory">🔄 Reset</button>
+                        <button id="trainBtn" onclick="trainToPerfection()" class="training-btn auto-train-btn" data-i18n="buttons.autoTrain" data-i18n-tooltip="buttons.autoTrain.tooltip" title="Instantly train to perfect accuracy">🎯 Auto-Train</button>
+                        <button id="resetWeightsBtn" onclick="resetWeights()" class="training-btn reset-btn" data-i18n="buttons.reset" data-i18n-tooltip="buttons.reset.tooltip" title="Reset the AI's memory">🔄 Reset</button>
                     </div>
                     
                     <!-- Advanced Tools -->
                     <div class="tool-buttons">
-                        <button id="whatIfBtn" onclick="toggleWeightSliders()" class="tool-btn" title="Explore how changing weights affects predictions">🔧 What If?</button>
-                        <button id="expertViewBtn" onclick="toggleExpertViewMode()" class="tool-btn" title="Toggle detailed mathematical explanations">🎓 Expert View</button>
-                        <button id="expertPanelBtn" onclick="toggleExpertPanel()" class="tool-btn" title="Advanced neural network parameters">⚙️ Config</button>
-                        <button id="pixelViewerBtn" onclick="openPixelViewer()" class="tool-btn" title="Learn how images become numbers">🔍 Pixels</button>
+                        <button id="whatIfBtn" onclick="toggleWeightSliders()" class="tool-btn" data-i18n="tools.whatIf" data-i18n-tooltip="tools.whatIf.tooltip" title="Explore how changing weights affects predictions">🔧 What If?</button>
+                        <button id="expertViewBtn" onclick="toggleExpertViewMode()" class="tool-btn" data-i18n="tools.expertView" data-i18n-tooltip="tools.expertView.tooltip" title="Toggle detailed mathematical explanations">🎓 Expert View</button>
+                        <button id="expertPanelBtn" onclick="toggleExpertPanel()" class="tool-btn" data-i18n="tools.config" data-i18n-tooltip="tools.config.tooltip" title="Advanced neural network parameters">⚙️ Config</button>
+                        <button id="pixelViewerBtn" onclick="openPixelViewer()" class="tool-btn" data-i18n="tools.pixels" data-i18n-tooltip="tools.pixels.tooltip" title="Learn how images become numbers">🔍 Pixels</button>
                     </div>
                 </div>
                 
@@ -95,17 +105,17 @@
             <!-- Right Sidebar - System Messages -->
             <div class="right-sidebar">
                 <div class="sidebar-header">
-                    <h3>📋 System Messages</h3>
-                    <div class="view-mode-indicator" id="viewModeIndicator">
+                    <h3 data-i18n="system.title">📋 System Messages</h3>
+                    <div class="view-mode-indicator" id="viewModeIndicator" data-i18n="system.viewMode.student">
                         👁️ Student View
                     </div>
                 </div>
-                <div class="message-content" id="currentStep">
+                <div class="message-content" id="currentStep" data-i18n="system.ready">
                     🎮 Ready! Pick "Think", "Learn", or "Full Demo"
                 </div>
                 <div class="sidebar-controls">
-                    <button class="sidebar-btn" onclick="clearMessageLog()">🗑️ Clear</button>
-                    <button class="sidebar-btn" onclick="toggleAutoScroll()">📜 Auto-scroll</button>
+                    <button class="sidebar-btn" onclick="clearMessageLog()" data-i18n="system.clear">🗑️ Clear</button>
+                    <button class="sidebar-btn" onclick="toggleAutoScroll()" data-i18n="system.autoScroll">📜 Auto-scroll</button>
                 </div>
             </div>
         </div>
@@ -115,7 +125,7 @@
     <div id="pixelViewerModal" class="modal" style="display: none;">
         <div class="modal-content pixel-viewer-content">
             <div class="modal-header">
-                <h2>🔍 How Images Become Pixels</h2>
+                <h2 data-i18n="pixelViewer.title">🔍 How Images Become Pixels</h2>
                 <button class="modal-close" onclick="closePixelViewer()">&times;</button>
             </div>
             <div class="modal-body">
@@ -123,29 +133,29 @@
                     <!-- Main pixel processing flow -->
                     <div class="pixel-processing-flow">
                         <div class="original-image-section">
-                            <h3>📸 Original Image</h3>
+                            <h3 data-i18n="pixelViewer.originalImage">📸 Original Image</h3>
                             <canvas id="originalImageCanvas" width="140" height="140"></canvas>
                         </div>
                         
                         <div class="flow-arrow">→</div>
                         
                         <div class="pixel-grid-section">
-                            <h3>🔍 8×8 Pixels</h3>
+                            <h3 data-i18n="pixelViewer.pixelGrid">🔍 8×8 Pixels</h3>
                             <canvas id="pixelGridCanvas" width="140" height="140"></canvas>
-                            <div class="pixel-info" id="pixelInfo">Hover over pixels!</div>
+                            <div class="pixel-info" id="pixelInfo" data-i18n="pixelViewer.hoverInfo">Hover over pixels!</div>
                         </div>
                         
                         <div class="flow-arrow">→</div>
                         
                         <div class="pattern-extraction">
-                            <h3>🧠 Pattern Values</h3>
+                            <h3 data-i18n="pixelViewer.patternValues">🧠 Pattern Values</h3>
                             <div class="pattern-neurons-vertical">
                                 <div class="pattern-neuron-compact" data-pattern="A" onmouseover="highlightPixelRegions('A')" onmouseout="clearHighlight()">
                                     <div class="neuron-circle pattern-a">
                                         <div class="neuron-label">A</div>
                                         <div class="neuron-value" id="patternAValue">0.90</div>
                                     </div>
-                                    <div class="pattern-calc" id="patternACalc">Top-left</div>
+                                    <div class="pattern-calc" id="patternACalc" data-i18n="pixelViewer.patterns.a">Top-left</div>
                                 </div>
                                 
                                 <div class="pattern-neuron-compact" data-pattern="B" onmouseover="highlightPixelRegions('B')" onmouseout="clearHighlight()">
@@ -153,7 +163,7 @@
                                         <div class="neuron-label">B</div>
                                         <div class="neuron-value" id="patternBValue">0.90</div>
                                     </div>
-                                    <div class="pattern-calc" id="patternBCalc">Top-right</div>
+                                    <div class="pattern-calc" id="patternBCalc" data-i18n="pixelViewer.patterns.b">Top-right</div>
                                 </div>
                                 
                                 <div class="pattern-neuron-compact" data-pattern="C" onmouseover="highlightPixelRegions('C')" onmouseout="clearHighlight()">
@@ -161,7 +171,7 @@
                                         <div class="neuron-label">C</div>
                                         <div class="neuron-value" id="patternCValue">0.10</div>
                                     </div>
-                                    <div class="pattern-calc" id="patternCCalc">Bottom-left</div>
+                                    <div class="pattern-calc" id="patternCCalc" data-i18n="pixelViewer.patterns.c">Bottom-left</div>
                                 </div>
                                 
                                 <div class="pattern-neuron-compact" data-pattern="D" onmouseover="highlightPixelRegions('D')" onmouseout="clearHighlight()">
@@ -169,15 +179,15 @@
                                         <div class="neuron-label">D</div>
                                         <div class="neuron-value" id="patternDValue">0.10</div>
                                     </div>
-                                    <div class="pattern-calc" id="patternDCalc">Bottom-right</div>
+                                    <div class="pattern-calc" id="patternDCalc" data-i18n="pixelViewer.patterns.d">Bottom-right</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
                     <div class="intuition-box">
-                        <h3>💡 The Big Idea</h3>
-                        <p>Computers can't "see" images like we do. They only understand numbers! So we convert every image into a grid of numbers representing brightness. The AI learns patterns in these numbers to recognize different objects.</p>
+                        <h3 data-i18n="pixelViewer.bigIdea">💡 The Big Idea</h3>
+                        <p data-i18n="pixelViewer.explanation">Computers can't "see" images like we do. They only understand numbers! So we convert every image into a grid of numbers representing brightness. The AI learns patterns in these numbers to recognize different objects.</p>
                     </div>
                 </div>
             </div>
@@ -188,16 +198,16 @@
     <div id="expertPanelModal" class="modal" style="display: none;">
         <div class="modal-content expert-panel-content">
             <div class="modal-header">
-                <h2>⚙️ Expert Neural Network Parameters</h2>
+                <h2 data-i18n="expertPanel.title">⚙️ Expert Neural Network Parameters</h2>
                 <button class="modal-close" onclick="closeExpertPanel()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="expert-panel-grid">
                     <!-- Activation Functions Section -->
                     <div class="expert-section">
-                        <h3>🧠 Activation Functions</h3>
+                        <h3 data-i18n="expertPanel.activationFunctions">🧠 Activation Functions</h3>
                         <div class="param-group">
-                            <label>Hidden Layer Activation:</label>
+                            <label data-i18n="expertPanel.hiddenActivation">Hidden Layer Activation:</label>
                             <select id="hiddenActivation" onchange="updateExpertConfig('hiddenActivation', this.value)">
                                 <option value="leaky_relu">Leaky ReLU</option>
                                 <option value="sigmoid">Sigmoid</option>
@@ -205,14 +215,14 @@
                             </select>
                         </div>
                         <div class="param-group">
-                            <label>Output Layer Activation:</label>
+                            <label data-i18n="expertPanel.outputActivation">Output Layer Activation:</label>
                             <select id="outputActivation" onchange="updateExpertConfig('outputActivation', this.value)">
                                 <option value="softmax">Softmax</option>
                                 <option value="sigmoid">Sigmoid</option>
                             </select>
                         </div>
                         <div class="param-group">
-                            <label>Leaky ReLU Alpha:</label>
+                            <label data-i18n="expertPanel.leakyReLUAlpha">Leaky ReLU Alpha:</label>
                             <input type="range" id="leakyReLUAlpha" min="0.01" max="0.3" step="0.01" value="0.1" 
                                    onchange="updateExpertConfig('leakyReLUAlpha', parseFloat(this.value))">
                             <span id="leakyReLUAlphaValue">0.1</span>
@@ -221,27 +231,27 @@
                     
                     <!-- Training Parameters Section -->
                     <div class="expert-section">
-                        <h3>📚 Training Parameters</h3>
+                        <h3 data-i18n="expertPanel.trainingParams">📚 Training Parameters</h3>
                         <div class="param-group">
-                            <label>Learning Rate:</label>
+                            <label data-i18n="expertPanel.learningRate">Learning Rate:</label>
                             <input type="range" id="learningRateSlider" min="0.001" max="1.0" step="0.001" value="0.1" 
                                    onchange="updateExpertConfig('learningRate', parseFloat(this.value))">
                             <span id="learningRateValue">0.1</span>
                         </div>
                         <div class="param-group">
-                            <label>Momentum:</label>
+                            <label data-i18n="expertPanel.momentum">Momentum:</label>
                             <input type="range" id="momentumSlider" min="0.0" max="0.99" step="0.01" value="0.0" 
                                    onchange="updateExpertConfig('momentum', parseFloat(this.value))">
                             <span id="momentumValue">0.0</span>
                         </div>
                         <div class="param-group">
-                            <label>L2 Regularization:</label>
+                            <label data-i18n="expertPanel.l2Regularization">L2 Regularization:</label>
                             <input type="range" id="l2RegSlider" min="0.0" max="0.01" step="0.0001" value="0.0" 
                                    onchange="updateExpertConfig('l2Regularization', parseFloat(this.value))">
                             <span id="l2RegValue">0.0</span>
                         </div>
                         <div class="param-group">
-                            <label>Max Epochs:</label>
+                            <label data-i18n="expertPanel.maxEpochs">Max Epochs:</label>
                             <input type="range" id="maxEpochsSlider" min="10" max="500" step="10" value="100" 
                                    onchange="updateExpertConfig('maxEpochs', parseInt(this.value))">
                             <span id="maxEpochsValue">100</span>
@@ -250,16 +260,16 @@
                     
                     <!-- Advanced Settings Section -->
                     <div class="expert-section">
-                        <h3>🎛️ Advanced Settings</h3>
+                        <h3 data-i18n="expertPanel.advancedSettings">🎛️ Advanced Settings</h3>
                         <div class="param-group">
                             <label>
                                 <input type="checkbox" id="adaptiveLearningRate" 
                                        onchange="updateExpertConfig('adaptiveLearningRate', this.checked)"> 
-                                Adaptive Learning Rate
+                                <span data-i18n="expertPanel.adaptiveLearningRate">Adaptive Learning Rate</span>
                             </label>
                         </div>
                         <div class="param-group">
-                            <label>Batch Size:</label>
+                            <label data-i18n="expertPanel.batchSize">Batch Size:</label>
                             <input type="range" id="batchSizeSlider" min="1" max="8" step="1" value="1" 
                                    onchange="updateExpertConfig('batchSize', parseInt(this.value))">
                             <span id="batchSizeValue">1</span>
@@ -268,7 +278,7 @@
                     
                     <!-- Network Architecture (Read-Only) -->
                     <div class="expert-section readonly-section">
-                        <h3>🏗️ Network Architecture (Read-Only)</h3>
+                        <h3 data-i18n="expertPanel.networkArchitecture">🏗️ Network Architecture (Read-Only)</h3>
                         <div class="param-group">
                             <label>Input Size: <span id="inputSizeDisplay">4</span></label>
                         </div>
@@ -289,6 +299,9 @@
         </div>
     </div>
     
+    <script src="locales/en.js"></script>
+    <script src="locales/it.js"></script>
+    <script src="i18n.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

@@ -17,6 +17,30 @@ let expertViewMode = false;
 let messageLog = [];
 let messageLogActive = false;
 
+// Internationalization helper function
+function t(key, replacements = []) {
+    if (typeof i18n !== 'undefined') {
+        return i18n.t(key, replacements);
+    }
+    // Fallback if i18n is not loaded yet
+    return key;
+}
+
+// Listen for language changes and update view mode indicator
+document.addEventListener('languageChanged', function(event) {
+    // Update view mode indicator when language changes
+    const indicator = document.getElementById('viewModeIndicator');
+    if (indicator) {
+        indicator.textContent = expertViewMode ? t('system.viewMode.expert') : t('system.viewMode.student');
+    }
+    
+    // Update current step message if it's the default ready message
+    const currentStep = document.getElementById('currentStep');
+    if (currentStep && currentStep.textContent.includes('Ready!')) {
+        currentStep.textContent = t('system.ready');
+    }
+});
+
 // ============================================================================
 // ACTIVATION FUNCTIONS - Centralized implementations
 // ============================================================================
@@ -313,17 +337,13 @@ function toggleExpertViewMode() {
     // Update view mode indicator in sidebar
     const indicator = document.getElementById('viewModeIndicator');
     if (indicator) {
-        indicator.textContent = expertViewMode ? '🎓 Expert View' : '👁️ Student View';
+        indicator.textContent = expertViewMode ? t('system.viewMode.expert') : t('system.viewMode.student');
         indicator.className = expertViewMode ? 'view-mode-indicator expert' : 'view-mode-indicator';
     }
     
     updateStepInfoDual(
-        `🎓 <strong>${expertViewMode ? 'Expert' : 'Student'} view ${status}!</strong><br>
-        ${expertViewMode ? '📊 Ready for detailed mathematical explanations with equations and technical details!' : '🌈 Ready for your learning adventure with simple, fun explanations!'}<br>
-        <em>All messages will now be shown in ${expertViewMode ? 'expert' : 'student'} mode.</em>`,
-        `🎓 <strong>${expertViewMode ? 'Expert' : 'Student'} view ${status}!</strong><br>
-        ${expertViewMode ? '📊 Ready for detailed mathematical explanations with equations and technical details!' : '🌈 Ready for your learning adventure with simple, fun explanations!'}<br>
-        <em>All messages will now be shown in ${expertViewMode ? 'expert' : 'student'} mode.</em>`
+        expertViewMode ? t('viewMode.expertEnabled') : t('viewMode.studentEnabled'),
+        expertViewMode ? t('viewMode.expertEnabled') : t('viewMode.studentEnabled')
     );
     console.log(`Expert view mode: ${status}`);
 }
@@ -1991,11 +2011,13 @@ async function runForwardPass() {
     document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
     
     updateStepInfoDual(
-        "🧠 <strong>Let's Watch the AI Think!</strong><br>🎬 Time to see how artificial intelligence really works! Like watching a student solve a puzzle, our AI will look at the picture, think about what it sees, and make its best guess. Ready to peek inside an AI brain?",
-        `🧠 <strong>Forward Propagation Started</strong><br>
-         🔢 Computing network output using current weights:<br>
-         ${formatMatrix(weights.inputToHidden, 'W₁ (Input→Hidden)')}<br>
-         ${formatMatrix(weights.hiddenToOutput, 'W₂ (Hidden→Output)')}`
+        t('forward.student.start'),
+        t('forward.expert.start', [
+            formatMatrix(weights.inputToHidden, 'W₁ (Input→Hidden)'),
+            formatMatrix(weights.hiddenToOutput, 'W₂ (Hidden→Output)'),
+            expertConfig.hiddenActivation,
+            expertConfig.outputActivation
+        ])
     );
     highlightSection('forward');
     await sleep(1000);
