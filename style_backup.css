@@ -1,0 +1,553 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    color: white;
+    margin-bottom: 10px;
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.container > p {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 30px;
+    font-size: 1.1em;
+}
+
+.visualization-area {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: grid;
+    grid-template-columns: 250px 1fr 300px;
+    gap: 30px;
+    min-height: 500px;
+    align-items: start;
+}
+
+.input-section {
+    text-align: center;
+}
+
+.input-section h3 {
+    margin-bottom: 15px;
+    color: #4a5568;
+}
+
+.image-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.img-btn {
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.img-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.img-btn.selected {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.current-step {
+    margin-top: 15px;
+    padding: 12px;
+    background: #f7fafc;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    color: #4a5568;
+    font-size: 0.9em;
+    font-weight: bold;
+    text-align: left;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+#inputImage {
+    border: 3px solid #e2e8f0;
+    border-radius: 8px;
+    image-rendering: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+
+.network-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.operation-banner {
+    text-align: center;
+    margin-bottom: 20px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.operation-box {
+    background: rgba(102, 126, 234, 0.9);
+    color: white;
+    border: 2px solid white;
+    border-radius: 8px;
+    padding: 12px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    text-align: center;
+    animation: fadeIn 0.3s ease-in;
+    display: inline-block;
+}
+
+.operation-title {
+    font-weight: bold;
+    color: white;
+    font-size: 1.2em;
+    margin-bottom: 5px;
+}
+
+.operation-desc {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+.neuron {
+    fill: #e2e8f0;
+    stroke: #cbd5e0;
+    stroke-width: 2;
+    transition: all 0.3s ease;
+}
+
+.neuron.active {
+    fill: #ffd89b;
+    stroke: #f6ad55;
+    stroke-width: 3;
+    filter: drop-shadow(0 0 10px rgba(246, 173, 85, 0.7));
+}
+
+.neuron.forward-active {
+    fill: #c6f6d5;
+    stroke: #48bb78;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 12px rgba(72, 187, 120, 0.8));
+    animation: neuronPulse 0.6s ease-in-out;
+}
+
+.neuron.backward-active {
+    fill: #fed7d7;
+    stroke: #e53e3e;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 12px rgba(229, 62, 62, 0.8));
+    animation: neuronPulse 0.6s ease-in-out;
+}
+
+.neuron-value {
+    fill: #1a202c;
+    font-size: 12px;
+    font-weight: bold;
+    text-anchor: middle;
+    dominant-baseline: central;
+    transition: all 0.3s ease;
+    stroke: #ffffff;
+    stroke-width: 1px;
+    paint-order: stroke fill;
+}
+
+.neuron.active .neuron-value {
+    fill: #1a202c;
+    stroke: #ffffff;
+    stroke-width: 1px;
+}
+
+
+.connection-line {
+    stroke: #cbd5e0;
+    stroke-width: 2;
+    transition: stroke-width 0.3s ease, stroke 0.3s ease;
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+.connection-line.active {
+    stroke: #f6ad55;
+    stroke-width: 4;
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(246, 173, 85, 0.6));
+}
+
+.connection-line.forward-pass {
+    stroke: #48bb78;
+    stroke-width: 4;
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(72, 187, 120, 0.8));
+    animation: forwardFlow 0.8s ease-in-out;
+}
+
+.connection-line.backward-pass {
+    stroke: #e53e3e;
+    stroke-width: 4;
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(229, 62, 62, 0.8));
+    animation: backwardFlow 0.8s ease-in-out;
+}
+
+.connection-line.positive {
+    stroke: #48bb78;
+}
+
+.connection-line.negative {
+    stroke: #f56565;
+}
+
+.weight-value {
+    fill: #4a5568;
+    font-size: 10px;
+    font-weight: bold;
+    text-anchor: middle;
+    dominant-baseline: central;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.weight-value.show {
+    opacity: 0.6;
+}
+
+.weight-value.weight-hover {
+    opacity: 1 !important;
+}
+
+.layer-label {
+    fill: #4a5568;
+    font-size: 14px;
+    font-weight: bold;
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+.controls-section {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.label-selection h3,
+.prediction-result h3 {
+    margin-bottom: 15px;
+    color: #4a5568;
+    text-align: center;
+}
+
+.label-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.label-btn {
+    padding: 12px 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.label-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.label-btn.selected {
+    background: #48bb78;
+    color: white;
+    border-color: #48bb78;
+}
+
+.selected-label {
+    text-align: center;
+    padding: 10px;
+    background: #f7fafc;
+    border-radius: 6px;
+    color: #4a5568;
+    font-weight: bold;
+}
+
+.prediction-display {
+    background: #f7fafc;
+    border-radius: 10px;
+    padding: 20px;
+    border: 3px solid #e2e8f0;
+    transition: all 0.5s ease;
+}
+
+.prob-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.prob-label {
+    width: 60px;
+    font-weight: bold;
+    color: #4a5568;
+}
+
+.prob-fill {
+    flex: 1;
+    height: 20px;
+    border-radius: 10px;
+    background: #e2e8f0;
+    position: relative;
+    overflow: hidden;
+}
+
+.prob-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: #48bb78;
+    width: 0%;
+    transition: width 0.5s ease;
+    border-radius: 10px;
+}
+
+.not-dog-bar .prob-fill::after {
+    background: #f56565;
+}
+
+.prob-value {
+    width: 40px;
+    font-weight: bold;
+    color: #4a5568;
+}
+
+
+.controls {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.controls button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#startBtn {
+    background: linear-gradient(45deg, #48bb78, #38a169);
+    color: white;
+}
+
+#startBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+}
+
+#resetBtn {
+    background: linear-gradient(45deg, #718096, #4a5568);
+    color: white;
+}
+
+#resetBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(113, 128, 150, 0.4);
+}
+
+#resetWeightsBtn {
+    background: linear-gradient(45deg, #e53e3e, #c53030);
+    color: white;
+    font-size: 0.9em;
+}
+
+#resetWeightsBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(229, 62, 62, 0.4);
+}
+
+#testBtn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    font-size: 0.9em;
+}
+
+#testBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+#trainBtn {
+    background: linear-gradient(45deg, #48bb78, #38a169);
+    color: white;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+#trainBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+}
+
+.speed-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.speed-control label {
+    color: #4a5568;
+    font-weight: bold;
+}
+
+#speedSlider {
+    width: 100px;
+}
+
+
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.neuron.pulsing {
+    animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes flow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+.connection.flowing {
+    background: linear-gradient(90deg, #cbd5e0, #f6ad55, #cbd5e0);
+    background-size: 200% 200%;
+    animation: flow 0.8s ease-in-out;
+}
+
+.backprop-animation .connection {
+    background: linear-gradient(90deg, #f56565, #ff9999, #f56565);
+    background-size: 200% 200%;
+    animation: flow 0.8s ease-in-out reverse;
+}
+
+.weight-update {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #e53e3e;
+    font-size: 10px;
+    font-weight: bold;
+    opacity: 0;
+    animation: weightUpdate 1s ease-in-out;
+}
+
+@keyframes weightUpdate {
+    0% { opacity: 0; transform: translateX(-50%) translateY(0); }
+    50% { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}
+
+@keyframes forwardFlow {
+    0% { stroke-dasharray: 10 10; stroke-dashoffset: 0; }
+    100% { stroke-dasharray: 10 10; stroke-dashoffset: -20; }
+}
+
+@keyframes backwardFlow {
+    0% { stroke-dasharray: 10 10; stroke-dashoffset: -20; }
+    100% { stroke-dasharray: 10 10; stroke-dashoffset: 0; }
+}
+
+@keyframes neuronPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.layer-highlight {
+    background: rgba(72, 187, 120, 0.1);
+    border-radius: 50px;
+    padding: 10px;
+    margin: -10px;
+    transition: all 0.3s ease;
+}
+
+#dogProbBar {
+    background: #48bb78;
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease;
+    border-radius: 10px;
+}
+
+#notDogProbBar {
+    background: #f56565;
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease;
+    border-radius: 10px;
+}

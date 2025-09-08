@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Learning Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <h1>🧠 How AI Recognizes Images</h1>
+            <p>Watch a neural network learn to identify objects step by step! This is how modern AI systems like image recognition work.</p>
+        </header>
+        
+        <div class="app-layout">
+            <!-- Compact Left Panel -->
+            <div class="left-panel">
+                <!-- Image & Controls in one compact section -->
+                <div class="compact-section">
+                    <h3>📸 Image & Controls</h3>
+                    <canvas id="inputImage" width="140" height="140"></canvas>
+                    <div class="image-selector">
+                        <button class="img-btn selected" onclick="selectImage('dog1')">🐕</button>
+                        <button class="img-btn" onclick="selectImage('dog2')">🐕</button>
+                        <button class="img-btn" onclick="selectImage('dog3')">🐕</button>
+                        <button class="img-btn" onclick="selectImage('cat')">🐱</button>
+                        <button class="img-btn" onclick="selectImage('bird')">🐦</button>
+                        <button class="img-btn" onclick="selectImage('fish')">🐟</button>
+                        <button class="img-btn" onclick="selectImage('car')">🚗</button>
+                        <button class="img-btn" onclick="selectImage('tree')">🌳</button>
+                    </div>
+                    
+                    <!-- Compact teaching buttons -->
+                    <div class="compact-teaching">
+                        <label>🎓 Correct Answer:</label>
+                        <div class="label-buttons">
+                            <button id="labelDog" class="label-btn" onclick="setTrueLabel('dog')">🐕 Dog</button>
+                            <button id="labelNotDog" class="label-btn" onclick="setTrueLabel('not-dog')">❌ Not Dog</button>
+                        </div>
+                        <div class="selected-label" id="selectedLabel">Auto-selected</div>
+                    </div>
+                </div>
+                
+                <!-- Main Controls -->
+                <div class="main-controls">
+                    <div class="action-buttons">
+                        <button id="forwardBtn" onclick="runForwardPass()" class="action-btn think-btn" disabled title="See how the AI processes the image">🧠 Think</button>
+                        <button id="backwardBtn" onclick="runBackwardPass()" class="action-btn learn-btn" disabled title="Watch the AI learn from its mistake">📚 Learn</button>
+                        <button id="fullDemoBtn" onclick="startFullDemo()" class="action-btn demo-btn" title="Complete thinking + learning process">🚀 Full Demo</button>
+                    </div>
+                    
+                    <div class="control-buttons">
+                        <button id="trainBtn" onclick="trainToPerfection()" class="control-btn" title="Instantly train to perfect accuracy">🎯 Auto-Train</button>
+                        <button id="resetWeightsBtn" onclick="resetWeights()" class="control-btn" title="Reset the AI's memory">🔄 Reset</button>
+                        <button id="whatIfBtn" onclick="toggleWeightSliders()" class="control-btn" title="Explore how changing weights affects predictions">🔧 What If?</button>
+                        <button id="pixelViewerBtn" onclick="openPixelViewer()" class="control-btn" title="Learn how images become numbers">🔍 Pixels</button>
+                    </div>
+                </div>
+                
+                <!-- Speed control -->
+                <div class="speed-compact">
+                    <label>⚡</label>
+                    <input type="range" id="speedSlider" min="1" max="10" value="5">
+                </div>
+                
+                <!-- Tutorial overlay -->
+                <div id="tutorialStep" class="tutorial-overlay" style="display: none;">
+                    <div class="tutorial-content">
+                        <div class="tutorial-title" id="tutorialTitle">Step 1</div>
+                        <div class="tutorial-text" id="tutorialText">Welcome!</div>
+                        <div class="tutorial-actions">
+                            <button id="tutorialNextBtn" onclick="nextTutorialStep()" class="tutorial-next">Next →</button>
+                            <button id="tutorialSkipBtn" onclick="skipTutorial()" class="tutorial-skip">Skip</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center - Neural Network Visualization -->
+            <div class="network-area">
+                <svg id="networkSvg" width="700" height="380">
+                    <!-- Network will be drawn here -->
+                </svg>
+                <div class="current-step" id="currentStep">🎮 Ready! Pick "Think", "Learn", or "Full Demo"</div>
+            </div>
+            
+            <!-- Right Panel - Results -->
+            <div class="right-panel">
+                <div class="results-section">
+                    <h3>🎯 AI's Guess</h3>
+                    <div class="prediction-display" id="predictionDisplay">
+                        <div class="prob-bar dog-bar">
+                            <span class="prob-label">Dog</span>
+                            <div class="prob-fill" id="dogProbBar"></div>
+                            <span class="prob-value" id="dogProbValue">0%</span>
+                        </div>
+                        <div class="prob-bar not-dog-bar">
+                            <span class="prob-label">Not Dog</span>
+                            <div class="prob-fill" id="notDogProbBar"></div>
+                            <span class="prob-value" id="notDogProbValue">0%</span>
+                        </div>
+                    </div>
+                    <div class="confidence-meter">
+                        <div class="confidence-label">Confidence:</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidenceFill"></div>
+                        </div>
+                        <div class="confidence-value" id="confidenceValue">0%</div>
+                    </div>
+                </div>
+                
+                <div class="legend-compact">
+                    <h4>🔗 How it works:</h4>
+                    <p><strong>📥 Input:</strong> Abstract features (A, B, C, D)</p>
+                    <p><strong>🧠 Hidden:</strong> Combines features using math</p>
+                    <p><strong>🎯 Output:</strong> Final decision (Dog vs Not Dog)</p>
+                    <p><strong>🔢 Numbers:</strong> Connection weights = AI's memory</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pixel Viewer Modal -->
+    <div id="pixelViewerModal" class="modal" style="display: none;">
+        <div class="modal-content pixel-viewer-content">
+            <div class="modal-header">
+                <h2>🔍 How Images Become Pixels</h2>
+                <button class="modal-close" onclick="closePixelViewer()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="compact-pixel-flow">
+                    <!-- Main pixel processing flow -->
+                    <div class="pixel-processing-flow">
+                        <div class="original-image-section">
+                            <h3>📸 Original Image</h3>
+                            <canvas id="originalImageCanvas" width="140" height="140"></canvas>
+                        </div>
+                        
+                        <div class="flow-arrow">→</div>
+                        
+                        <div class="pixel-grid-section">
+                            <h3>🔍 8×8 Pixels</h3>
+                            <canvas id="pixelGridCanvas" width="140" height="140"></canvas>
+                            <div class="pixel-info" id="pixelInfo">Hover over pixels!</div>
+                        </div>
+                        
+                        <div class="flow-arrow">→</div>
+                        
+                        <div class="pattern-extraction">
+                            <h3>🧠 Pattern Values</h3>
+                            <div class="pattern-neurons-vertical">
+                                <div class="pattern-neuron-compact" data-pattern="A" onmouseover="highlightPixelRegions('A')" onmouseout="clearHighlight()">
+                                    <div class="neuron-circle pattern-a">
+                                        <div class="neuron-label">A</div>
+                                        <div class="neuron-value" id="patternAValue">0.90</div>
+                                    </div>
+                                    <div class="pattern-calc" id="patternACalc">Top-left</div>
+                                </div>
+                                
+                                <div class="pattern-neuron-compact" data-pattern="B" onmouseover="highlightPixelRegions('B')" onmouseout="clearHighlight()">
+                                    <div class="neuron-circle pattern-b">
+                                        <div class="neuron-label">B</div>
+                                        <div class="neuron-value" id="patternBValue">0.90</div>
+                                    </div>
+                                    <div class="pattern-calc" id="patternBCalc">Top-right</div>
+                                </div>
+                                
+                                <div class="pattern-neuron-compact" data-pattern="C" onmouseover="highlightPixelRegions('C')" onmouseout="clearHighlight()">
+                                    <div class="neuron-circle pattern-c">
+                                        <div class="neuron-label">C</div>
+                                        <div class="neuron-value" id="patternCValue">0.10</div>
+                                    </div>
+                                    <div class="pattern-calc" id="patternCCalc">Bottom-left</div>
+                                </div>
+                                
+                                <div class="pattern-neuron-compact" data-pattern="D" onmouseover="highlightPixelRegions('D')" onmouseout="clearHighlight()">
+                                    <div class="neuron-circle pattern-d">
+                                        <div class="neuron-label">D</div>
+                                        <div class="neuron-value" id="patternDValue">0.10</div>
+                                    </div>
+                                    <div class="pattern-calc" id="patternDCalc">Bottom-right</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="intuition-box">
+                        <h3>💡 The Big Idea</h3>
+                        <p>Computers can't "see" images like we do. They only understand numbers! So we convert every image into a grid of numbers representing brightness. The AI learns patterns in these numbers to recognize different objects.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
