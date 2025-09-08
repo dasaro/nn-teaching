@@ -129,4 +129,10 @@ If images don't load:
 
 ---
 
+## ⚠️ Disclaimer
+
+Since this project was mostly "vibe coded" for educational purposes, it may contain errors or inconsistencies. While the core neural network concepts are sound, some implementation details may not follow strict mathematical precision in favor of visual clarity and pedagogical effectiveness.
+
+---
+
 Built with ❤️ for AI education. No frameworks, no dependencies, just pure JavaScript and educational value!
