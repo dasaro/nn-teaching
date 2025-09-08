@@ -1366,7 +1366,19 @@ function selectImage(imageType) {
     
     // Update button states
     document.querySelectorAll('.img-btn').forEach(btn => btn.classList.remove('selected'));
-    event.target.classList.add('selected');
+    
+    // Handle both programmatic calls and user clicks
+    if (typeof event !== 'undefined' && event.target) {
+        event.target.classList.add('selected');
+    } else {
+        // For programmatic calls, find the button by its onclick attribute
+        const buttons = document.querySelectorAll('.img-btn');
+        buttons.forEach(btn => {
+            if (btn.onclick && btn.onclick.toString().includes(`'${imageType}'`)) {
+                btn.classList.add('selected');
+            }
+        });
+    }
     
     // Create new image with new activations
     createImage(imageType);
@@ -2239,14 +2251,16 @@ async function displayResult() {
     
     updateStepInfo(`${statusEmoji} The AI's final answer: "${prediction}" with ${confidence.toFixed(1)}% confidence. ${statusText} ${isCorrect ? 'Great job!' : 'It will learn from this mistake!'}`);
     
-    // Highlight the prediction result visually
+    // Highlight the prediction result visually (only if element exists)
     const predictionDisplay = document.getElementById('predictionDisplay');
-    if (isCorrect) {
-        predictionDisplay.style.borderColor = '#10b981';
-        predictionDisplay.style.backgroundColor = '#ecfdf5';
-    } else {
-        predictionDisplay.style.borderColor = '#ef4444';
-        predictionDisplay.style.backgroundColor = '#fef2f2';
+    if (predictionDisplay) {
+        if (isCorrect) {
+            predictionDisplay.style.borderColor = '#10b981';
+            predictionDisplay.style.backgroundColor = '#ecfdf5';
+        } else {
+            predictionDisplay.style.borderColor = '#ef4444';
+            predictionDisplay.style.backgroundColor = '#fef2f2';
+        }
     }
     
     // Update debug console if open
