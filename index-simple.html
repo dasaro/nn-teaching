@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Dog Classifier - Simple Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .section {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .image-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .img-btn {
+            background: #e2e8f0;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .img-btn:hover {
+            background: #cbd5e0;
+            transform: translateY(-1px);
+        }
+
+        .img-btn.selected {
+            background: #4299e1;
+            color: white;
+            border-color: #3182ce;
+        }
+
+        .image-display {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        #inputImage {
+            border: 3px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .feature-item {
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .feature-value {
+            font-weight: bold;
+            color: #4299e1;
+        }
+
+        #networkSvg {
+            width: 100%;
+            height: 300px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .probability-bars {
+            margin: 1rem 0;
+        }
+
+        .prob-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            gap: 10px;
+        }
+
+        .prob-bar-bg {
+            flex: 1;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .prob-bar-fill {
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+        }
+
+        .dog-prob {
+            background: linear-gradient(90deg, #48bb78, #38a169);
+        }
+
+        .not-dog-prob {
+            background: linear-gradient(90deg, #f56565, #e53e3e);
+        }
+
+        .prediction-box {
+            background: white;
+            border: 3px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .prediction-box.dog {
+            border-color: #48bb78;
+            color: #48bb78;
+        }
+
+        .prediction-box.not-dog {
+            border-color: #f56565;
+            color: #f56565;
+        }
+
+        .controls {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            margin: 0 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .neuron {
+            fill: #e2e8f0;
+            stroke: #cbd5e0;
+            stroke-width: 2;
+            transition: all 0.3s;
+        }
+
+        .neuron.active {
+            fill: #4299e1;
+            stroke: #3182ce;
+        }
+
+        .connection {
+            stroke: #cbd5e0;
+            stroke-width: 1;
+            opacity: 0.6;
+            transition: all 0.3s;
+        }
+
+        .connection.active {
+            stroke: #4299e1;
+            stroke-width: 3;
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐕 Neural Network Dog Classifier</h1>
+            <p>Watch how AI learns to recognize dogs through interactive visualization</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Input Section -->
+            <div class="section">
+                <h2>📥 Input Image</h2>
+                
+                <div class="image-buttons">
+                    <h3>Dogs:</h3>
+                    <button class="img-btn selected" onclick="selectImage('dog1')">🐕 Golden Retriever</button>
+                    <button class="img-btn" onclick="selectImage('dog2')">🐕 German Shepherd</button>
+                    <button class="img-btn" onclick="selectImage('dog3')">🐕 Bulldog</button>
+                </div>
+                
+                <div class="image-buttons">
+                    <h3>Not Dogs:</h3>
+                    <button class="img-btn" onclick="selectImage('cat')">🐱 Cat</button>
+                    <button class="img-btn" onclick="selectImage('bird')">🐦 Bird</button>
+                    <button class="img-btn" onclick="selectImage('car')">🚗 Car</button>
+                </div>
+
+                <div class="image-display">
+                    <canvas id="inputImage" width="200" height="200"></canvas>
+                </div>
+
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <span>Pattern A:</span>
+                        <span class="feature-value" id="input-value-0">0.90</span>
+                    </div>
+                    <div class="feature-item">
+                        <span>Pattern B:</span>
+                        <span class="feature-value" id="input-value-1">0.90</span>
+                    </div>
+                    <div class="feature-item">
+                        <span>Pattern C:</span>
+                        <span class="feature-value" id="input-value-2">0.10</span>
+                    </div>
+                    <div class="feature-item">
+                        <span>Pattern D:</span>
+                        <span class="feature-value" id="input-value-3">0.10</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Section -->
+            <div class="section">
+                <h2>🧠 Neural Network</h2>
+                <svg id="networkSvg" width="100%" height="300"></svg>
+            </div>
+
+            <!-- Results Section -->
+            <div class="section">
+                <h2>📊 Results</h2>
+                
+                <div class="probability-bars">
+                    <div class="prob-bar">
+                        <span>🐕 Dog:</span>
+                        <div class="prob-bar-bg">
+                            <div class="prob-bar-fill dog-prob" id="dogProbBar" style="width: 50%"></div>
+                        </div>
+                        <span id="dogProbValue">50%</span>
+                    </div>
+                    <div class="prob-bar">
+                        <span>🚫 Not Dog:</span>
+                        <div class="prob-bar-bg">
+                            <div class="prob-bar-fill not-dog-prob" id="notDogProbBar" style="width: 50%"></div>
+                        </div>
+                        <span id="notDogProbValue">50%</span>
+                    </div>
+                </div>
+
+                <div class="prediction-box" id="predictionBox">
+                    <span>Prediction:</span> <span id="finalPrediction">Unknown</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="control-btn" onclick="startDemo()" id="startBtn">🚀 Start Demo</button>
+                <button class="control-btn" onclick="resetDemo()">🔄 Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple Neural Network Demo - Monolithic Version
+        let isAnimating = false;
+        let currentImage = 'dog1';
+        
+        // Network configuration
+        const networkConfig = {
+            inputSize: 4,
+            hiddenSize: 4,
+            outputSize: 2
+        };
+        
+        // Neural network weights and activations
+        let weights = {
+            inputToHidden: [],
+            hiddenToOutput: []
+        };
+        
+        let activations = {
+            input: [],
+            hidden: [],
+            output: []
+        };
+
+        // Image data - simplified patterns
+        const imageData = {
+            'dog1': [0.9, 0.9, 0.1, 0.1],   // Strong dog patterns
+            'dog2': [0.8, 0.85, 0.15, 0.2],
+            'dog3': [0.95, 0.8, 0.05, 0.25],
+            'cat': [0.2, 0.3, 0.8, 0.7],     // Strong non-dog patterns
+            'bird': [0.1, 0.4, 0.9, 0.6],
+            'car': [0.15, 0.1, 0.85, 0.9]
+        };
+
+        // Initialize the network
+        function initializeNetwork() {
+            console.log('🎯 Initializing neural network...');
+            
+            // Initialize weights randomly
+            weights.inputToHidden = [];
+            for (let i = 0; i < networkConfig.inputSize; i++) {
+                weights.inputToHidden[i] = [];
+                for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                    weights.inputToHidden[i][j] = (Math.random() - 0.5) * 2;
+                }
+            }
+            
+            weights.hiddenToOutput = [];
+            for (let i = 0; i < networkConfig.hiddenSize; i++) {
+                weights.hiddenToOutput[i] = [];
+                for (let j = 0; j < networkConfig.outputSize; j++) {
+                    weights.hiddenToOutput[i][j] = (Math.random() - 0.5) * 2;
+                }
+            }
+            
+            // Create the visual network
+            createNetworkVisualization();
+            
+            // Initialize with first image
+            selectImage('dog1');
+            
+            console.log('✅ Network initialized successfully');
+        }
+
+        // Create network visualization
+        function createNetworkVisualization() {
+            const svg = document.getElementById('networkSvg');
+            svg.innerHTML = '';
+            
+            const width = 300;
+            const height = 300;
+            const layers = [networkConfig.inputSize, networkConfig.hiddenSize, networkConfig.outputSize];
+            const layerSpacing = width / (layers.length + 1);
+            
+            let neurons = [];
+            
+            // Create neurons for each layer
+            layers.forEach((layerSize, layerIndex) => {
+                const x = layerSpacing * (layerIndex + 1);
+                const neuronSpacing = height / (layerSize + 1);
+                
+                neurons[layerIndex] = [];
+                
+                for (let i = 0; i < layerSize; i++) {
+                    const y = neuronSpacing * (i + 1);
+                    
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', x);
+                    circle.setAttribute('cy', y);
+                    circle.setAttribute('r', 15);
+                    circle.classList.add('neuron');
+                    circle.id = `neuron-${layerIndex}-${i}`;
+                    
+                    svg.appendChild(circle);
+                    neurons[layerIndex][i] = { x, y };
+                }
+            });
+            
+            // Create connections
+            for (let layer = 0; layer < layers.length - 1; layer++) {
+                for (let i = 0; i < layers[layer]; i++) {
+                    for (let j = 0; j < layers[layer + 1]; j++) {
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', neurons[layer][i].x);
+                        line.setAttribute('y1', neurons[layer][i].y);
+                        line.setAttribute('x2', neurons[layer + 1][j].x);
+                        line.setAttribute('y2', neurons[layer + 1][j].y);
+                        line.classList.add('connection');
+                        line.id = `connection-${layer}-${i}-${j}`;
+                        
+                        svg.appendChild(line);
+                    }
+                }
+            }
+        }
+
+        // Activation functions
+        function sigmoid(x) {
+            return 1 / (1 + Math.exp(-Math.max(-500, Math.min(500, x))));
+        }
+
+        function softmax(values) {
+            const maxVal = Math.max(...values);
+            const expVals = values.map(val => Math.exp(Math.min(val - maxVal, 700)));
+            const sumExp = expVals.reduce((sum, val) => sum + val, 0);
+            return expVals.map(val => val / sumExp);
+        }
+
+        // Select image
+        function selectImage(imageType) {
+            currentImage = imageType;
+            
+            // Update button selection
+            document.querySelectorAll('.img-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            
+            // Update input values
+            const values = imageData[imageType];
+            values.forEach((value, index) => {
+                document.getElementById(`input-value-${index}`).textContent = value.toFixed(2);
+            });
+            
+            // Draw image on canvas
+            drawImage(imageType);
+            
+            console.log(`🖼️ Selected image: ${imageType}`);
+        }
+
+        // Draw image representation
+        function drawImage(imageType) {
+            const canvas = document.getElementById('inputImage');
+            const ctx = canvas.getContext('2d');
+            const values = imageData[imageType];
+            
+            // Clear canvas
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, 200, 200);
+            
+            // Create a simple pattern based on the image type
+            const patterns = {
+                'dog1': () => drawDogPattern(ctx, '#8B4513', '#FFD700'),
+                'dog2': () => drawDogPattern(ctx, '#654321', '#000000'),
+                'dog3': () => drawDogPattern(ctx, '#F5DEB3', '#8B4513'),
+                'cat': () => drawCatPattern(ctx),
+                'bird': () => drawBirdPattern(ctx),
+                'car': () => drawCarPattern(ctx)
+            };
+            
+            if (patterns[imageType]) {
+                patterns[imageType]();
+            }
+        }
+
+        function drawDogPattern(ctx, color1, color2) {
+            // Dog face
+            ctx.fillStyle = color1;
+            ctx.fillRect(50, 60, 100, 80);
+            
+            // Ears
+            ctx.fillRect(30, 40, 30, 40);
+            ctx.fillRect(140, 40, 30, 40);
+            
+            // Eyes
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(70, 80, 15, 15);
+            ctx.fillRect(115, 80, 15, 15);
+            
+            // Nose
+            ctx.fillRect(95, 110, 10, 10);
+        }
+
+        function drawCatPattern(ctx) {
+            // Cat face
+            ctx.fillStyle = '#808080';
+            ctx.fillRect(60, 70, 80, 60);
+            
+            // Pointed ears
+            ctx.beginPath();
+            ctx.moveTo(50, 70);
+            ctx.lineTo(70, 40);
+            ctx.lineTo(90, 70);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(110, 70);
+            ctx.lineTo(130, 40);
+            ctx.lineTo(150, 70);
+            ctx.fill();
+            
+            // Eyes
+            ctx.fillStyle = '#00FF00';
+            ctx.fillRect(75, 85, 12, 12);
+            ctx.fillRect(113, 85, 12, 12);
+        }
+
+        function drawBirdPattern(ctx) {
+            // Bird body
+            ctx.fillStyle = '#4169E1';
+            ctx.fillRect(80, 90, 40, 60);
+            
+            // Wing
+            ctx.fillRect(120, 100, 30, 40);
+            
+            // Beak
+            ctx.fillStyle = '#FFA500';
+            ctx.fillRect(70, 95, 15, 8);
+        }
+
+        function drawCarPattern(ctx) {
+            // Car body
+            ctx.fillStyle = '#DC143C';
+            ctx.fillRect(40, 100, 120, 40);
+            
+            // Wheels
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(55, 140, 20, 20);
+            ctx.fillRect(125, 140, 20, 20);
+            
+            // Windows
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(50, 80, 100, 25);
+        }
+
+        // Forward propagation
+        function forwardPropagation() {
+            const inputValues = imageData[currentImage];
+            
+            // Set input activations
+            activations.input = [...inputValues];
+            
+            // Calculate hidden layer
+            activations.hidden = [];
+            for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                let sum = 0;
+                for (let i = 0; i < networkConfig.inputSize; i++) {
+                    sum += activations.input[i] * weights.inputToHidden[i][j];
+                }
+                activations.hidden[j] = sigmoid(sum);
+            }
+            
+            // Calculate output layer
+            let outputSums = [];
+            for (let k = 0; k < networkConfig.outputSize; k++) {
+                let sum = 0;
+                for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                    sum += activations.hidden[j] * weights.hiddenToOutput[j][k];
+                }
+                outputSums[k] = sum;
+            }
+            
+            activations.output = softmax(outputSums);
+            
+            return activations.output;
+        }
+
+        // Animate the demo
+        async function startDemo() {
+            if (isAnimating) return;
+            
+            console.log('🚀 Starting neural network demo...');
+            isAnimating = true;
+            document.getElementById('startBtn').disabled = true;
+            
+            try {
+                // Step 1: Highlight input
+                await animateInput();
+                
+                // Step 2: Forward propagation
+                const output = forwardPropagation();
+                await animateForwardProp();
+                
+                // Step 3: Show results
+                updateResults(output);
+                await animateResults();
+                
+                console.log('✅ Demo completed successfully');
+            } catch (error) {
+                console.error('❌ Error during demo:', error);
+            } finally {
+                isAnimating = false;
+                document.getElementById('startBtn').disabled = false;
+            }
+        }
+
+        async function animateInput() {
+            console.log('⚡ Animating input layer...');
+            
+            // Highlight input neurons
+            for (let i = 0; i < networkConfig.inputSize; i++) {
+                const neuron = document.getElementById(`neuron-0-${i}`);
+                neuron.classList.add('active');
+                await sleep(300);
+            }
+        }
+
+        async function animateForwardProp() {
+            console.log('🔄 Animating forward propagation...');
+            
+            // Animate input to hidden
+            for (let i = 0; i < networkConfig.inputSize; i++) {
+                for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                    const connection = document.getElementById(`connection-0-${i}-${j}`);
+                    connection.classList.add('active');
+                }
+            }
+            
+            await sleep(500);
+            
+            // Activate hidden neurons
+            for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                const neuron = document.getElementById(`neuron-1-${j}`);
+                neuron.classList.add('active');
+            }
+            
+            await sleep(300);
+            
+            // Animate hidden to output
+            for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                for (let k = 0; k < networkConfig.outputSize; k++) {
+                    const connection = document.getElementById(`connection-1-${j}-${k}`);
+                    connection.classList.add('active');
+                }
+            }
+            
+            await sleep(500);
+            
+            // Activate output neurons
+            for (let k = 0; k < networkConfig.outputSize; k++) {
+                const neuron = document.getElementById(`neuron-2-${k}`);
+                neuron.classList.add('active');
+            }
+        }
+
+        async function animateResults() {
+            console.log('📊 Animating results...');
+            await sleep(500);
+        }
+
+        function updateResults(output) {
+            const dogProb = Math.round(output[0] * 100);
+            const notDogProb = Math.round(output[1] * 100);
+            
+            // Update probability bars
+            document.getElementById('dogProbBar').style.width = dogProb + '%';
+            document.getElementById('notDogProbBar').style.width = notDogProb + '%';
+            document.getElementById('dogProbValue').textContent = dogProb + '%';
+            document.getElementById('notDogProbValue').textContent = notDogProb + '%';
+            
+            // Update prediction
+            const prediction = dogProb > notDogProb ? 'Dog' : 'Not Dog';
+            const predictionBox = document.getElementById('predictionBox');
+            document.getElementById('finalPrediction').textContent = prediction;
+            
+            predictionBox.className = 'prediction-box ' + (prediction === 'Dog' ? 'dog' : 'not-dog');
+            
+            console.log(`🎯 Prediction: ${prediction} (${Math.max(dogProb, notDogProb)}% confidence)`);
+        }
+
+        function resetDemo() {
+            console.log('🔄 Resetting demo...');
+            isAnimating = false;
+            
+            // Reset visual states
+            document.querySelectorAll('.neuron, .connection').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Reset results
+            document.getElementById('dogProbBar').style.width = '50%';
+            document.getElementById('notDogProbBar').style.width = '50%';
+            document.getElementById('dogProbValue').textContent = '50%';
+            document.getElementById('notDogProbValue').textContent = '50%';
+            document.getElementById('finalPrediction').textContent = 'Unknown';
+            document.getElementById('predictionBox').className = 'prediction-box';
+            
+            document.getElementById('startBtn').disabled = false;
+            
+            console.log('✅ Demo reset complete');
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 Neural Network Visualization - Simple Version');
+            console.log('🚀 Initializing application...');
+            
+            initializeNetwork();
+            
+            console.log('✅ Application ready!');
+        });
+    </script>
+</body>
+</html>

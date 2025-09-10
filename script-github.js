@@ -1,4 +1,12 @@
-// Simple Neural Network Learning Demo
+// ============================================================================
+// NEURAL NETWORK VISUALIZATION - GITHUB PAGES COMPATIBLE VERSION
+// ============================================================================
+// This version works without ES6 modules for file:// protocol compatibility
+// All required functions are available from script-bundled.js
+
+// ============================================================================
+// CORE APPLICATION STATE
+// ============================================================================
 let animationSpeed = 5;
 let isAnimating = false;
 let trueLabel = null; // 'dog' or 'not-dog'
@@ -47,79 +55,16 @@ document.addEventListener('languageChanged', function(event) {
 });
 
 // ============================================================================
-// ACTIVATION FUNCTIONS - Centralized implementations
+// ACTIVATION FUNCTIONS AND UTILITIES - Available via legacy bridge
+// ============================================================================
+// Note: These functions are now provided by utility modules and available
+// globally via the legacy bridge. Direct function definitions removed to
+// prevent duplication.
 // ============================================================================
 
-// Sigmoid activation function
-function sigmoid(x) {
-    return 1 / (1 + Math.exp(-Math.max(-500, Math.min(500, x)))); // Prevent overflow
-}
-
-// Sigmoid derivative
-function sigmoidDerivative(x) {
-    const s = sigmoid(x);
-    return s * (1 - s);
-}
-
-// Leaky ReLU activation function
-function leakyReLU(x, alpha = 0.1) {
-    return x > 0 ? x : alpha * x;
-}
-
-// Leaky ReLU derivative
-function leakyReLUDerivative(x, alpha = 0.1) {
-    return x > 0 ? 1 : alpha;
-}
-
-// Tanh activation function (wrapper for consistency)
-function tanhActivation(x) {
-    return Math.tanh(x);
-}
-
-// Tanh derivative
-function tanhDerivative(x) {
-    const t = Math.tanh(x);
-    return 1 - t * t;
-}
-
-// Softmax activation function
-function softmax(values) {
-    const maxVal = Math.max(...values);
-    const expVals = values.map(val => Math.exp(Math.min(val - maxVal, 700))); // Prevent overflow
-    const sumExp = expVals.reduce((sum, val) => sum + val, 0);
-    return expVals.map(val => val / sumExp);
-}
-
-// ============================================================================
-// END ACTIVATION FUNCTIONS
-// ============================================================================
-
-// ============================================================================
-// UTILITY FUNCTIONS - Centralized calculations
-// ============================================================================
-
-// Centralized accuracy calculation for binary classification
-function calculateBinaryAccuracy(predictedProbability, isDogActual) {
-    const predictedIsDog = predictedProbability > 0.5;
-    return predictedIsDog === isDogActual;
-}
-
-// Calculate accuracy for a dataset
-function calculateDatasetAccuracy(dataset, getOutputFunction) {
-    let correct = 0;
-    for (const example of dataset) {
-        const output = getOutputFunction(example.input);
-        const dogProb = Array.isArray(output) ? output[0] : output;
-        if (calculateBinaryAccuracy(dogProb, example.isDog)) {
-            correct++;
-        }
-    }
-    return correct / dataset.length;
-}
-
-// ============================================================================
-// END UTILITY FUNCTIONS
-// ============================================================================
+// All mathematical functions now available via MathUtils import
+// sleep function available via AnimationUtils import
+// No more duplicate functions needed!
 
 // ============================================================================
 // CENTRALIZED PARAMETER CONFIGURATION
@@ -195,146 +140,18 @@ function syncExpertConfigToLegacy() {
 // ============================================================================
 // EXPERT PANEL FUNCTIONALITY
 // ============================================================================
+// EXPERT PANEL FUNCTIONALITY - Available via ExpertPanel module
+// ============================================================================
+// Expert panel functions now provided by modules/expertPanel.js and available
+// globally via the legacy bridge. Direct function definitions removed to
+// prevent duplication.
+//
+// Available functions: toggleExpertPanel, openExpertPanel, closeExpertPanel,
+// initializeExpertPanelUI, updateExpertConfig, resetExpertDefaults, 
+// applyExpertConfig
+// ============================================================================
 
-// Expert panel state
-let expertPanelVisible = false;
-
-// Toggle Expert Panel
-function toggleExpertPanel() {
-    const modal = document.getElementById('expertPanelModal');
-    if (expertPanelVisible) {
-        closeExpertPanel();
-    } else {
-        openExpertPanel();
-    }
-}
-
-// Open Expert Panel
-function openExpertPanel() {
-    const modal = document.getElementById('expertPanelModal');
-    modal.style.display = 'flex';
-    expertPanelVisible = true;
-    
-    // Initialize UI with current expert config values
-    initializeExpertPanelUI();
-}
-
-// Close Expert Panel
-function closeExpertPanel() {
-    const modal = document.getElementById('expertPanelModal');
-    modal.style.display = 'none';
-    expertPanelVisible = false;
-}
-
-// Initialize Expert Panel UI with current values
-function initializeExpertPanelUI() {
-    // Activation functions
-    document.getElementById('hiddenActivation').value = expertConfig.hiddenActivation;
-    document.getElementById('outputActivation').value = expertConfig.outputActivation;
-    
-    // Training parameters
-    document.getElementById('learningRateSlider').value = expertConfig.learningRate;
-    document.getElementById('learningRateValue').textContent = expertConfig.learningRate.toFixed(3);
-    
-    document.getElementById('momentumSlider').value = expertConfig.momentum;
-    document.getElementById('momentumValue').textContent = expertConfig.momentum.toFixed(2);
-    
-    document.getElementById('l2RegSlider').value = expertConfig.l2Regularization;
-    document.getElementById('l2RegValue').textContent = expertConfig.l2Regularization.toFixed(4);
-    
-    document.getElementById('maxEpochsSlider').value = expertConfig.maxEpochs;
-    document.getElementById('maxEpochsValue').textContent = expertConfig.maxEpochs;
-    
-    // Activation function parameters
-    document.getElementById('leakyReLUAlpha').value = expertConfig.leakyReLUAlpha;
-    document.getElementById('leakyReLUAlphaValue').textContent = expertConfig.leakyReLUAlpha.toFixed(2);
-    
-    // Advanced settings
-    document.getElementById('adaptiveLearningRate').checked = expertConfig.adaptiveLearningRate;
-    
-    document.getElementById('batchSizeSlider').value = expertConfig.batchSize;
-    document.getElementById('batchSizeValue').textContent = expertConfig.batchSize;
-    
-    // Network architecture (read-only)
-    document.getElementById('inputSizeDisplay').textContent = expertConfig.inputSize;
-    document.getElementById('hiddenSizeDisplay').textContent = expertConfig.hiddenSize;
-    document.getElementById('outputSizeDisplay').textContent = expertConfig.outputSize;
-}
-
-// Update Expert Config
-function updateExpertConfig(parameter, value) {
-    expertConfig[parameter] = value;
-    
-    // Update corresponding display values
-    switch (parameter) {
-        case 'learningRate':
-            document.getElementById('learningRateValue').textContent = value.toFixed(3);
-            break;
-        case 'momentum':
-            document.getElementById('momentumValue').textContent = value.toFixed(2);
-            break;
-        case 'l2Regularization':
-            document.getElementById('l2RegValue').textContent = value.toFixed(4);
-            break;
-        case 'maxEpochs':
-            document.getElementById('maxEpochsValue').textContent = value;
-            break;
-        case 'leakyReLUAlpha':
-            document.getElementById('leakyReLUAlphaValue').textContent = value.toFixed(2);
-            break;
-        case 'batchSize':
-            document.getElementById('batchSizeValue').textContent = value;
-            break;
-    }
-    
-    console.log(`Expert parameter updated: ${parameter} = ${value}`);
-}
-
-// Reset Expert Panel to Defaults
-function resetExpertDefaults() {
-    expertConfig.hiddenActivation = 'leaky_relu';
-    expertConfig.outputActivation = 'softmax';
-    expertConfig.learningRate = 0.1;
-    expertConfig.momentum = 0.0;
-    expertConfig.l2Regularization = 0.0;
-    expertConfig.leakyReLUAlpha = 0.1;
-    expertConfig.adaptiveLearningRate = false;
-    expertConfig.batchSize = 1;
-    expertConfig.maxEpochs = 100;
-    
-    // Refresh UI
-    initializeExpertPanelUI();
-    
-    console.log('Expert parameters reset to defaults');
-}
-
-// Apply Expert Configuration and Restart Network
-function applyExpertConfig() {
-    console.log('🔧 Applying expert configuration...');
-    console.log('Expert Config:', expertConfig);
-    
-    // Enable expert view mode when expert panel is used
-    expertViewMode = true;
-    
-    // Sync to legacy networkConfig for compatibility
-    syncExpertConfigToLegacy();
-    
-    // Reset and reinitialize network with new parameters
-    resetWeights();
-    
-    // Update step info to reflect new configuration
-    updateStepInfoDual(
-        `⚙️ <strong>Expert Settings Applied!</strong><br>🔧 The neural network was restarted with ${expertConfig.hiddenActivation.replace('_', ' ')} activation and ${expertConfig.learningRate} learning rate. You're now in expert mode!`,
-        `⚙️ <strong>Expert Configuration Applied</strong><br>🔧 Network reinitialized: ${expertConfig.hiddenActivation.replace('_', ' ')} activation, η=${expertConfig.learningRate}. Expert view enabled.`
-    );
-    
-    // Close expert panel
-    closeExpertPanel();
-    
-    console.log('✅ Expert configuration applied successfully');
-}
-
-// Toggle Expert View Mode
+// Toggle Expert View Mode - Kept here as it's part of main UI state
 function toggleExpertViewMode() {
     expertViewMode = !expertViewMode;
     const status = expertViewMode ? 'enabled' : 'disabled';
@@ -354,158 +171,24 @@ function toggleExpertViewMode() {
 }
 
 // ============================================================================
-// END EXPERT PANEL FUNCTIONALITY
+// EXPERT PANEL INTEGRATION
 // ============================================================================
-
-// ============================================================================
-// DUAL-MODE MESSAGING SYSTEM
-// ============================================================================
-
-// Centralized message system for student vs expert explanations
-function updateStepInfoDual(studentMessage, expertMessage = null) {
-    const currentStep = document.getElementById('currentStep');
-    if (!currentStep) return;
-    
-    const messageToShow = expertViewMode && expertMessage ? expertMessage : studentMessage;
-    
-    // If message logging is active, accumulate messages
-    if (messageLogActive) {
-        messageLog.push({
-            timestamp: new Date().toLocaleTimeString(),
-            message: messageToShow,
-            type: expertViewMode ? 'expert' : 'student',
-            mode: expertViewMode ? 'Expert' : 'Student'
-        });
-        displayMessageLog();
-    } else {
-        currentStep.innerHTML = messageToShow;
-    }
-}
-
-// Start message accumulation (works for both student and expert)
-function startMessageLog() {
-    messageLog = [];
-    messageLogActive = true;
-    const currentStep = document.getElementById('currentStep');
-    const mode = expertViewMode ? 'Expert' : 'Student';
-    const icon = expertViewMode ? '📋' : '🎓';
-    const description = expertViewMode ? 'Mathematical Details' : 'Learning Adventure';
-    currentStep.innerHTML = `<div class="message-log-container"><div class="message-log-header">${icon} <strong>${mode} ${description}</strong> (Recording...)</div><div id="messageLogContent" class="message-log-content"></div></div>`;
-}
-
-// Stop message accumulation
-function stopMessageLog() {
-    messageLogActive = false;
-    if (messageLog.length > 0) {
-        const currentStep = document.getElementById('currentStep');
-        const mode = messageLog[0]?.mode || 'Student';
-        const icon = mode === 'Expert' ? '📋' : '🎓';
-        const description = mode === 'Expert' ? 'Complete Mathematical Analysis' : 'Complete Learning Adventure';
-        const finalMessage = `<div class="message-log-container"><div class="message-log-header">${icon} <strong>${description}</strong> ✅</div><div id="messageLogContent" class="message-log-content">` + 
-            messageLog.map(entry => `<div class="message-log-entry ${entry.type}"><span class="log-timestamp">[${entry.timestamp}]</span> ${entry.message}</div>`).join('') + 
-            `</div><div class="message-log-footer">${mode === 'Expert' ? '🎓 All mathematical steps preserved above' : '📖 Your complete AI learning story - review at your own pace!'}</div></div>`;
-        currentStep.innerHTML = finalMessage;
-    }
-}
-
-// Display accumulated messages
-function displayMessageLog() {
-    const logContent = document.getElementById('messageLogContent');
-    if (logContent && messageLog.length > 0) {
-        const lastEntry = messageLog[messageLog.length - 1];
-        const entryHtml = `<div class="message-log-entry ${lastEntry.type}"><span class="log-timestamp">[${lastEntry.timestamp}]</span> ${lastEntry.message}</div>`;
-        logContent.innerHTML += entryHtml;
-        // Auto-scroll to bottom
-        logContent.scrollTop = logContent.scrollHeight;
-    }
-}
-
-// Mathematical explanation helpers for expert mode
-function formatMatrix(matrix, name) {
-    let html = `<div class="math-matrix"><strong>${name}:</strong><br>`;
-    if (Array.isArray(matrix[0])) {
-        // 2D matrix
-        html += '[';
-        matrix.forEach((row, i) => {
-            html += '[' + row.map(val => val.toFixed(3)).join(', ') + ']';
-            if (i < matrix.length - 1) html += '<br> ';
-        });
-        html += ']';
-    } else {
-        // 1D vector
-        html += '[' + matrix.map(val => val.toFixed(3)).join(', ') + ']';
-    }
-    html += '</div>';
-    return html;
-}
-
-function formatOperation(operation, inputs, result, description) {
-    return `
-        <div class="math-operation">
-            <div class="op-title">🔢 <strong>${operation}</strong></div>
-            <div class="op-description">${description}</div>
-            <div class="op-calculation">
-                <strong>Input:</strong> ${inputs}<br>
-                <strong>Result:</strong> <span class="result-highlight">${result}</span>
-            </div>
-        </div>
-    `;
-}
+// Expert panel functions are now provided by legacy-bridge.js
 
 // ============================================================================
-// END DUAL-MODE MESSAGING SYSTEM  
+// MODULE INTEGRATION
 // ============================================================================
-
-// ============================================================================
-// RIGHT SIDEBAR FUNCTIONALITY
-// ============================================================================
-
-let autoScrollEnabled = true;
-
-// Clear message log
-function clearMessageLog() {
-    const messageContent = document.getElementById('currentStep');
-    if (messageContent) {
-        const resetMessage = expertViewMode ? 
-            '🗑️ <strong>Expert Sidebar Cleared</strong><br>📊 All previous mathematical analysis cleared. Ready for new detailed explanations!' :
-            '🗑️ <strong>Student Sidebar Cleared</strong><br>🎓 All previous lessons cleared. Ready for your next learning adventure!';
-        messageContent.innerHTML = resetMessage;
-    }
-    messageLog = [];
-    messageLogActive = false;
-}
-
-// Toggle auto-scroll
-function toggleAutoScroll() {
-    autoScrollEnabled = !autoScrollEnabled;
-    const button = event.target;
-    button.textContent = autoScrollEnabled ? '📜 Auto-scroll' : '📜 Manual';
-    button.title = autoScrollEnabled ? 'Disable auto-scroll' : 'Enable auto-scroll';
-    
-    if (autoScrollEnabled) {
-        scrollToBottom();
-    }
-}
-
-// Auto-scroll to bottom of messages
-function scrollToBottom() {
-    if (!autoScrollEnabled) return;
-    
-    const messageContent = document.getElementById('currentStep');
-    if (messageContent) {
-        messageContent.scrollTop = messageContent.scrollHeight;
-    }
-}
-
-// Enhanced updateStepInfoDual to handle sidebar scrolling
-const originalUpdateStepInfoDual = updateStepInfoDual;
-updateStepInfoDual = function(studentMessage, expertMessage = null) {
-    originalUpdateStepInfoDual(studentMessage, expertMessage);
-    setTimeout(scrollToBottom, 100);
-};
+// Expert panel, message system, and DOM utility functions are provided by legacy-bridge.js
 
 // ============================================================================
-// END RIGHT SIDEBAR FUNCTIONALITY  
+// UI CONTROLS SYSTEM - Available via UIController module
+// ============================================================================
+// UI control functions now provided by modules/uiController.js and available
+// globally via the legacy bridge. Existing function definitions kept as smart
+// fallbacks until loading order is optimized.
+//
+// Available functions: selectImage, setTrueLabel, startDemo, resetDemo,
+// toggleWeightSliders, openPixelViewer, quickAccuracyTest, etc.
 // ============================================================================
 
 // Tutorial system
@@ -545,54 +228,9 @@ let performanceMetrics = {
     lastLoss: 0
 };
 
-// DEBUG FUNCTION: Quick test for console - FULL 8 IMAGE TEST
+// MODULARIZED: Testing functions moved to modules/testingSuite.js
 function quickAccuracyTest() {
-    console.log('🧪 FULL 8-IMAGE ACCURACY TEST');
-    
-    // Test with ALL 8 images exactly like training does
-    const imageTypes = ['dog1', 'dog2', 'dog3', 'cat', 'bird', 'car', 'tree', 'fish'];
-    const testData = [];
-    
-    imageTypes.forEach(imageType => {
-        setVisualFeaturesAndLabel(imageType);
-        const isDog = imageType.startsWith('dog');
-        testData.push({
-            input: [...activations.input], // Copy input array
-            target: isDog ? [1, 0] : [0, 1],
-            isDog: isDog,
-            label: imageType
-        });
-    });
-    
-    console.log('📊 Current predictions for all 8 images:');
-    testData.forEach(ex => {
-        const output = forwardPropagationSilent(ex.input);
-        const predicted = output[0] > output[1] ? 'DOG' : 'NOT-DOG';
-        const isCorrect = (output[0] > output[1]) === ex.isDog;
-        const status = isCorrect ? '✅' : '❌';
-        console.log(`${ex.label}: [${output[0].toFixed(3)}, ${output[1].toFixed(3)}] → ${predicted} (actual: ${ex.isDog ? 'DOG' : 'NOT-DOG'}) ${status}`);
-    });
-    
-    const accuracy = testAccuracy(testData);
-    console.log(`\n🎯 Total accuracy: ${(accuracy * 100).toFixed(1)}% (${accuracy * testData.length}/${testData.length} correct)`);
-    
-    // Check for bias
-    let allPredictedDog = true;
-    let allPredictedNotDog = true;
-    testData.forEach(ex => {
-        const output = forwardPropagationSilent(ex.input);
-        const predicted = output[0] > output[1];
-        if (predicted) allPredictedNotDog = false;
-        if (!predicted) allPredictedDog = false;
-    });
-    
-    if (allPredictedDog) {
-        console.log('🚨 BIAS DETECTED: Network predicts EVERYTHING as DOG!');
-    } else if (allPredictedNotDog) {
-        console.log('🚨 BIAS DETECTED: Network predicts EVERYTHING as NOT-DOG!');
-    }
-    
-    return accuracy;
+    return TestingSuite.quickAccuracyTest({ activations, setVisualFeaturesAndLabel, forwardPropagationSilent, testAccuracy });
 }
 
 // Network structure optimized for stable learning - VISUAL FEATURES
@@ -603,11 +241,17 @@ const networkConfig = {
     learningRate: 0.1 // Conservative learning rate for better generalization
 };
 
+// Make networkConfig globally available for modules
+window.networkConfig = networkConfig;
+
 // Network weights
 let weights = {
     inputToHidden: [],
     hiddenToOutput: []
 };
+
+// Make weights globally available for modules
+window.weights = weights;
 
 // Network activations
 let activations = {
@@ -615,6 +259,9 @@ let activations = {
     hidden: [0, 0, 0, 0], // 4 hidden neurons - optimal for this task
     output: [0, 0]
 };
+
+// Make activations globally available for modules
+window.activations = activations;
 
 // Network positions for SVG drawing - optimized spacing with more vertical room
 const positions = {
@@ -639,6 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
+// MODULARIZED: Testing functions moved to modules/testingSuite.js
 function updateDebugConsole() {
     if (!debugConsoleVisible) return;
     
@@ -840,80 +488,19 @@ function initializeNetwork() {
     }
 }
 
-// Comprehensive weight initialization debugging
+// MODULARIZED: Testing functions moved to modules/testingSuite.js
 function debugWeightInitialization() {
-    console.log('📊 WEIGHT INITIALIZATION ANALYSIS:');
-    
-    // Analyze input->hidden weights
-    console.log('\n🔗 Input → Hidden Layer Weights:');
-    weights.inputToHidden.forEach((neuron, h) => {
-        const stats = calculateWeightStats(neuron);
-        console.log(`  Hidden[${h}]: min=${stats.min.toFixed(4)}, max=${stats.max.toFixed(4)}, mean=${stats.mean.toFixed(4)}, std=${stats.std.toFixed(4)}`);
-    });
-    
-    // Analyze hidden->output weights  
-    console.log('\n🔗 Hidden → Output Layer Weights:');
-    weights.hiddenToOutput.forEach((neuron, o) => {
-        const stats = calculateWeightStats(neuron);
-        console.log(`  Output[${o}]: min=${stats.min.toFixed(4)}, max=${stats.max.toFixed(4)}, mean=${stats.mean.toFixed(4)}, std=${stats.std.toFixed(4)}`);
-    });
-    
-    // Check for symmetry issues (major cause of convergence problems)
-    const inputSymmetry = checkWeightSymmetry(weights.inputToHidden);
-    const outputSymmetry = checkWeightSymmetry(weights.hiddenToOutput);
-    console.log(`\n⚖️ Symmetry Analysis (lower = more diverse):`);
-    console.log(`  Input layer symmetry: ${inputSymmetry.toFixed(6)}`);
-    console.log(`  Output layer symmetry: ${outputSymmetry.toFixed(6)}`);
-    
-    // Check weight distribution
-    const allInputWeights = weights.inputToHidden.flat();
-    const allOutputWeights = weights.hiddenToOutput.flat();
-    console.log(`\n📈 Overall Weight Distribution:`);
-    console.log(`  Input weights: ${allInputWeights.length} values, range [${Math.min(...allInputWeights).toFixed(4)}, ${Math.max(...allInputWeights).toFixed(4)}]`);
-    console.log(`  Output weights: ${allOutputWeights.length} values, range [${Math.min(...allOutputWeights).toFixed(4)}, ${Math.max(...allOutputWeights).toFixed(4)}]`);
-    
-    // Potential problem indicators
-    console.log(`\n⚠️ Potential Issues Check:`);
-    if (inputSymmetry < 0.01) console.log('  🚨 WARNING: Input weights may be too symmetric!');
-    if (outputSymmetry < 0.01) console.log('  🚨 WARNING: Output weights may be too symmetric!');
-    if (Math.abs(calculateWeightStats(allInputWeights).mean) > 0.02) console.log('  🚨 WARNING: Input weights have non-zero mean bias!');
-    if (Math.abs(calculateWeightStats(allOutputWeights).mean) > 0.02) console.log('  🚨 WARNING: Output weights have non-zero mean bias!');
+    return TestingSuite.debugWeightInitialization();
 }
 
-// Helper function to calculate comprehensive weight statistics
+// MODULARIZED: Helper functions moved to modules/testingSuite.js
 function calculateWeightStats(weightArray) {
-    const mean = weightArray.reduce((sum, w) => sum + w, 0) / weightArray.length;
-    const variance = weightArray.reduce((sum, w) => sum + Math.pow(w - mean, 2), 0) / weightArray.length;
-    const sortedWeights = [...weightArray].sort((a, b) => a - b);
-    
-    return {
-        min: Math.min(...weightArray),
-        max: Math.max(...weightArray),
-        mean: mean,
-        std: Math.sqrt(variance),
-        median: sortedWeights[Math.floor(sortedWeights.length / 2)],
-        range: Math.max(...weightArray) - Math.min(...weightArray)
-    };
+    return TestingSuite.calculateWeightStats(weightArray);
 }
 
-// Helper function to detect weight symmetry (major convergence issue indicator)
+// MODULARIZED: Helper functions moved to modules/testingSuite.js
 function checkWeightSymmetry(weightMatrix) {
-    if (weightMatrix.length < 2) return 0;
-    
-    let totalDifference = 0;
-    let comparisons = 0;
-    
-    // Compare each neuron's weights with every other neuron
-    for (let i = 0; i < weightMatrix.length - 1; i++) {
-        for (let j = i + 1; j < weightMatrix.length; j++) {
-            for (let k = 0; k < weightMatrix[i].length; k++) {
-                totalDifference += Math.abs(weightMatrix[i][k] - weightMatrix[j][k]);
-                comparisons++;
-            }
-        }
-    }
-    
-    return comparisons > 0 ? totalDifference / comparisons : 0;
+    return TestingSuite.checkWeightSymmetry(weightMatrix);
 }
 
 // Base64 embedded images - works with file:// protocol
@@ -928,574 +515,26 @@ const imageUrls = {
     tree: 'data:image/jpeg;base64,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'
 };
 
+// MODULARIZED: Image feature extraction moved to modules/imageGenerator.js
 function setVisualFeaturesAndLabel(imageType) {
-    // NUANCED feature patterns for better learning: [feature_A, feature_B, feature_C, feature_D]
-    // Dogs use mixed HIGH/LOW patterns, Non-dogs use different mixed patterns
-    // This gives 8 distinct, learnable combinations for 4 hidden units to distinguish
-    
-    switch(imageType) {
-        case 'dog1':
-            updateInputActivations([0.9, 0.9, 0.1, 0.1]); // Dog pattern: HIGH-HIGH-LOW-LOW
-            if (!preventAutoLabeling) setTrueLabel('dog');
-            break;
-        case 'dog2':
-            updateInputActivations([0.8, 0.7, 0.2, 0.3]); // Dog pattern: HIGH-HIGH-LOW-LOW (with variation)
-            if (!preventAutoLabeling) setTrueLabel('dog');
-            break;
-        case 'dog3':
-            updateInputActivations([0.7, 0.8, 0.3, 0.2]); // Dog pattern: HIGH-HIGH-LOW-LOW (with variation)
-            if (!preventAutoLabeling) setTrueLabel('dog');
-            break;
-        case 'cat':
-            updateInputActivations([0.1, 0.9, 0.1, 0.9]); // Non-dog pattern: LOW-HIGH-LOW-HIGH
-            if (!preventAutoLabeling) setTrueLabel('not-dog');
-            break;
-        case 'bird':
-            updateInputActivations([0.2, 0.8, 0.3, 0.7]); // Non-dog pattern: LOW-HIGH-LOW-HIGH (with variation)
-            if (!preventAutoLabeling) setTrueLabel('not-dog');
-            break;
-        case 'car':
-            updateInputActivations([0.3, 0.7, 0.2, 0.8]); // Non-dog pattern: LOW-HIGH-LOW-HIGH (with variation)
-            if (!preventAutoLabeling) setTrueLabel('not-dog');
-            break;
-        case 'tree':
-            updateInputActivations([0.9, 0.1, 0.9, 0.1]); // Non-dog pattern: HIGH-LOW-HIGH-LOW
-            if (!preventAutoLabeling) setTrueLabel('not-dog');
-            break;
-        case 'fish':
-            updateInputActivations([0.8, 0.2, 0.7, 0.3]); // Non-dog pattern: HIGH-LOW-HIGH-LOW (with variation)
-            if (!preventAutoLabeling) setTrueLabel('not-dog');
-            break;
-        default:
-            console.error('Unknown image type:', imageType);
-            updateInputActivations([0.1, 0.1, 0.1, 0.1]);
-            if (!preventAutoLabeling) setTrueLabel('not-dog');
-    }
-    console.log('🎯 Abstract patterns set for', imageType, '- [Pattern A, Pattern B, Pattern C, Pattern D]:', activations.input);
-    console.log('🎯 Pattern type:', imageType.startsWith('dog') ? 'DOG (HIGH-HIGH-LOW-LOW variants)' : 'NON-DOG (alternating patterns)');
+    return ImageGenerator.setVisualFeaturesAndLabel(imageType);
 }
 
+// MODULARIZED: Image creation moved to modules/imageGenerator.js
 function createImage(imageType) {
-    const canvas = document.getElementById('inputImage');
-    // Optimize canvas for frequent getImageData operations
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    
-    // Clear canvas with loading state
-    ctx.fillStyle = '#f0f8ff';
-    ctx.fillRect(0, 0, 140, 140);
-    ctx.fillStyle = '#64748b';
-    ctx.font = '14px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Loading...', 70, 70);
-    
-    // Load stock photo
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = function() {
-        console.log(`✅ Successfully loaded image: ${imageType} from ${img.src}`);
-        
-        // Clear canvas and draw the loaded image
-        ctx.clearRect(0, 0, 140, 140);
-        ctx.drawImage(img, 0, 0, 140, 140);
-        
-        // Add a subtle border
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(1, 1, 138, 138);
-        
-        // Add success indicator
-        ctx.fillStyle = '#22c55e';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'right';
-        ctx.fillText('✓', 135, 15);
-        
-        // CRITICAL: Set visual features based on image type!
-        setVisualFeaturesAndLabel(imageType);
-    };
-    
-    img.onerror = function(error) {
-        console.error(`❌ Failed to load image: ${imageType} from ${img.src}`, error);
-        console.log(`Current page location: ${window.location.href}`);
-        console.log(`Image path: ${img.src}`);
-        
-        // Fallback to solid color with emoji if image fails to load
-        ctx.clearRect(0, 0, 140, 140);
-        ctx.fillStyle = getImageColor(imageType);
-        ctx.fillRect(0, 0, 140, 140);
-        
-        // Add error indicator in corner
-        ctx.fillStyle = '#ef4444';
-        ctx.font = '10px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('IMG ERR', 5, 12);
-        
-        // Large emoji fallback
-        ctx.fillStyle = '#333';
-        ctx.font = '40px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(getImageEmoji(imageType), 70, 85);
-        
-        // CRITICAL: Set visual features even on fallback!
-        setVisualFeaturesAndLabel(imageType);
-    };
-    
-    img.src = imageUrls[imageType];
-    
-    // Set the visual features and labels based on image type
-    setVisualFeaturesAndLabel(imageType);
+    return ImageGenerator.createImage(imageType);
 }
 
-// Helper functions for fallback display
+// MODULARIZED: Helper functions moved to modules/imageGenerator.js
 function getImageColor(imageType) {
-    const colors = {
-        dog1: '#8B4513', dog2: '#D2691E', dog3: '#FFFFFF',
-        cat: '#696969', bird: '#FFD700', fish: '#1E90FF',
-        car: '#FF6B6B', tree: '#228B22'
-    };
-    return colors[imageType] || '#f0f8ff';
+    return ImageGenerator.getImageColor(imageType);
 }
 
 function getImageEmoji(imageType) {
-    const emojis = {
-        dog1: '🐕', dog2: '🐕', dog3: '🐕',
-        cat: '🐱', bird: '🐦', fish: '🐟',
-        car: '🚗', tree: '🌳'
-    };
-    return emojis[imageType] || '❓';
+    return ImageGenerator.getImageEmoji(imageType);
 }
 
-function drawDog1(ctx) {
-    // Body
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(60, 120, 80, 60);
-    
-    // Head
-    ctx.fillStyle = '#D2B48C';
-    ctx.beginPath();
-    ctx.arc(100, 80, 35, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Ears
-    ctx.fillStyle = '#8B4513';
-    ctx.beginPath();
-    ctx.ellipse(80, 60, 15, 25, -0.3, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(120, 60, 15, 25, 0.3, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Eyes
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(90, 75, 4, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(110, 75, 4, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Nose
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(100, 90, 3, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Mouth
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(100, 95, 8, 0, Math.PI);
-    ctx.stroke();
-    
-    // Legs
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(70, 180, 10, 20);
-    ctx.fillRect(85, 180, 10, 20);
-    ctx.fillRect(105, 180, 10, 20);
-    ctx.fillRect(120, 180, 10, 20);
-    
-    // Tail
-    ctx.beginPath();
-    ctx.arc(150, 140, 15, 0, Math.PI);
-    ctx.fill();
-}
-
-function drawDog2(ctx) {
-    // Different dog - more square/bulldog style
-    // Body
-    ctx.fillStyle = '#A0522D';
-    ctx.fillRect(40, 110, 90, 40);
-    
-    // Head - more square
-    ctx.fillStyle = '#DEB887';
-    ctx.fillRect(60, 50, 50, 50);
-    
-    // Ears - smaller, different position (floppy)
-    ctx.fillStyle = '#A0522D';
-    ctx.fillRect(55, 45, 12, 18);
-    ctx.fillRect(103, 45, 12, 18);
-    
-    // Eyes
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(72, 68, 5, 5);
-    ctx.fillRect(93, 68, 5, 5);
-    
-    // Nose
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(82, 85, 6, 3);
-    
-    // Mouth
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(78, 95);
-    ctx.lineTo(85, 98);
-    ctx.lineTo(92, 95);
-    ctx.stroke();
-    
-    // Legs
-    ctx.fillStyle = '#A0522D';
-    ctx.fillRect(50, 150, 10, 18);
-    ctx.fillRect(68, 150, 10, 18);
-    ctx.fillRect(92, 150, 10, 18);
-    ctx.fillRect(110, 150, 10, 18);
-    
-    // Tail
-    ctx.fillStyle = '#A0522D';
-    ctx.beginPath();
-    ctx.arc(135, 120, 12, 0, Math.PI);
-    ctx.fill();
-}
-
-function drawDog3(ctx) {
-    // Spotted dog - dalmatian style
-    // Body
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(50, 100, 80, 50);
-    
-    // Head
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(90, 70, 28, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Ears - floppy
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.ellipse(72, 55, 12, 20, -0.3, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(108, 55, 12, 20, 0.3, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Spots
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(95, 60, 3, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(75, 75, 2, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(65, 115, 4, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(110, 120, 3, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Eyes
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(82, 68, 3, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(98, 68, 3, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Nose
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(90, 80, 2, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Mouth
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(90, 85, 6, 0, Math.PI);
-    ctx.stroke();
-    
-    // Legs
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(60, 150, 8, 16);
-    ctx.fillRect(75, 150, 8, 16);
-    ctx.fillRect(95, 150, 8, 16);
-    ctx.fillRect(110, 150, 8, 16);
-    
-    // Tail - wagging upward
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(135, 110, 10, Math.PI, 0, false);
-    ctx.fill();
-}
-
-function drawCat(ctx) {
-    // Body
-    ctx.fillStyle = '#696969';
-    ctx.fillRect(70, 130, 60, 50);
-    
-    // Head
-    ctx.fillStyle = '#808080';
-    ctx.beginPath();
-    ctx.arc(100, 85, 30, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Pointed ears
-    ctx.fillStyle = '#808080';
-    ctx.beginPath();
-    ctx.moveTo(80, 65);
-    ctx.lineTo(85, 45);
-    ctx.lineTo(95, 60);
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.moveTo(120, 65);
-    ctx.lineTo(115, 45);
-    ctx.lineTo(105, 60);
-    ctx.fill();
-    
-    // Eyes - cat-like
-    ctx.fillStyle = '#00FF00';
-    ctx.beginPath();
-    ctx.ellipse(90, 80, 4, 6, 0, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(110, 80, 4, 6, 0, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Pupils
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(89, 78, 2, 4);
-    ctx.fillRect(109, 78, 2, 4);
-    
-    // Nose - triangle
-    ctx.fillStyle = '#FFB6C1';
-    ctx.beginPath();
-    ctx.moveTo(100, 88);
-    ctx.lineTo(95, 95);
-    ctx.lineTo(105, 95);
-    ctx.fill();
-    
-    // Whiskers
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(70, 85);
-    ctx.lineTo(85, 87);
-    ctx.moveTo(70, 90);
-    ctx.lineTo(85, 90);
-    ctx.moveTo(130, 85);
-    ctx.lineTo(115, 87);
-    ctx.moveTo(130, 90);
-    ctx.lineTo(115, 90);
-    ctx.stroke();
-    
-    // Legs
-    ctx.fillStyle = '#696969';
-    ctx.fillRect(75, 180, 8, 20);
-    ctx.fillRect(90, 180, 8, 20);
-    ctx.fillRect(102, 180, 8, 20);
-    ctx.fillRect(117, 180, 8, 20);
-    
-    // Tail - long and curved
-    ctx.strokeStyle = '#696969';
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.arc(140, 150, 20, Math.PI, 0);
-    ctx.stroke();
-}
-
-function drawCar(ctx) {
-    // Car body
-    ctx.fillStyle = '#FF4500';
-    ctx.fillRect(40, 130, 120, 40);
-    
-    // Car roof
-    ctx.fillStyle = '#FF6347';
-    ctx.fillRect(60, 100, 80, 30);
-    
-    // Windows
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(65, 105, 25, 20);
-    ctx.fillRect(110, 105, 25, 20);
-    
-    // Wheels
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(65, 170, 15, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(135, 170, 15, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Wheel centers
-    ctx.fillStyle = '#C0C0C0';
-    ctx.beginPath();
-    ctx.arc(65, 170, 6, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(135, 170, 6, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Headlights
-    ctx.fillStyle = '#FFFF00';
-    ctx.beginPath();
-    ctx.arc(35, 145, 5, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(35, 155, 5, 0, 2 * Math.PI);
-    ctx.fill();
-}
-
-function drawBird(ctx) {
-    // Body - oval
-    ctx.fillStyle = '#FFD700';
-    ctx.beginPath();
-    ctx.ellipse(90, 100, 25, 15, 0, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Head
-    ctx.fillStyle = '#FFD700';
-    ctx.beginPath();
-    ctx.arc(90, 70, 18, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Beak - pointed (no ears!)
-    ctx.fillStyle = '#FFA500';
-    ctx.beginPath();
-    ctx.moveTo(75, 70);
-    ctx.lineTo(60, 68);
-    ctx.lineTo(75, 75);
-    ctx.fill();
-    
-    // Eye
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(85, 65, 2, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Wings
-    ctx.fillStyle = '#FF8C00';
-    ctx.beginPath();
-    ctx.ellipse(95, 95, 15, 8, 0.3, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Tail feathers - small
-    ctx.fillStyle = '#FF8C00';
-    ctx.beginPath();
-    ctx.ellipse(115, 105, 8, 4, 0, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Legs - thin (not four legs!)
-    ctx.strokeStyle = '#FFA500';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(85, 115);
-    ctx.lineTo(85, 130);
-    ctx.moveTo(95, 115);
-    ctx.lineTo(95, 130);
-    ctx.stroke();
-    
-    // Feet
-    ctx.beginPath();
-    ctx.moveTo(82, 130);
-    ctx.lineTo(88, 130);
-    ctx.moveTo(92, 130);
-    ctx.lineTo(98, 130);
-    ctx.stroke();
-}
-
-function drawFish(ctx) {
-    // Body - streamlined
-    ctx.fillStyle = '#1E90FF';
-    ctx.beginPath();
-    ctx.ellipse(90, 100, 30, 15, 0, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Head is part of body (no ears!)
-    
-    // Eye
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(75, 95, 6, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(75, 95, 3, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Tail - prominent
-    ctx.fillStyle = '#1E90FF';
-    ctx.beginPath();
-    ctx.moveTo(120, 100);
-    ctx.lineTo(140, 85);
-    ctx.lineTo(140, 115);
-    ctx.fill();
-    
-    // Fins (not legs!)
-    ctx.fillStyle = '#4169E1';
-    ctx.beginPath();
-    ctx.ellipse(85, 115, 8, 4, 0, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.ellipse(95, 85, 8, 4, 0, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Scales pattern
-    ctx.strokeStyle = '#4169E1';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(85, 100, 4, 0, 2 * Math.PI);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(95, 105, 4, 0, 2 * Math.PI);
-    ctx.stroke();
-}
-
-function drawTree(ctx) {
-    // Trunk
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(80, 100, 16, 60);
-    
-    // Tree crown - multiple circles
-    ctx.fillStyle = '#228B22';
-    ctx.beginPath();
-    ctx.arc(70, 90, 20, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(108, 90, 20, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(89, 70, 25, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(89, 105, 20, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Leaves details
-    ctx.fillStyle = '#32CD32';
-    ctx.beginPath();
-    ctx.arc(80, 80, 6, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(98, 80, 6, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(89, 95, 6, 0, 2 * Math.PI);
-    ctx.fill();
-}
+// MODULARIZED: All drawing functions moved to modules/imageGenerator.js
 
 function updateInputActivations(values) {
     activations.input = values;
@@ -2308,82 +1347,35 @@ async function startFullDemo() {
 }
 
 async function startDemo() {
-    if (isAnimating) return;
-    
-    console.log("=== START DEMO CALLED ===");
-    console.log("Current trueLabel:", trueLabel);
-    console.log("Current image:", currentImage);
-    
-    // Failsafe: Ensure trueLabel is set based on current image
-    if (!trueLabel) {
-        console.log("trueLabel was null, setting it based on currentImage");
-        const correctLabel = currentImage.startsWith('dog') ? 'dog' : 'not-dog';
-        setTrueLabel(correctLabel);
-        console.log("trueLabel set to:", trueLabel);
-    }
-    
-    const startTime = performance.now();
+    // Set global animation flag to prevent concurrent demos
     isAnimating = true;
-    // Button doesn't exist in compact interface
-    performanceMetrics.totalOperations++;
     
-    
-    // Show current weight values at start
-    document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
-    
-    updateStepInfo("🚀 Let's watch how the AI brain processes this image step by step!");
-    highlightSection('forward');
-    await sleep(1000);
-    
-    // Step 1: Show input activation
-    const forwardStartTime = performance.now();
-    updateStepInfo("📥 STEP 1: Converting the image into numbers the AI can understand. Each feature gets a score from 0 to 1.");
-    await animateInputActivation();
-    
-    // Step 2: Forward propagation to hidden layer
-    updateStepInfo("🧠 STEP 2: The hidden neurons are doing math! Each one multiplies input numbers by its connection weights, then adds them up.");
-    await animateForwardPropagation();
-    
-    // Step 3: Forward propagation to output layer
-    updateStepInfo("🎯 STEP 3: The output neurons make the final decision by combining all the hidden neuron signals!");
-    await animateOutputComputation();
-    
-    performanceMetrics.forwardPassTime = Math.round(performance.now() - forwardStartTime);
-    
-    // Step 4: Show result
-    await displayResult();
-    
-    // Step 5: Backpropagation if true label is set
-    console.log("Checking backpropagation condition: trueLabel =", trueLabel);
-    if (trueLabel) {
-        await sleep(2000);
-        const backpropStartTime = performance.now();
-        highlightSection('backward');
-        updateStepInfoDual(
-            "📚 <strong>STEP 4: Learning Time!</strong><br>🎓 Just like when you study for a test, the AI looks at its mistake and figures out how to do better next time. It's like having a really patient teacher help it learn!",
-            "📚 <strong>STEP 4: Backpropagation Learning Phase</strong><br>🔄 Computing gradients and updating weights based on classification error."
-        );
-        await animateBackpropagation();
+    try {
+        // Prepare dependencies for the demo orchestrator
+        const dependencies = {
+            isAnimating,
+            trueLabel,
+            currentImage,
+            setTrueLabel,
+            updateStepInfo,
+            updateStepInfoDual,
+            highlightSection,
+            animateInputActivation,
+            animateForwardPropagation,
+            animateOutputComputation,
+            displayResult,
+            animateBackpropagation,
+            refreshAllConnectionVisuals,
+            networkConfig,
+            performanceMetrics
+        };
         
-        performanceMetrics.backpropTime = Math.round(performance.now() - backpropStartTime);
-        performanceMetrics.epochCount++;
-        performanceMetrics.weightUpdates += (networkConfig.inputSize * networkConfig.hiddenSize) + (networkConfig.hiddenSize * networkConfig.outputSize);
-        
-        updateStepInfo("🎉 Learning complete! The AI has updated its 'memory' (connection weights) and should be smarter now. Try running it again!");
-        
-        // Keep weight values visible after training
-        document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
-        
-        // Make weight changes visible immediately
-        refreshAllConnectionVisuals();
-    } else {
-        updateStepInfo("💡 Tip: Select the correct answer above to see how the AI learns from its mistakes!");
+        // Delegate to the demo orchestrator module
+        await globalDemoOrchestrator.startDemo(dependencies);
+    } finally {
+        // Ensure animation flag is reset even if there's an error
+        isAnimating = false;
     }
-    
-    highlightSection('none');
-    
-    // Button doesn't exist in compact interface
-    isAnimating = false;
 }
 
 async function animateInputActivation() {
@@ -2898,9 +1890,7 @@ function highlightSection(phase) {
     }
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms * (11 - animationSpeed) / 10));
-}
+// sleep function now provided by AnimationUtils via legacy bridge
 
 
 function updateNeuronColors() {
@@ -3410,166 +2400,42 @@ function hideWeightSliders() {
 }
 
 // Comprehensive feature representation debugging
+// MODULARIZED: Testing functions moved to modules/testingSuite.js
 function debugFeatureRepresentation(inputValues, context = '') {
-    console.log(`\n🔍 ===== FEATURE REPRESENTATION DEBUG ${context} =====`);
-    
-    // Input analysis
-    console.log('📊 INPUT ANALYSIS:');
-    const inputStats = calculateWeightStats(inputValues);
-    console.log(`  Values: [${inputValues.slice(0, 8).map(v => v.toFixed(3)).join(', ')}${inputValues.length > 8 ? '...' : ''}]`);
-    console.log(`  Stats: min=${inputStats.min.toFixed(4)}, max=${inputStats.max.toFixed(4)}, mean=${inputStats.mean.toFixed(4)}, std=${inputStats.std.toFixed(4)}`);
-    
-    // Check for problematic patterns
-    const zeroCount = inputValues.filter(v => Math.abs(v) < 1e-10).length;
-    const duplicateCount = checkValueDuplication(inputValues);
-    console.log(`  Zero values: ${zeroCount}/${inputValues.length} (${(100*zeroCount/inputValues.length).toFixed(1)}%)`);
-    console.log(`  Duplicate rate: ${(duplicateCount*100).toFixed(1)}% (potential lack of diversity)`);
-    
-    // Feature diversity analysis
-    const diversity = calculateFeatureDiversity(inputValues);
-    console.log(`  Feature diversity score: ${diversity.toFixed(4)} (higher = more diverse)`);
-    
-    // Activation pattern prediction
-    console.log('\n🔮 ACTIVATION PREDICTION:');
-    predictActivationPatterns(inputValues);
-    
-    console.log('🔍 ==========================================');
+    return TestingSuite.debugFeatureRepresentation(inputValues, context);
 }
 
-// Helper function to check feature duplication
+// MODULARIZED: Helper functions moved to modules/testingSuite.js
 function checkValueDuplication(values) {
-    const uniqueValues = new Set(values.map(v => Math.round(v * 1000) / 1000));
-    return 1 - (uniqueValues.size / values.length);
+    return TestingSuite.checkValueDuplication(values);
 }
 
-// Helper function to calculate feature diversity
+// MODULARIZED: Helper functions moved to modules/testingSuite.js
 function calculateFeatureDiversity(values) {
-    if (values.length < 2) return 0;
-    
-    let totalVariation = 0;
-    for (let i = 0; i < values.length - 1; i++) {
-        for (let j = i + 1; j < values.length; j++) {
-            totalVariation += Math.abs(values[i] - values[j]);
-        }
-    }
-    
-    const maxPossibleVariation = values.length * (values.length - 1) / 2;
-    return totalVariation / maxPossibleVariation;
+    return TestingSuite.calculateFeatureDiversity(values);
 }
 
-// Function to predict activation patterns based on inputs and current weights
+// MODULARIZED: Testing functions moved to modules/testingSuite.js
 function predictActivationPatterns(inputValues) {
-    // Predict hidden layer activations
-    const predictedHidden = [];
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        let sum = 0;
-        for (let i = 0; i < networkConfig.inputSize; i++) {
-            sum += inputValues[i] * weights.inputToHidden[h][i];
-        }
-        predictedHidden[h] = leakyReLU(sum); // Leaky ReLU
-    }
-    
-    console.log(`  Predicted hidden activations: [${predictedHidden.map(v => v.toFixed(3)).join(', ')}]`);
-    
-    const hiddenStats = calculateWeightStats(predictedHidden);
-    console.log(`  Hidden stats: min=${hiddenStats.min.toFixed(4)}, max=${hiddenStats.max.toFixed(4)}, mean=${hiddenStats.mean.toFixed(4)}`);
-    
-    // Check for dead neurons
-    const deadNeurons = predictedHidden.filter(v => Math.abs(v) < 1e-6).length;
-    if (deadNeurons > 0) {
-        console.log(`  ⚠️ WARNING: ${deadNeurons} potentially dead neurons detected!`);
-    }
-    
-    // Predict output layer
-    const predictedOutputs = [];
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        let sum = 0;
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
-            sum += predictedHidden[h] * weights.hiddenToOutput[o][h];
-        }
-        predictedOutputs[o] = sum;
-    }
-    
-    console.log(`  Predicted raw outputs: [${predictedOutputs.map(v => v.toFixed(3)).join(', ')}]`);
-    
-    // Apply softmax for final prediction
-    const softmaxOutputs = softmax(predictedOutputs);
-    
-    console.log(`  Final probabilities: [${softmaxOutputs.map(v => (v*100).toFixed(1) + '%').join(', ')}]`);
-    
-    // Convergence warning
-    const maxProb = Math.max(...softmaxOutputs);
-    const minProb = Math.min(...softmaxOutputs);
-    if (maxProb - minProb < 0.1) {
-        console.log('  ⚠️ WARNING: Predictions are very close - possible convergence issue!');
-    }
+    return TestingSuite.predictActivationPatterns(inputValues, { weights, networkConfig, leakyReLU, calculateWeightStats, softmax });
 }
 
 // Unit testing functions for network learning
 function forwardPropagationSilent(inputValues, debugMode = false) {
-    // Set input activations
-    activations.input = inputValues;
+    // MODULARIZED: Delegates to neural network module
+    const globalState = {
+        weights: weights,
+        activations: activations,
+        networkConfig: networkConfig
+    };
     
-    // DEBUG: Feature representation analysis
-    if (debugMode) {
-        debugFeatureRepresentation(inputValues, 'FORWARD_PROP');
-    }
+    const result = NetworkEngine.forwardPropagationBridge(inputValues, debugMode, globalState);
     
-    // Compute hidden layer
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        let sum = 0;
-        for (let i = 0; i < networkConfig.inputSize; i++) {
-            sum += activations.input[i] * weights.inputToHidden[h][i];
-        }
-        activations.hidden[h] = leakyReLU(sum); // Leaky ReLU activation
-        
-        // Check for NaN
-        if (isNaN(activations.hidden[h])) {
-            console.error('NaN in hidden activation!');
-            activations.hidden[h] = 0;
-        }
-    }
+    // Sync back the state changes
+    weights = globalState.weights;
+    activations = globalState.activations;
     
-    // Compute output layer (raw logits)
-    const rawOutputs = [];
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        let sum = 0;
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
-            sum += activations.hidden[h] * weights.hiddenToOutput[o][h];
-        }
-        rawOutputs[o] = sum;
-        
-        // Check for NaN
-        if (isNaN(rawOutputs[o])) {
-            console.error('NaN in output activation!');
-            rawOutputs[o] = 0;
-        }
-    }
-    
-    // Apply softmax with numerical stability
-    const maxVal = Math.max(...rawOutputs);
-    const expVals = rawOutputs.map(val => {
-        const expVal = Math.exp(Math.min(val - maxVal, 700)); // Prevent overflow
-        return isNaN(expVal) ? 0.5 : expVal;
-    });
-    const sumExp = expVals.reduce((a, b) => a + b, 0);
-    
-    if (sumExp === 0) {
-        // Fallback if all exponentials are 0
-        activations.output = [0.5, 0.5];
-    } else {
-        activations.output = expVals.map(val => val / sumExp);
-    }
-    
-    // Final NaN check
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        if (isNaN(activations.output[o])) {
-            console.error('NaN in final output!');
-            activations.output[o] = 0.5;
-        }
-    }
-    
-    return activations.output;
+    return result;
 }
 
 // Global momentum storage
@@ -3630,241 +2496,28 @@ function initializeMomentum() {
 }
 
 function backpropagationSilent(target, debugMode = false) {
-    initializeMomentum();
+    // MODULARIZED: Delegates to neural network module
+    const globalState = {
+        weights: weights,
+        activations: activations,
+        networkConfig: networkConfig
+    };
     
-    // DEBUG: Store initial weights for change monitoring
-    let initialWeights = null;
-    if (debugMode) {
-        initialWeights = {
-            inputToHidden: weights.inputToHidden.map(row => [...row]),
-            hiddenToOutput: weights.hiddenToOutput.map(row => [...row])
-        };
-    }
+    const result = NetworkEngine.backpropagationBridge(target, debugMode, globalState);
     
-    // Calculate cross-entropy loss for better training
-    let loss = 0;
-    const outputErrors = [];
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        // Cross-entropy loss derivative
-        outputErrors[o] = target[o] - activations.output[o];
-        
-        // Accumulate loss (cross-entropy)
-        if (target[o] > 0) {
-            loss -= target[o] * Math.log(Math.max(activations.output[o], 1e-15));
-        }
-        
-        // Check for NaN
-        if (isNaN(outputErrors[o])) {
-            console.error('NaN in output error!');
-            return;
-        }
-    }
+    // Sync back the state changes
+    weights = globalState.weights;
+    activations = globalState.activations;
     
-    // Update output to hidden weights with gradient clipping
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
-            let gradient = outputErrors[o] * activations.hidden[h];
-            
-            // Add L2 regularization (weight decay) to prevent overfitting
-            const l2Lambda = 0.001; // Very light regularization for better generalization
-            gradient -= l2Lambda * weights.hiddenToOutput[o][h] / networkConfig.learningRate;
-            
-            // Gradient clipping to prevent explosion
-            gradient = Math.max(-5, Math.min(5, gradient));
-            
-            // Simple momentum update with lower momentum for better generalization
-            const momentumFactor = 0.5; // Reduced momentum for stability
-            momentum.hiddenToOutput[o][h] = momentumFactor * momentum.hiddenToOutput[o][h] + 
-                                           networkConfig.learningRate * gradient;
-            
-            const weightUpdate = momentum.hiddenToOutput[o][h];
-            
-            // Check for NaN
-            if (isNaN(weightUpdate)) {
-                console.error('NaN in weight update!');
-                continue;
-            }
-            
-            // Store weight change for pedagogical visualization
-            const oldWeight = weights.hiddenToOutput[o][h];
-            weights.hiddenToOutput[o][h] += weightUpdate;
-            
-            // Ensure weight stays within reasonable bounds
-            weights.hiddenToOutput[o][h] = Math.max(-3, Math.min(3, weights.hiddenToOutput[o][h]));
-            
-            // Track the actual change that occurred
-            weightChanges.hiddenToOutput[o][h] = weights.hiddenToOutput[o][h] - weightChanges.lastWeights.hiddenToOutput[o][h];
-        }
-    }
-    
-    // Calculate hidden layer errors (backpropagated)
-    const hiddenErrors = [];
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        let error = 0;
-        for (let o = 0; o < networkConfig.outputSize; o++) {
-            error += outputErrors[o] * weights.hiddenToOutput[o][h];
-        }
-        // Leaky ReLU derivative: 1 if hidden activation > 0, 0.1 otherwise
-        hiddenErrors[h] = error * leakyReLUDerivative(activations.hidden[h]);
-        
-        // Check for NaN
-        if (isNaN(hiddenErrors[h])) {
-            console.error('NaN in hidden error!');
-            hiddenErrors[h] = 0;
-        }
-    }
-    
-    // Update input to hidden weights with gradient clipping
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        for (let i = 0; i < networkConfig.inputSize; i++) {
-            let gradient = hiddenErrors[h] * activations.input[i];
-            
-            // Add L2 regularization (weight decay) to prevent overfitting
-            const l2Lambda = 0.001; // Very light regularization for better generalization
-            gradient -= l2Lambda * weights.inputToHidden[h][i] / networkConfig.learningRate;
-            
-            // Gradient clipping to prevent explosion
-            gradient = Math.max(-5, Math.min(5, gradient));
-            
-            // Simple momentum update with lower momentum for better generalization
-            const momentumFactor = 0.5; // Reduced momentum for stability
-            momentum.inputToHidden[h][i] = momentumFactor * momentum.inputToHidden[h][i] + 
-                                          networkConfig.learningRate * gradient;
-            
-            const weightUpdate = momentum.inputToHidden[h][i];
-            
-            // Check for NaN
-            if (isNaN(weightUpdate)) {
-                console.error('NaN in input weight update!');
-                continue;
-            }
-            
-            // Store weight change for pedagogical visualization
-            const oldWeight = weights.inputToHidden[h][i];
-            weights.inputToHidden[h][i] += weightUpdate;
-            
-            // Ensure weight stays within reasonable bounds
-            weights.inputToHidden[h][i] = Math.max(-3, Math.min(3, weights.inputToHidden[h][i]));
-            
-            // Track the actual change that occurred
-            weightChanges.inputToHidden[h][i] = weights.inputToHidden[h][i] - weightChanges.lastWeights.inputToHidden[h][i];
-        }
-    }
-    
-    // DEBUG: Weight change analysis
-    if (debugMode && initialWeights) {
-        debugWeightChanges(initialWeights, target);
-    }
-    
-    // Update last weights for next comparison
-    updateLastWeights();
+    return result;
 }
 
 // Comprehensive weight change debugging
+// MODULARIZED: Testing functions moved to modules/testingSuite.js
 function debugWeightChanges(initialWeights, target) {
-    console.log('\n⚖️ ===== WEIGHT CHANGE ANALYSIS =====');
-    
-    // Calculate weight changes
-    const inputWeightChanges = [];
-    const outputWeightChanges = [];
-    
-    // Analyze input->hidden weight changes
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        for (let i = 0; i < networkConfig.inputSize; i++) {
-            const change = weights.inputToHidden[h][i] - initialWeights.inputToHidden[h][i];
-            inputWeightChanges.push(change);
-        }
-    }
-    
-    // Analyze hidden->output weight changes
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
-            const change = weights.hiddenToOutput[o][h] - initialWeights.hiddenToOutput[o][h];
-            outputWeightChanges.push(change);
-        }
-    }
-    
-    // Statistics on weight changes
-    const inputChangeStats = calculateWeightStats(inputWeightChanges);
-    const outputChangeStats = calculateWeightStats(outputWeightChanges);
-    
-    console.log('📊 WEIGHT UPDATE STATISTICS:');
-    console.log(`  Input→Hidden changes: ${inputWeightChanges.length} weights`);
-    console.log(`    Range: [${inputChangeStats.min.toFixed(6)}, ${inputChangeStats.max.toFixed(6)}]`);
-    console.log(`    Mean: ${inputChangeStats.mean.toFixed(6)}, Std: ${inputChangeStats.std.toFixed(6)}`);
-    
-    console.log(`  Hidden→Output changes: ${outputWeightChanges.length} weights`);
-    console.log(`    Range: [${outputChangeStats.min.toFixed(6)}, ${outputChangeStats.max.toFixed(6)}]`);
-    console.log(`    Mean: ${outputChangeStats.mean.toFixed(6)}, Std: ${outputChangeStats.std.toFixed(6)}`);
-    
-    // Check for problematic patterns
-    console.log('\n⚠️ CONVERGENCE ISSUE DETECTION:');
-    
-    // Check for very small changes (possible convergence)
-    const smallInputChanges = inputWeightChanges.filter(c => Math.abs(c) < 1e-6).length;
-    const smallOutputChanges = outputWeightChanges.filter(c => Math.abs(c) < 1e-6).length;
-    
-    console.log(`  Tiny changes (<1e-6): Input ${smallInputChanges}/${inputWeightChanges.length} (${(100*smallInputChanges/inputWeightChanges.length).toFixed(1)}%)`);
-    console.log(`  Tiny changes (<1e-6): Output ${smallOutputChanges}/${outputWeightChanges.length} (${(100*smallOutputChanges/outputWeightChanges.length).toFixed(1)}%)`);
-    
-    if (smallInputChanges > inputWeightChanges.length * 0.8) {
-        console.log('  🚨 WARNING: Most input weights barely changing - possible convergence!');
-    }
-    if (smallOutputChanges > outputWeightChanges.length * 0.8) {
-        console.log('  🚨 WARNING: Most output weights barely changing - possible convergence!');
-    }
-    
-    // Check for symmetry in weight changes
-    const inputChangeSymmetry = checkWeightSymmetry([inputWeightChanges]);
-    const outputChangeSymmetry = checkWeightSymmetry([outputWeightChanges]);
-    
-    console.log(`  Weight change symmetry: Input=${inputChangeSymmetry.toFixed(6)}, Output=${outputChangeSymmetry.toFixed(6)}`);
-    if (inputChangeSymmetry < 0.001) {
-        console.log('  🚨 WARNING: Input weight changes are too symmetric!');
-    }
-    if (outputChangeSymmetry < 0.001) {
-        console.log('  🚨 WARNING: Output weight changes are too symmetric!');
-    }
-    
-    // Gradient magnitude analysis
-    const inputGradMagnitude = Math.sqrt(inputWeightChanges.reduce((sum, c) => sum + c*c, 0));
-    const outputGradMagnitude = Math.sqrt(outputWeightChanges.reduce((sum, c) => sum + c*c, 0));
-    
-    console.log(`\n📈 GRADIENT ANALYSIS:`);
-    console.log(`  Input gradient magnitude: ${inputGradMagnitude.toFixed(6)}`);
-    console.log(`  Output gradient magnitude: ${outputGradMagnitude.toFixed(6)}`);
-    
-    if (inputGradMagnitude < 1e-5) {
-        console.log('  🚨 WARNING: Vanishing gradients in input layer!');
-    }
-    if (outputGradMagnitude < 1e-5) {
-        console.log('  🚨 WARNING: Vanishing gradients in output layer!');
-    }
-    if (inputGradMagnitude > 10) {
-        console.log('  🚨 WARNING: Exploding gradients in input layer!');
-    }
-    if (outputGradMagnitude > 10) {
-        console.log('  🚨 WARNING: Exploding gradients in output layer!');
-    }
-    
-    // Target analysis
-    console.log(`\n🎯 TARGET ANALYSIS:`);
-    console.log(`  Target: [${target.map(t => t.toFixed(3)).join(', ')}]`);
-    console.log(`  Current output: [${activations.output.map(o => o.toFixed(3)).join(', ')}]`);
-    
-    const error = target.map((t, i) => t - activations.output[i]);
-    const errorMagnitude = Math.sqrt(error.reduce((sum, e) => sum + e*e, 0));
-    console.log(`  Error: [${error.map(e => e.toFixed(3)).join(', ')}]`);
-    console.log(`  Error magnitude: ${errorMagnitude.toFixed(6)}`);
-    
-    if (errorMagnitude < 0.01) {
-        console.log('  ✅ Very low error - network converging well');
-    } else if (errorMagnitude > 1.0) {
-        console.log('  ⚠️ High error - network struggling to learn');
-    }
-    
-    console.log('⚖️ ====================================');
+    return TestingSuite.debugWeightChanges(initialWeights, target, { weights });
 }
+// ORPHANED CODE REMOVED - moved to modules/testingSuite.js
 
 // Comprehensive convergence analysis system
 function enableConvergenceAnalysis() {
@@ -3997,24 +2650,9 @@ function checkPredictionDiversity(trainingData) {
 }
 
 // Function to enable deep debugging mode
+// MODULARIZED: Testing functions moved to modules/testingSuite.js
 function enableDeepDebugging() {
-    console.log('🔧 ===== ENABLING DEEP DEBUGGING MODE =====');
-    enableConvergenceAnalysis();
-    
-    // Override forwardPropagationSilent and backpropagationSilent to always use debug mode
-    const originalForward = window.forwardPropagationSilent;
-    const originalBackward = window.backpropagationSilent;
-    
-    window.forwardPropagationSilent = function(inputValues, debugMode = true) {
-        return originalForward.call(this, inputValues, debugMode);
-    };
-    
-    window.backpropagationSilent = function(target, debugMode = true) {
-        return originalBackward.call(this, target, debugMode);
-    };
-    
-    console.log('✅ Deep debugging enabled - all training will show detailed logs');
-    console.log('🔧 ==========================================');
+    return TestingSuite.enableDeepDebugging();
 }
 
 // Update the baseline weights for change tracking
@@ -4111,6 +2749,82 @@ function generateSimpleTrainingData() {
     return trainingData;
 }
 
+// Test optimal learning sequence for back-and-forth learning
+function testOptimalLearningSequence() {
+    console.log('=== TESTING OPTIMAL 4-EXAMPLE LEARNING SEQUENCE ===');
+    
+    const examples = createOptimalLearningSequence();
+    initializeNetwork();
+    
+    console.log('\nLearning Examples:');
+    examples.forEach(ex => {
+        console.log(`${ex.label}: [${ex.input.join(', ')}] -> ${ex.isDog ? 'Dog' : 'Not Dog'}`);
+        console.log(`  ${ex.description}`);
+    });
+    
+    // Test initial predictions
+    console.log('\n--- BEFORE TRAINING ---');
+    examples.forEach(ex => {
+        const output = forwardPropagationSilent(ex.input);
+        const dogProb = output[0];
+        const predicted = dogProb > 0.5 ? 'Dog' : 'Not Dog';
+        const correct = (ex.isDog && dogProb > 0.5) || (!ex.isDog && dogProb <= 0.5);
+        console.log(`${ex.label}: ${predicted} (${(dogProb*100).toFixed(1)}%) - ${correct ? 'CORRECT' : 'WRONG'}`);
+    });
+    
+    // Simple training with reduced learning rate
+    const originalLR = networkConfig.learningRate;
+    networkConfig.learningRate = 0.05; // Even more conservative
+    
+    console.log('\n--- TRAINING (Conservative Learning) ---');
+    let epoch = 0;
+    const maxEpochs = 30;
+    
+    while (epoch < maxEpochs) {
+        // Single pass through examples
+        examples.forEach(ex => {
+            forwardPropagationSilent(ex.input);
+            backpropagationSilent(ex.target);
+        });
+        
+        epoch++;
+        
+        // Check accuracy every 10 epochs
+        if (epoch % 10 === 0) {
+            let correct = 0;
+            console.log(`\nEpoch ${epoch} results:`);
+            examples.forEach(ex => {
+                const output = forwardPropagationSilent(ex.input);
+                const dogProb = output[0];
+                const predicted = dogProb > 0.5 ? 'Dog' : 'Not Dog';
+                const isCorrect = (ex.isDog && dogProb > 0.5) || (!ex.isDog && dogProb <= 0.5);
+                if (isCorrect) correct++;
+                console.log(`${ex.label}: ${predicted} (${(dogProb*100).toFixed(1)}%) - ${isCorrect ? 'CORRECT' : 'WRONG'}`);
+            });
+            
+            const accuracy = correct / examples.length;
+            console.log(`Accuracy: ${(accuracy * 100).toFixed(1)}%`);
+            
+            if (accuracy === 1.0) {
+                console.log(`Perfect accuracy achieved at epoch ${epoch}!`);
+                break;
+            }
+        }
+    }
+    
+    // Restore original learning rate
+    networkConfig.learningRate = originalLR;
+    
+    return {
+        examples: examples,
+        epochsNeeded: epoch,
+        finalAccuracy: examples.map(ex => {
+            const output = forwardPropagationSilent(ex.input);
+            const dogProb = output[0];
+            return (ex.isDog && dogProb > 0.5) || (!ex.isDog && dogProb <= 0.5);
+        }).reduce((sum, correct) => sum + (correct ? 1 : 0), 0) / examples.length
+    };
+}
 
 // Create optimal 3-4 learning examples with clear decision boundaries
 function createOptimalLearningSequence() {
@@ -4153,6 +2867,123 @@ function createOptimalLearningSequence() {
     ];
 }
 
+function runLearningTest() {
+    console.log('=== STARTING LEARNING TEST ===');
+    
+    // Generate simple training data
+    const testCases = generateSimpleTrainingData();
+    console.log(`Generated ${testCases.length} simple training examples (${testCases.filter(t => t.isDog).length} dogs, ${testCases.filter(t => !t.isDog).length} non-dogs)`);
+    
+    // Reset network
+    initializeNetwork();
+    
+    // Test initial predictions (before training)
+    console.log('--- BEFORE TRAINING ---');
+    const initialResults = [];
+    testCases.forEach(testCase => {
+        const output = forwardPropagationSilent(testCase.input);
+        const dogProb = output[0];
+        const predicted = dogProb > 0.5 ? 'Dog' : 'Not Dog';
+        const correct = (testCase.isDog && dogProb > 0.5) || (!testCase.isDog && dogProb <= 0.5);
+        console.log(`${testCase.label}: ${predicted} (${(dogProb*100).toFixed(1)}%) - ${correct ? 'CORRECT' : 'WRONG'}`);
+        initialResults.push({ correct, confidence: Math.abs(dogProb - 0.5) });
+    });
+    
+    // Simple, stable training approach
+    const maxEpochs = 50;
+    console.log(`--- TRAINING FOR UP TO ${maxEpochs} EPOCHS (simple approach) ---`);
+    
+    let epoch = 0;
+    let perfectAccuracyCount = 0;
+    
+    while (epoch < maxEpochs && perfectAccuracyCount < 3) {
+        // Simple training: one pass through all examples
+        testCases.forEach(testCase => {
+            forwardPropagationSilent(testCase.input);
+            backpropagationSilent(testCase.target);
+        });
+        epoch++;
+        
+        // Test accuracy every epoch
+        let correct = 0;
+        testCases.forEach(testCase => {
+            const output = forwardPropagationSilent(testCase.input);
+            const dogProb = output[0];
+            const isCorrect = (testCase.isDog && dogProb > 0.5) || (!testCase.isDog && dogProb <= 0.5);
+            if (isCorrect) correct++;
+        });
+        
+        const accuracy = correct / testCases.length;
+        console.log(`Epoch ${epoch}: Accuracy = ${correct}/${testCases.length} (${(accuracy*100).toFixed(1)}%)`);
+        
+        // Early stopping if perfect accuracy achieved 3 times in a row
+        if (accuracy === 1.0) {
+            perfectAccuracyCount++;
+            console.log(`Perfect accuracy achieved ${perfectAccuracyCount}/3 times`);
+        } else {
+            perfectAccuracyCount = 0;
+        }
+        
+        // Stop if converged
+        if (perfectAccuracyCount >= 3) {
+            console.log(`🎉 CONVERGED! Perfect accuracy maintained for 3 epochs. Total training: ${epoch} epochs`);
+            break;
+        }
+    }
+    
+    // Test final predictions (after training)
+    console.log('--- AFTER TRAINING ---');
+    let finalCorrect = 0;
+    let totalConfidence = 0;
+    
+    testCases.forEach(testCase => {
+        const output = forwardPropagationSilent(testCase.input);
+        const dogProb = output[0];
+        const predicted = dogProb > 0.5 ? 'Dog' : 'Not Dog';
+        const correct = (testCase.isDog && dogProb > 0.5) || (!testCase.isDog && dogProb <= 0.5);
+        const confidence = Math.abs(dogProb - 0.5);
+        
+        console.log(`${testCase.label}: ${predicted} (${(dogProb*100).toFixed(1)}%) - ${correct ? 'CORRECT' : 'WRONG'} (confidence: ${(confidence*100).toFixed(1)}%)`);
+        
+        if (correct) finalCorrect++;
+        totalConfidence += confidence;
+    });
+    
+    const finalAccuracy = finalCorrect / testCases.length;
+    const avgConfidence = totalConfidence / testCases.length;
+    
+    console.log('=== LEARNING TEST RESULTS ===');
+    console.log(`Final Accuracy: ${finalCorrect}/${testCases.length} (${(finalAccuracy*100).toFixed(1)}%)`);
+    console.log(`Average Confidence: ${(avgConfidence*100).toFixed(1)}%`);
+    console.log(`Training Epochs Used: ${epoch} epochs`);
+    console.log(`Learning Success: ${finalAccuracy === 1.0 ? 'PERFECT! 🎉' : finalAccuracy >= 0.8 ? 'GOOD ✅' : 'NEEDS WORK ❌'}`);
+    
+    // Calculate training rounds needed for users
+    const trainingRoundsNeeded = Math.ceil(epoch / 2); // Each user demo = ~2 epochs worth of training
+    console.log(`📊 USER TRAINING ESTIMATE: Run demo ${trainingRoundsNeeded}-${trainingRoundsNeeded + 1} times to reach 100% accuracy`);
+    
+    // Update UI with test results  
+    updateStepInfoDual(
+        `🧪 <strong>Test Results:</strong> ${(finalAccuracy*100).toFixed(1)}% accuracy after ${epoch} training rounds!<br>
+        📈 <strong>Estimate:</strong> Run demo ${trainingRoundsNeeded}-${trainingRoundsNeeded + 1} times for 100% accuracy!<br>
+        ${finalAccuracy === 1.0 ? '🎉 PERFECT - The AI is now a pro!' : finalAccuracy >= 0.8 ? '✅ GOOD - The AI is getting smart!' : '❌ NEEDS MORE PRACTICE - Keep training!'}`,
+        `🧪 <strong>Training Assessment:</strong><br>
+        📊 Final Accuracy: ${(finalAccuracy*100).toFixed(1)}% (${epoch} epochs)<br>
+        📈 Estimated Rounds for 100%: ${trainingRoundsNeeded}-${trainingRoundsNeeded + 1}<br>
+        🎯 Status: ${finalAccuracy === 1.0 ? 'OPTIMAL' : finalAccuracy >= 0.8 ? 'GOOD' : 'SUBOPTIMAL'}`
+    );
+    
+    // Redraw network with updated weights
+    drawNetwork();
+    
+    return { 
+        accuracy: finalAccuracy, 
+        confidence: avgConfidence, 
+        epochs: epoch,
+        userTrainingRounds: trainingRoundsNeeded,
+        passed: finalAccuracy === 1.0 
+    };
+}
 
 // Advanced training support functions
 function initializeOptimalWeights() {
@@ -4176,6 +3007,64 @@ function initializeOptimalWeights() {
     
 }
 
+function advancedBackpropagation(target, sampleWeight = 1.0, trainingState) {
+    // Calculate output layer errors
+    const outputErrors = [];
+    for (let o = 0; o < networkConfig.outputSize; o++) {
+        outputErrors[o] = (target[o] - activations.output[o]) * sampleWeight;
+    }
+    
+    // Update output to hidden weights with momentum and weight decay
+    for (let o = 0; o < networkConfig.outputSize; o++) {
+        for (let h = 0; h < networkConfig.hiddenSize; h++) {
+            const gradient = outputErrors[o] * activations.hidden[h];
+            
+            // Apply momentum
+            trainingState.momentum.hiddenToOutput[o][h] = 
+                trainingState.momentum.hiddenToOutput[o][h] * 0.9 + 
+                gradient * trainingState.currentLearningRate;
+            
+            // Weight update with decay
+            const weightDecay = weights.hiddenToOutput[o][h] * 0.0001;
+            weights.hiddenToOutput[o][h] += trainingState.momentum.hiddenToOutput[o][h] - weightDecay;
+            
+            // Gradient clipping
+            weights.hiddenToOutput[o][h] = Math.max(-8, Math.min(8, weights.hiddenToOutput[o][h]));
+        }
+    }
+    
+    // Calculate hidden layer errors
+    const hiddenErrors = [];
+    for (let h = 0; h < networkConfig.hiddenSize; h++) {
+        let error = 0;
+        for (let o = 0; o < networkConfig.outputSize; o++) {
+            error += outputErrors[o] * weights.hiddenToOutput[o][h];
+        }
+        hiddenErrors[h] = activations.hidden[h] > 0 ? error : 0; // ReLU derivative
+    }
+    
+    // Update input to hidden weights with momentum
+    for (let h = 0; h < networkConfig.hiddenSize; h++) {
+        for (let i = 0; i < networkConfig.inputSize; i++) {
+            const gradient = hiddenErrors[h] * activations.input[i];
+            
+            // Apply momentum
+            trainingState.momentum.inputToHidden[h][i] = 
+                trainingState.momentum.inputToHidden[h][i] * 0.9 + 
+                gradient * trainingState.currentLearningRate;
+            
+            // Weight update with decay
+            const weightDecay = weights.inputToHidden[h][i] * 0.0001;
+            weights.inputToHidden[h][i] += trainingState.momentum.inputToHidden[h][i] - weightDecay;
+            
+            // Gradient clipping
+            weights.inputToHidden[h][i] = Math.max(-8, Math.min(8, weights.inputToHidden[h][i]));
+        }
+    }
+    
+    // Update network config for display
+    networkConfig.learningRate = trainingState.currentLearningRate;
+}
 
 function adaptLearningRate(trainingState, trainingConfig, accuracy, loss) {
     const history = trainingState.convergenceHistory;
@@ -4295,182 +3184,33 @@ function stopTrainingAnimation(success = true) {
 
 // COMPLETELY NEW SIMPLE TRAINING ALGORITHM
 async function trainToPerfection() {
-    if (isAnimating) return;
-    console.log('🔄 NEW SIMPLE TRAINING ALGORITHM');
-    
-    // Start the training animation
-    startTrainingAnimation();
-    
-    updateStepInfoDual(
-        '🎯 <strong>Starting Auto-Training!</strong><br>🚀 The AI will now practice with different examples to get smarter. Watch as it learns!',
-        '🎯 <strong>Auto-Training Initiated</strong><br>📊 Beginning batch training with multiple examples to improve network accuracy.'
-    );
-    
-    // IMPORTANT: Save current user's image and label state before training
-    const originalCurrentImage = currentImage;
-    const originalTrueLabel = trueLabel;
-    const originalInputActivations = [...activations.input];
-    
-    console.log(`💾 Saved original state: image=${originalCurrentImage}, label=${originalTrueLabel}`);
-    
-    // Create training dataset with all 8 image types
-    const imageTypes = ['dog1', 'dog2', 'dog3', 'cat', 'bird', 'car', 'tree', 'fish'];
-    const trainingData = [];
-    
-    imageTypes.forEach(imageType => {
-        setVisualFeaturesAndLabel(imageType);
-        const isDog = imageType.startsWith('dog');
-        trainingData.push({
-            input: [...activations.input],
-            target: isDog ? 1 : 0, // Simple binary target: 1 = dog, 0 = not-dog
-            label: imageType,
-            isDog: isDog
-        });
-    });
-    
-    console.log(`📊 Training data created:`);
-    trainingData.forEach((example, i) => {
-        console.log(`${i+1}. ${example.label}: [${example.input.join(', ')}] → target: ${example.target}`);
-    });
-    
-    // Initialize network with very simple weights
-    initializeNetwork();
-    
-    // EXTREMELY SIMPLE TRAINING: Just use gradient descent without complex momentum
-    const learningRate = 0.3; // Moderate learning rate
-    const maxEpochs = 100;
-    let bestAccuracy = 0;
-    
-    for (let epoch = 1; epoch <= maxEpochs; epoch++) {
-        let totalError = 0;
+    try {
+        // Prepare dependencies for the training manager
+        const dependencies = {
+            isAnimating,
+            currentImage,
+            trueLabel,
+            activations,
+            setVisualFeaturesAndLabel,
+            initializeNetwork,
+            simpleBinaryForward,
+            simpleBinaryBackward,
+            testSimpleBinaryAccuracy,
+            updateStepInfoDual,
+            startTrainingAnimation,
+            stopTrainingAnimation,
+            updateTrainingAnimation,
+            refreshAllConnectionVisuals,
+            selectImage,
+            setTrueLabel,
+            preventAutoLabeling
+        };
         
-        // Shuffle data
-        const shuffled = [...trainingData].sort(() => Math.random() - 0.5);
-        
-        // Train on each example
-        for (const example of shuffled) {
-            // Forward pass - get single output (probability of being a dog)
-            const output = simpleBinaryForward(example.input);
-            const error = output - example.target;
-            totalError += error * error;
-            
-            // Simple backward pass - update weights directly
-            simpleBinaryBackward(example.input, output, example.target, learningRate);
-        }
-        
-        // Check accuracy every 10 epochs
-        if (epoch % 10 === 0 || epoch === 1) {
-            const accuracy = testSimpleBinaryAccuracy(trainingData);
-            console.log(`Epoch ${epoch}: Accuracy ${(accuracy*100).toFixed(1)}%, Error ${(totalError/trainingData.length).toFixed(4)}`);
-            
-            // Show predictions for all examples
-            console.log('Predictions:');
-            trainingData.forEach(ex => {
-                const output = simpleBinaryForward(ex.input);
-                const predicted = output > 0.5 ? 'DOG' : 'NOT-DOG';
-                const actual = ex.isDog ? 'DOG' : 'NOT-DOG';
-                const correct = (output > 0.5) === ex.isDog ? '✅' : '❌';
-                console.log(`  ${ex.label}: ${output.toFixed(3)} → ${predicted} (${actual}) ${correct}`);
-            });
-            
-            updateStepInfoDual(
-                `🔄 <strong>Training Progress - Round ${epoch}</strong><br>🎯 Current accuracy: ${(accuracy*100).toFixed(1)}% - The AI is getting ${accuracy >= 0.8 ? 'really smart' : accuracy >= 0.5 ? 'better' : 'started'}!`,
-                `🔄 <strong>Epoch ${epoch}</strong><br>📊 Accuracy: ${(accuracy*100).toFixed(1)}% | Loss: ${((1-accuracy)*100).toFixed(1)}%`
-            );
-            
-            // Update training animation with current progress
-            updateTrainingAnimation(epoch, accuracy);
-            
-            // Update visual representation of weights during training
-            refreshAllConnectionVisuals();
-            
-            if (accuracy > bestAccuracy) {
-                bestAccuracy = accuracy;
-            }
-            
-            if (accuracy >= 1.0) {
-                console.log(`🎉 Perfect accuracy achieved in ${epoch} epochs!`);
-                updateStepInfoDual(
-                    `🏆 <strong>Perfect Training Complete!</strong><br>🎉 The AI achieved 100% accuracy in just ${epoch} rounds! It's now a master at recognizing dogs!`,
-                    `🏆 <strong>Training Complete</strong><br>📊 100% accuracy achieved in ${epoch} epochs. Optimal convergence reached.`
-                );
-                
-                // Stop training animation with success
-                stopTrainingAnimation(true);
-                
-                // IMPORTANT: Restore user's original image and label state after early completion
-                console.log(`🔄 Restoring original state: image=${originalCurrentImage}, label=${originalTrueLabel}`);
-                currentImage = originalCurrentImage;
-                trueLabel = originalTrueLabel;
-                activations.input = originalInputActivations;
-                
-                // Prevent auto-labeling during restoration (SET BEFORE selectImage!)
-                preventAutoLabeling = true;
-                
-                // Update UI to reflect restored state
-                selectImage(originalCurrentImage);
-                
-                // Wait a moment for async image loading, then restore label and re-enable auto-labeling
-                setTimeout(() => {
-                    if (originalTrueLabel) {
-                        setTrueLabel(originalTrueLabel);
-                    }
-                    preventAutoLabeling = false;
-                    
-                    // Ensure buttons are properly enabled after restoration
-                    document.getElementById('forwardBtn').disabled = false;
-                    document.getElementById('fullDemoBtn').disabled = false;
-                    document.getElementById('backwardBtn').disabled = true;
-                    
-                    console.log(`✅ Restoration complete: image=${currentImage}, label=${trueLabel}`);
-                }, 100);
-                
-                refreshAllConnectionVisuals(); // Make weight changes visible immediately
-                return;
-            }
-        }
-        
-        await sleep(100); // Small delay for visualization
+        // Delegate to the training manager module
+        await globalTrainingManager.trainToPerfection(dependencies);
+    } catch (error) {
+        console.error('Training error:', error);
     }
-    
-    const finalAccuracy = testSimpleBinaryAccuracy(trainingData);
-    updateStepInfoDual(
-        `✅ <strong>Auto-Training Finished!</strong><br>🎓 Final result: ${(finalAccuracy*100).toFixed(1)}% accuracy! ${finalAccuracy >= 0.9 ? '🌟 Excellent performance!' : finalAccuracy >= 0.7 ? '👍 Good progress!' : '📚 Needs more practice!'}`,
-        `✅ <strong>Training Session Complete</strong><br>📊 Final Accuracy: ${(finalAccuracy*100).toFixed(1)}%`
-    );
-    console.log(`Final accuracy: ${(finalAccuracy*100).toFixed(1)}%`);
-    
-    // Stop training animation
-    stopTrainingAnimation(finalAccuracy >= 0.8);
-    
-    // IMPORTANT: Restore user's original image and label state after training
-    console.log(`🔄 Restoring original state: image=${originalCurrentImage}, label=${originalTrueLabel}`);
-    currentImage = originalCurrentImage;
-    trueLabel = originalTrueLabel;
-    activations.input = originalInputActivations;
-    
-    // Prevent auto-labeling during restoration (SET BEFORE selectImage!)
-    preventAutoLabeling = true;
-    
-    // Update UI to reflect restored state
-    selectImage(originalCurrentImage);
-    
-    // Wait a moment for async image loading, then restore label and re-enable auto-labeling
-    setTimeout(() => {
-        if (originalTrueLabel) {
-            setTrueLabel(originalTrueLabel);
-        }
-        preventAutoLabeling = false;
-        
-        // Ensure buttons are properly enabled after restoration
-        document.getElementById('forwardBtn').disabled = false;
-        document.getElementById('fullDemoBtn').disabled = false;
-        document.getElementById('backwardBtn').disabled = true;
-        
-        console.log(`✅ Restoration complete: image=${currentImage}, label=${trueLabel}`);
-    }, 100);
-    
-    refreshAllConnectionVisuals(); // Make weight changes visible immediately
 }
 
 // Simple binary forward propagation (single output: probability of being a dog)
@@ -4704,6 +3444,120 @@ async function tuneHyperparameters() {
 }
 
 // Quick hyperparameter test with multiple trials for statistical validity
+async function quickHyperparamTest() {
+    console.log('🚀 QUICK HYPERPARAMETER TEST (Multiple Trials)');
+    
+    // Create training dataset once
+    const imageTypes = ['dog1', 'dog2', 'dog3', 'cat', 'bird', 'car', 'tree', 'fish'];
+    const trainingData = [];
+    
+    imageTypes.forEach(imageType => {
+        setVisualFeaturesAndLabel(imageType);
+        const isDog = imageType.startsWith('dog');
+        trainingData.push({
+            input: [...activations.input],
+            target: isDog ? [1, 0] : [0, 1],
+            label: imageType,
+            isDog: isDog
+        });
+    });
+    
+    // Test promising hyperparameter combinations (5 trials each)
+    const testSets = [
+        [0.4, 0.8, "High LR + High Momentum"],
+        [0.5, 0.7, "Very High LR + Med Momentum"],  
+        [0.35, 0.85, "Med-High LR + Very High Momentum"],
+        [0.45, 0.75, "High LR + Med-High Momentum"],
+        [0.3, 0.9, "Med LR + Max Momentum"]
+    ];
+    
+    const results = [];
+    
+    for (let setIdx = 0; setIdx < testSets.length; setIdx++) {
+        const [lr, mom, desc] = testSets[setIdx];
+        console.log(`\n📊 Testing: ${desc} (LR=${lr}, Mom=${mom})`);
+        
+        const trials = [];
+        
+        // Run 5 trials for statistical validity
+        for (let trial = 0; trial < 5; trial++) {
+            initializeNetwork(); // Fresh start each trial
+            const result = await trainWithHyperparams(trainingData, lr, mom, 100);
+            trials.push(result);
+            
+            const status = result.accuracy === 1.0 ? '🏆' : result.accuracy >= 0.9 ? '🎯' : '📈';
+            console.log(`  Trial ${trial+1}: ${(result.accuracy*100).toFixed(1)}% in ${result.epochs} epochs ${status}`);
+        }
+        
+        // Calculate statistics
+        const accuracies = trials.map(t => t.accuracy);
+        const epochs = trials.map(t => t.epochs);
+        const perfectTrials = trials.filter(t => t.accuracy === 1.0).length;
+        
+        const avgAccuracy = accuracies.reduce((a,b) => a+b, 0) / 5;
+        const avgEpochs = epochs.reduce((a,b) => a+b, 0) / 5;
+        const bestEpochs = Math.min(...epochs);
+        const worstEpochs = Math.max(...epochs);
+        
+        results.push({
+            description: desc,
+            learningRate: lr,
+            momentum: mom,
+            avgAccuracy,
+            avgEpochs,
+            bestEpochs,
+            worstEpochs,
+            perfectTrials,
+            consistency: 1 - (worstEpochs - bestEpochs) / avgEpochs // Lower variation = more consistent
+        });
+        
+        console.log(`  📊 Stats: ${(avgAccuracy*100).toFixed(1)}% avg, ${avgEpochs.toFixed(1)} avg epochs, ${perfectTrials}/5 perfect`);
+    }
+    
+    // Rank results by success rate, then speed
+    results.sort((a, b) => {
+        if (a.perfectTrials !== b.perfectTrials) return b.perfectTrials - a.perfectTrials;
+        if (a.avgAccuracy !== b.avgAccuracy) return b.avgAccuracy - a.avgAccuracy;
+        return a.avgEpochs - b.avgEpochs;
+    });
+    
+    console.log('\n🏆 FINAL HYPERPARAMETER RANKINGS:');
+    console.log('=' .repeat(70));
+    
+    results.forEach((result, rank) => {
+        const medal = rank === 0 ? '🥇' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : '  ';
+        console.log(`${medal} #${rank+1}: ${result.description}`);
+        console.log(`     LR=${result.learningRate}, Momentum=${result.momentum}`);
+        console.log(`     Success: ${result.perfectTrials}/5 perfect (${(result.avgAccuracy*100).toFixed(1)}% avg)`);
+        console.log(`     Speed: ${result.avgEpochs.toFixed(1)} avg epochs (best: ${result.bestEpochs}, worst: ${result.worstEpochs})`);
+        console.log(`     Consistency: ${(result.consistency*100).toFixed(1)}%`);
+        console.log('');
+    });
+    
+    const winner = results[0];
+    console.log('🎯 RECOMMENDED HYPERPARAMETERS:');
+    console.log(`Learning Rate: ${winner.learningRate}`);
+    console.log(`Momentum: ${winner.momentum}`);
+    console.log(`Expected: ${winner.perfectTrials}/5 chance of 100%, avg ${winner.avgEpochs.toFixed(1)} epochs`);
+    
+    return winner;
+}
+
+// Training function with specific hyperparameters (no UI updates for testing)
+async function trainWithHyperparams(trainingData, learningRate, initialMomentum, maxEpochs) {
+    // MODULARIZED: Delegates to training manager module
+    const dependencies = {
+        forwardPropagationSilent,
+        backpropagationWithMomentum,
+        testAccuracy,
+        networkConfig,
+        weights
+    };
+    
+    return await TrainingManagerModule.trainWithHyperparams(
+        trainingData, learningRate, initialMomentum, maxEpochs, dependencies
+    );
+}
 
 // Tutorial System Functions
 function startTutorial() {
@@ -4724,10 +3578,11 @@ function showTutorialStep() {
     
     // Update navigation buttons
     const nextBtn = document.getElementById('tutorialNextBtn');
+    
     if (tutorialStep === tutorialSteps.length - 1) {
         nextBtn.textContent = 'Start Learning! 🚀';
     } else {
-        nextBtn.textContent = 'Next →';
+        nextBtn.textContent = 'Next';
     }
 }
 
@@ -4741,11 +3596,7 @@ function nextTutorialStep() {
     }
 }
 
-function skipTutorial() {
-    tutorialActive = false;
-    document.getElementById('tutorialStep').style.display = 'none';
-    document.getElementById('startTutorialBtn').style.display = 'inline-block';
-}
+
 
 function completeTutorial() {
     tutorialActive = false;
@@ -4776,6 +3627,484 @@ function skipTutorial() {
 }
 
 // ==================== COMPREHENSIVE NEURAL NETWORK TESTS ====================
+
+function testDeadNeuronPrevention() {
+    console.log('=== TESTING DEAD NEURON PREVENTION ===');
+    
+    initializeNetwork();
+    
+    // Create a scenario that would cause dead neurons with regular ReLU
+    // Set some weights to very negative values
+    weights.inputToHidden[0][0] = -10;
+    weights.inputToHidden[1][1] = -8;
+    
+    // Test with different inputs
+    const testInputs = [
+        [0.5, 0.5, 0.5, 0.5],
+        [0.1, 0.9, 0.3, 0.7],
+        [0.8, 0.2, 0.6, 0.4]
+    ];
+    
+    let deadNeuronCount = 0;
+    let totalActivations = 0;
+    
+    testInputs.forEach((input, idx) => {
+        const output = forwardPropagationSilent(input);
+        
+        activations.hidden.forEach((activation, neuronIdx) => {
+            if (Math.abs(activation) < 1e-10) {
+                deadNeuronCount++;
+            }
+            totalActivations++;
+        });
+        
+        console.log(`Test ${idx + 1}: Hidden=[${activations.hidden.map(a => a.toFixed(3)).join(', ')}] Output=[${output.map(o => o.toFixed(3)).join(', ')}]`);
+    });
+    
+    const deadNeuronRate = deadNeuronCount / totalActivations;
+    console.log(`Dead Neuron Rate: ${(deadNeuronRate * 100).toFixed(1)}% (${deadNeuronCount}/${totalActivations})`);
+    
+    return {
+        passed: deadNeuronRate < 0.3, // Less than 30% dead neurons is acceptable
+        deadNeuronRate: deadNeuronRate,
+        message: deadNeuronRate < 0.3 ? '✅ PASS: Leaky ReLU prevents most dead neurons' : '❌ FAIL: Too many dead neurons detected'
+    };
+}
+
+function testGeneralization() {
+    console.log('=== TESTING GENERALIZATION ===');
+    
+    initializeNetwork();
+    const trainingData = generateBalancedTrainingData();
+    
+    // Split data: 70% training, 30% testing
+    const splitIdx = Math.floor(trainingData.length * 0.7);
+    const trainSet = trainingData.slice(0, splitIdx);
+    const testSet = trainingData.slice(splitIdx);
+    
+    console.log(`Training on ${trainSet.length} examples, testing on ${testSet.length} examples`);
+    
+    // Train the network
+    for (let epoch = 0; epoch < 50; epoch++) {
+        trainSet.forEach(example => {
+            forwardPropagationSilent(example.input);
+            backpropagationSilent(example.target);
+        });
+    }
+    
+    // Test on training set
+    let trainCorrect = 0;
+    trainSet.forEach(example => {
+        const output = forwardPropagationSilent(example.input);
+        const predicted = output[0] > output[1];
+        const actual = example.isDog;
+        if (predicted === actual) trainCorrect++;
+    });
+    
+    // Test on test set
+    let testCorrect = 0;
+    let dogCorrect = 0, dogTotal = 0;
+    let nonDogCorrect = 0, nonDogTotal = 0;
+    
+    testSet.forEach(example => {
+        const output = forwardPropagationSilent(example.input);
+        const predicted = output[0] > output[1];
+        const actual = example.isDog;
+        
+        if (predicted === actual) testCorrect++;
+        
+        if (actual) {
+            dogTotal++;
+            if (predicted) dogCorrect++;
+        } else {
+            nonDogTotal++;
+            if (!predicted) nonDogCorrect++;
+        }
+    });
+    
+    const trainAccuracy = trainCorrect / trainSet.length;
+    const testAccuracy = testCorrect / testSet.length;
+    const dogAccuracy = dogCorrect / dogTotal;
+    const nonDogAccuracy = nonDogCorrect / nonDogTotal;
+    
+    console.log(`Training Accuracy: ${(trainAccuracy * 100).toFixed(1)}%`);
+    console.log(`Test Accuracy: ${(testAccuracy * 100).toFixed(1)}%`);
+    console.log(`Dog Accuracy: ${(dogAccuracy * 100).toFixed(1)}% (${dogCorrect}/${dogTotal})`);
+    console.log(`Non-Dog Accuracy: ${(nonDogAccuracy * 100).toFixed(1)}% (${nonDogCorrect}/${nonDogTotal})`);
+    
+    const generalizationGap = trainAccuracy - testAccuracy;
+    const balancedAccuracy = (dogAccuracy + nonDogAccuracy) / 2;
+    
+    console.log(`Generalization Gap: ${(generalizationGap * 100).toFixed(1)}%`);
+    console.log(`Balanced Accuracy: ${(balancedAccuracy * 100).toFixed(1)}%`);
+    
+    // Good generalization: small gap, high balanced accuracy
+    const goodGeneralization = generalizationGap < 0.15 && balancedAccuracy > 0.7;
+    
+    return {
+        passed: goodGeneralization,
+        trainAccuracy: trainAccuracy,
+        testAccuracy: testAccuracy,
+        dogAccuracy: dogAccuracy,
+        nonDogAccuracy: nonDogAccuracy,
+        generalizationGap: generalizationGap,
+        balancedAccuracy: balancedAccuracy,
+        message: goodGeneralization ? '✅ PASS: Network generalizes well to both classes' : '❌ FAIL: Poor generalization detected'
+    };
+}
+
+function testWeightInitialization() {
+    console.log('=== TESTING WEIGHT INITIALIZATION ===');
+    
+    const numTests = 10;
+    const results = [];
+    
+    for (let test = 0; test < numTests; test++) {
+        initializeNetwork();
+        
+        // Check weight distribution
+        const allWeights = [
+            ...weights.inputToHidden.flat(),
+            ...weights.hiddenToOutput.flat()
+        ];
+        
+        const mean = allWeights.reduce((sum, w) => sum + w, 0) / allWeights.length;
+        const variance = allWeights.reduce((sum, w) => sum + Math.pow(w - mean, 2), 0) / allWeights.length;
+        const std = Math.sqrt(variance);
+        
+        // Test initial forward pass - shouldn't have extreme activations
+        const testInput = [0.5, 0.5, 0.5, 0.5];
+        const output = forwardPropagationSilent(testInput);
+        
+        const maxHiddenActivation = Math.max(...activations.hidden.map(Math.abs));
+        const outputSum = output.reduce((sum, val) => sum + val, 0);
+        
+        results.push({
+            mean: mean,
+            std: std,
+            maxHiddenActivation: maxHiddenActivation,
+            outputSum: outputSum
+        });
+    }
+    
+    // Analyze results
+    const avgMean = results.reduce((sum, r) => sum + Math.abs(r.mean), 0) / results.length;
+    const avgStd = results.reduce((sum, r) => sum + r.std, 0) / results.length;
+    const avgMaxHidden = results.reduce((sum, r) => sum + r.maxHiddenActivation, 0) / results.length;
+    
+    console.log(`Average weight mean: ${avgMean.toFixed(4)} (should be close to 0)`);
+    console.log(`Average weight std: ${avgStd.toFixed(4)} (should be reasonable for He init)`);
+    console.log(`Average max hidden activation: ${avgMaxHidden.toFixed(3)} (shouldn't be extreme)`);
+    
+    // Good initialization: mean near 0, reasonable std, no extreme activations
+    const goodInit = avgMean < 0.1 && avgStd > 0.1 && avgStd < 1.0 && avgMaxHidden < 10;
+    
+    return {
+        passed: goodInit,
+        avgMean: avgMean,
+        avgStd: avgStd,
+        avgMaxHidden: avgMaxHidden,
+        message: goodInit ? '✅ PASS: Weight initialization is good' : '❌ FAIL: Poor weight initialization'
+    };
+}
+
+function runComprehensiveTests() {
+    console.log('🧪 RUNNING COMPREHENSIVE NEURAL NETWORK TESTS...\n');
+    
+    const tests = [
+        { name: 'Dead Neuron Prevention', fn: testDeadNeuronPrevention },
+        { name: 'Weight Initialization', fn: testWeightInitialization },
+        { name: 'Generalization', fn: testGeneralization },
+        { name: '100% Accuracy Achievement', fn: test100PercentAccuracy }
+    ];
+    
+    const results = [];
+    
+    tests.forEach(test => {
+        console.log(`\n--- ${test.name.toUpperCase()} ---`);
+        const result = test.fn();
+        result.testName = test.name;
+        results.push(result);
+        console.log(result.message);
+    });
+    
+    // Summary
+    console.log('\n=== TEST SUMMARY ===');
+    const passed = results.filter(r => r.passed).length;
+    const total = results.length;
+    
+    results.forEach(result => {
+        console.log(`${result.testName}: ${result.passed ? '✅ PASS' : '❌ FAIL'}`);
+    });
+    
+    console.log(`\nOverall: ${passed}/${total} tests passed`);
+    
+    if (passed === total) {
+        console.log('🎉 ALL TESTS PASSED! The neural network is working properly.');
+    } else {
+        console.log('⚠️ Some tests failed. Check the issues above.');
+    }
+    
+    return {
+        passed: passed,
+        total: total,
+        results: results,
+        success: passed === total
+    };
+}
+
+// Enhanced test for 100% accuracy
+function test100PercentAccuracy() {
+    console.log('=== TESTING 100% ACCURACY TARGET ===');
+    
+    initializeNetwork();
+    const trainingData = generateBalancedTrainingData();
+    
+    // Split into train/validation sets
+    const splitIdx = Math.floor(trainingData.length * 0.8);
+    const trainSet = trainingData.slice(0, splitIdx);
+    const validSet = trainingData.slice(splitIdx);
+    
+    console.log(`Training on ${trainSet.length} examples, validating on ${validSet.length} examples`);
+    
+    // Train with advanced techniques
+    let epoch = 0;
+    let bestAccuracy = 0;
+    let perfectEpochs = 0;
+    const maxEpochs = 200;
+    
+    while (epoch < maxEpochs && perfectEpochs < 10) {
+        // Curriculum learning with increasing difficulty
+        const curriculumSize = Math.min(20 + epoch * 2, trainSet.length);
+        const currentSet = trainSet.slice(0, curriculumSize);
+        
+        // Adaptive learning rate
+        networkConfig.learningRate = Math.max(0.01, 0.3 * Math.exp(-epoch * 0.015));
+        
+        // Multiple passes per epoch
+        const passes = epoch < 50 ? 8 : epoch < 100 ? 5 : 3;
+        for (let pass = 0; pass < passes; pass++) {
+            currentSet.forEach(example => {
+                forwardPropagationSilent(example.input);
+                backpropagationSilent(example.target);
+            });
+        }
+        
+        epoch++;
+        
+        // Test on validation set every 10 epochs
+        if (epoch % 10 === 0) {
+            let correct = 0;
+            validSet.forEach(example => {
+                const output = forwardPropagationSilent(example.input);
+                const predicted = output[0] > output[1];
+                if (predicted === example.isDog) correct++;
+            });
+            
+            const accuracy = correct / validSet.length;
+            console.log(`Epoch ${epoch}: Validation Accuracy = ${(accuracy * 100).toFixed(1)}%`);
+            
+            if (accuracy > bestAccuracy) {
+                bestAccuracy = accuracy;
+                perfectEpochs = 0;
+            }
+            
+            if (accuracy === 1.0) {
+                perfectEpochs++;
+                console.log(`Perfect accuracy achieved! (${perfectEpochs}/10 confirmations)`);
+            }
+        }
+    }
+    
+    // Final comprehensive test on all data
+    let totalCorrect = 0;
+    let dogCorrect = 0, dogTotal = 0;
+    let nonDogCorrect = 0, nonDogTotal = 0;
+    
+    trainingData.forEach(example => {
+        const output = forwardPropagationSilent(example.input);
+        const predicted = output[0] > output[1];
+        const actual = example.isDog;
+        
+        if (predicted === actual) totalCorrect++;
+        
+        if (actual) {
+            dogTotal++;
+            if (predicted) dogCorrect++;
+        } else {
+            nonDogTotal++;
+            if (!predicted) nonDogCorrect++;
+        }
+    });
+    
+    const overallAccuracy = totalCorrect / trainingData.length;
+    const dogAccuracy = dogCorrect / dogTotal;
+    const nonDogAccuracy = nonDogCorrect / nonDogTotal;
+    
+    console.log(`Final Results after ${epoch} epochs:`);
+    console.log(`Overall Accuracy: ${(overallAccuracy * 100).toFixed(1)}% (${totalCorrect}/${trainingData.length})`);
+    console.log(`Dog Accuracy: ${(dogAccuracy * 100).toFixed(1)}% (${dogCorrect}/${dogTotal})`);
+    console.log(`Non-Dog Accuracy: ${(nonDogAccuracy * 100).toFixed(1)}% (${nonDogCorrect}/${nonDogTotal})`);
+    
+    const achieved100Percent = overallAccuracy === 1.0 && dogAccuracy === 1.0 && nonDogAccuracy === 1.0;
+    
+    return {
+        passed: achieved100Percent,
+        overallAccuracy: overallAccuracy,
+        dogAccuracy: dogAccuracy,
+        nonDogAccuracy: nonDogAccuracy,
+        epochsUsed: epoch,
+        message: achieved100Percent ? '🎉 PERFECT! 100% accuracy achieved on all classes!' : 
+                `❌ Failed to reach 100% accuracy. Best: ${(Math.max(overallAccuracy, dogAccuracy, nonDogAccuracy) * 100).toFixed(1)}%`
+    };
+}
+
+// Test back-and-forth learning stability
+function testBackAndForthLearning() {
+    console.log('=== TESTING BACK-AND-FORTH LEARNING STABILITY ===');
+    
+    const examples = createOptimalLearningSequence();
+    initializeNetwork();
+    
+    // Train on first two examples (one dog, one cat)
+    console.log('\n--- PHASE 1: Learning Dog vs Cat ---');
+    const phase1Examples = [examples[0], examples[1]]; // PrototypeDog, PrototypeCat
+    
+    for (let epoch = 0; epoch < 15; epoch++) {
+        phase1Examples.forEach(ex => {
+            forwardPropagationSilent(ex.input);
+            backpropagationSilent(ex.target);
+        });
+    }
+    
+    // Test all examples after phase 1
+    console.log('\nAfter learning Dog vs Cat:');
+    examples.forEach(ex => {
+        const output = forwardPropagationSilent(ex.input);
+        const dogProb = output[0];
+        const predicted = dogProb > 0.5 ? 'Dog' : 'Not Dog';
+        const correct = (ex.isDog && dogProb > 0.5) || (!ex.isDog && dogProb <= 0.5);
+        console.log(`${ex.label}: ${predicted} (${(dogProb*100).toFixed(1)}%) - ${correct ? 'CORRECT' : 'WRONG'}`);
+    });
+    
+    // Train on next two examples (another dog, an object)
+    console.log('\n--- PHASE 2: Adding Family Dog vs Object ---');
+    const phase2Examples = [examples[2], examples[3]]; // FamilyDog, Object
+    
+    for (let epoch = 0; epoch < 15; epoch++) {
+        phase2Examples.forEach(ex => {
+            forwardPropagationSilent(ex.input);
+            backpropagationSilent(ex.target);
+        });
+    }
+    
+    // Test all examples after phase 2
+    console.log('\nAfter adding more examples:');
+    examples.forEach(ex => {
+        const output = forwardPropagationSilent(ex.input);
+        const dogProb = output[0];
+        const predicted = dogProb > 0.5 ? 'Dog' : 'Not Dog';
+        const correct = (ex.isDog && dogProb > 0.5) || (!ex.isDog && dogProb <= 0.5);
+        console.log(`${ex.label}: ${predicted} (${(dogProb*100).toFixed(1)}%) - ${correct ? 'CORRECT' : 'WRONG'}`);
+    });
+    
+    // Go back to training on original examples to test stability
+    console.log('\n--- PHASE 3: Returning to Dog vs Cat (stability test) ---');
+    
+    for (let epoch = 0; epoch < 10; epoch++) {
+        phase1Examples.forEach(ex => {
+            forwardPropagationSilent(ex.input);
+            backpropagationSilent(ex.target);
+        });
+    }
+    
+    // Final test
+    console.log('\nFinal results after back-and-forth learning:');
+    let finalCorrect = 0;
+    examples.forEach(ex => {
+        const output = forwardPropagationSilent(ex.input);
+        const dogProb = output[0];
+        const predicted = dogProb > 0.5 ? 'Dog' : 'Not Dog';
+        const correct = (ex.isDog && dogProb > 0.5) || (!ex.isDog && dogProb <= 0.5);
+        if (correct) finalCorrect++;
+        console.log(`${ex.label}: ${predicted} (${(dogProb*100).toFixed(1)}%) - ${correct ? 'CORRECT' : 'WRONG'}`);
+    });
+    
+    const finalAccuracy = finalCorrect / examples.length;
+    const stable = finalAccuracy >= 0.75; // At least 3/4 correct
+    
+    console.log(`\nStability Test: ${stable ? 'PASSED' : 'FAILED'} (${(finalAccuracy * 100).toFixed(1)}% accuracy)`);
+    
+    return {
+        passed: stable,
+        finalAccuracy: finalAccuracy,
+        examples: examples,
+        message: stable ? '✅ Network maintains learning stability' : '❌ Network shows instability in back-and-forth learning'
+    };
+}
+
+// Simplified network capacity test
+function testSimplifiedNetwork() {
+    console.log('=== TESTING 4-NEURON NETWORK SUFFICIENCY ===');
+    
+    const examples = createOptimalLearningSequence();
+    const results = [];
+    
+    // Test multiple random initializations
+    for (let trial = 0; trial < 5; trial++) {
+        initializeNetwork();
+        
+        let epoch = 0;
+        const maxEpochs = 50;
+        let finalAccuracy = 0;
+        
+        while (epoch < maxEpochs) {
+            examples.forEach(ex => {
+                forwardPropagationSilent(ex.input);
+                backpropagationSilent(ex.target);
+            });
+            epoch++;
+            
+            // Check accuracy
+            let correct = 0;
+            examples.forEach(ex => {
+                const output = forwardPropagationSilent(ex.input);
+                const dogProb = output[0];
+                const isCorrect = (ex.isDog && dogProb > 0.5) || (!ex.isDog && dogProb <= 0.5);
+                if (isCorrect) correct++;
+            });
+            
+            finalAccuracy = correct / examples.length;
+            if (finalAccuracy === 1.0) break; // Early stopping
+        }
+        
+        results.push({
+            trial: trial + 1,
+            epochs: epoch,
+            accuracy: finalAccuracy
+        });
+        
+        console.log(`Trial ${trial + 1}: ${(finalAccuracy * 100).toFixed(1)}% accuracy in ${epoch} epochs`);
+    }
+    
+    const avgAccuracy = results.reduce((sum, r) => sum + r.accuracy, 0) / results.length;
+    const perfectTrials = results.filter(r => r.accuracy === 1.0).length;
+    const avgEpochs = results.reduce((sum, r) => sum + r.epochs, 0) / results.length;
+    
+    console.log(`\nSummary: ${perfectTrials}/5 trials achieved 100% accuracy`);
+    console.log(`Average accuracy: ${(avgAccuracy * 100).toFixed(1)}%`);
+    console.log(`Average epochs needed: ${avgEpochs.toFixed(1)}`);
+    
+    const sufficient = avgAccuracy >= 0.9; // 90% average accuracy
+    
+    return {
+        passed: sufficient,
+        avgAccuracy: avgAccuracy,
+        perfectTrials: perfectTrials,
+        avgEpochs: avgEpochs,
+        message: sufficient ? '✅ 4 neurons are sufficient for this task' : '❌ 4 neurons may be insufficient'
+    };
+}
 
 // Pixel Viewer Functions
 let pixelData = null;
@@ -5297,8 +4626,19 @@ function displayAIInputNumbers() {
 
 
 // Make test functions available globally for console testing
+window.runComprehensiveTests = runComprehensiveTests;
+window.testDeadNeuronPrevention = testDeadNeuronPrevention;
+window.testGeneralization = testGeneralization;
+window.testWeightInitialization = testWeightInitialization;
+window.runLearningTest = runLearningTest;
+window.test100PercentAccuracy = test100PercentAccuracy;
 window.showWeightChanges = showWeightChanges;
+window.testOptimalLearningSequence = testOptimalLearningSequence;
+window.testBackAndForthLearning = testBackAndForthLearning;
+window.testSimplifiedNetwork = testSimplifiedNetwork;
 window.createOptimalLearningSequence = createOptimalLearningSequence;
+window.tuneHyperparameters = tuneHyperparameters;
+window.quickHyperparamTest = quickHyperparamTest;
 window.debugTraining = debugTraining;
 
 // Debug function to test the training manually
@@ -5573,3 +4913,22 @@ console.log('   • debugFeatureRepresentation(inputs, "context") - Analyze feat
 console.log('   • debugWeightInitialization() - Check weight initialization issues');
 console.log('   • enableConvergenceAnalysis() - Track convergence during training');
 console.log('🔧 ===================================================\n');
+
+// ============================================================================
+// GLOBAL FUNCTION EXPORTS FOR HTML ONCLICK HANDLERS
+// ============================================================================
+// ES6 modules don't automatically add functions to global scope, so we need
+// to explicitly make functions available for HTML onclick handlers
+
+window.runForwardPass = runForwardPass;
+window.runBackwardPass = runBackwardPass;
+window.startFullDemo = startFullDemo;
+window.trainToPerfection = trainToPerfection;
+window.resetWeights = resetWeights;
+window.selectImage = selectImage;
+window.setTrueLabel = setTrueLabel;
+// Expert panel, message system, UI controller functions are provided by legacy-bridge.js
+// Only export functions that exist locally in script.js:
+window.toggleExpertViewMode = toggleExpertViewMode;
+
+console.log('🌐 Global functions exported for HTML onclick handlers');

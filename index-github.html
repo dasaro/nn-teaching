@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Dog Classifier - Interactive Visualization</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="description" content="Interactive neural network visualization showing how AI classifies dog vs non-dog images through forward propagation and backpropagation">
+    <meta name="keywords" content="neural network, AI, machine learning, dog classifier, visualization, education">
+</head>
+<body>
+    <!-- Language Selector -->
+    <div class="language-selector">
+        <button onclick="setLanguage('en')" id="lang-en">🇺🇸 EN</button>
+        <button onclick="setLanguage('it')" id="lang-it">🇮🇹 IT</button>
+    </div>
+
+    <!-- View Mode Toggle -->
+    <div class="view-mode-toggle">
+        <button onclick="toggleViewMode()" id="viewModeToggle">
+            <span data-i18n="ui.toggles.switchToExpert">🎓 Switch to Expert Mode</span>
+        </button>
+        <div class="view-mode-indicator" id="viewModeIndicator" data-i18n="system.viewMode.student">Student Mode</div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1 data-i18n="ui.title">🐕 Neural Network Dog Classifier</h1>
+            <p class="subtitle" data-i18n="ui.subtitle">Watch how AI learns to recognize dogs through interactive visualization</p>
+        </header>
+
+        <!-- Tutorial Overlay -->
+        <div id="tutorialOverlay" class="tutorial-overlay" style="display: none;">
+            <div class="tutorial-content">
+                <div class="tutorial-header">
+                    <h3 id="tutorialTitle">Tutorial</h3>
+                    <button onclick="skipTutorial()" class="tutorial-close">✕</button>
+                </div>
+                <div id="tutorialText" class="tutorial-text"></div>
+                <div class="tutorial-controls">
+                    <button onclick="nextTutorialStep()" id="tutorialNext" class="tutorial-btn">Next</button>
+                    <div id="tutorialProgress" class="tutorial-progress"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="visualization-area">
+                <!-- Input Section -->
+                <div class="section input-section">
+                    <h2 data-i18n="ui.sections.input">📥 Input Image</h2>
+                    
+                    <div class="image-selector">
+                        <div class="image-buttons">
+                            <h3 data-i18n="ui.images.dogs">Dogs:</h3>
+                            <button class="img-btn selected" onclick="selectImage('dog1')" data-i18n="ui.images.dog1">🐕 Golden Retriever</button>
+                            <button class="img-btn" onclick="selectImage('dog2')" data-i18n="ui.images.dog2">🐕 German Shepherd</button>
+                            <button class="img-btn" onclick="selectImage('dog3')" data-i18n="ui.images.dog3">🐕 Bulldog</button>
+                        </div>
+                        
+                        <div class="image-buttons">
+                            <h3 data-i18n="ui.images.nonDogs">Not Dogs:</h3>
+                            <button class="img-btn" onclick="selectImage('cat')" data-i18n="ui.images.cat">🐱 Cat</button>
+                            <button class="img-btn" onclick="selectImage('bird')" data-i18n="ui.images.bird">🐦 Bird</button>
+                            <button class="img-btn" onclick="selectImage('car')" data-i18n="ui.images.car">🚗 Car</button>
+                            <button class="img-btn" onclick="selectImage('tree')" data-i18n="ui.images.tree">🌳 Tree</button>
+                            <button class="img-btn" onclick="selectImage('fish')" data-i18n="ui.images.fish">🐟 Fish</button>
+                        </div>
+                    </div>
+
+                    <div class="image-display">
+                        <canvas id="inputImage" width="200" height="200"></canvas>
+                    </div>
+
+                    <div class="input-features">
+                        <h4 data-i18n="ui.features.title">Visual Features (Abstract Patterns):</h4>
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <span class="feature-label" data-i18n="ui.features.patternA">Pattern A:</span>
+                                <span class="feature-value" id="input-value-0">0.90</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-label" data-i18n="ui.features.patternB">Pattern B:</span>
+                                <span class="feature-value" id="input-value-1">0.90</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-label" data-i18n="ui.features.patternC">Pattern C:</span>
+                                <span class="feature-value" id="input-value-2">0.10</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-label" data-i18n="ui.features.patternD">Pattern D:</span>
+                                <span class="feature-value" id="input-value-3">0.10</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Network Section -->
+                <div class="section network-section">
+                    <h2 data-i18n="ui.sections.network">🧠 Neural Network</h2>
+                    <svg id="networkSvg" width="500" height="360"></svg>
+                </div>
+
+                <!-- Results Section -->
+                <div class="section results-section">
+                    <h2 data-i18n="ui.sections.results">📊 Results</h2>
+                    
+                    <div class="prediction-display">
+                        <div class="probability-bars">
+                            <div class="prob-bar">
+                                <span class="prob-label" data-i18n="ui.results.dogProbability">🐕 Dog:</span>
+                                <div class="prob-bar-bg">
+                                    <div class="prob-bar-fill dog-prob" id="dogProbBar" style="width: 50%"></div>
+                                </div>
+                                <span class="prob-value" id="dogProbValue">50%</span>
+                            </div>
+                            <div class="prob-bar">
+                                <span class="prob-label" data-i18n="ui.results.notDogProbability">🚫 Not Dog:</span>
+                                <div class="prob-bar-bg">
+                                    <div class="prob-bar-fill not-dog-prob" id="notDogProbBar" style="width: 50%"></div>
+                                </div>
+                                <span class="prob-value" id="notDogProbValue">50%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="final-prediction">
+                        <div class="prediction-box" id="predictionBox">
+                            <span data-i18n="ui.results.prediction">Prediction:</span> <span id="finalPrediction" data-i18n="ui.results.unknown">Unknown</span>
+                        </div>
+                    </div>
+                    
+                    <div class="true-label-section">
+                        <h4 data-i18n="ui.results.trueLabel">True Label:</h4>
+                        <div class="label-buttons">
+                            <button class="label-btn dog-label" onclick="setTrueLabel('dog')" data-i18n="ui.results.isDog">🐕 Is Dog</button>
+                            <button class="label-btn not-dog-label" onclick="setTrueLabel('not-dog')" data-i18n="ui.results.isNotDog">🚫 Not Dog</button>
+                        </div>
+                        <div class="current-label">
+                            <span data-i18n="ui.results.current">Current:</span> <span id="currentTrueLabel" data-i18n="ui.results.none">None</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="controls-area">
+                <div class="section controls-section">
+                    <h2 data-i18n="ui.sections.controls">🎛️ Controls</h2>
+                    
+                    <div class="main-controls">
+                        <button class="control-btn primary-btn" onclick="startDemo()" data-i18n="ui.controls.startDemo">
+                            🚀 Start Demo
+                        </button>
+                        <button class="control-btn secondary-btn" onclick="resetDemo()" data-i18n="ui.controls.reset">
+                            🔄 Reset Network
+                        </button>
+                    </div>
+
+                    <div class="speed-control">
+                        <label for="speedSlider" data-i18n="ui.controls.speed">⚡ Animation Speed:</label>
+                        <input type="range" id="speedSlider" min="1" max="10" value="5">
+                        <span id="speedValue">5</span>
+                    </div>
+
+                    <div class="advanced-controls" style="display: none;" id="advancedControls">
+                        <h3 data-i18n="ui.controls.advanced">Advanced Controls</h3>
+                        <button class="control-btn" onclick="quickAccuracyTest()" data-i18n="ui.controls.quickTest">🧪 Quick Test</button>
+                        <button class="control-btn" onclick="openPixelViewer()" data-i18n="ui.controls.pixelViewer">🔍 Pixel Viewer</button>
+                        <button class="control-btn" onclick="toggleWeightSliders()" data-i18n="ui.controls.weightSliders">⚖️ Weight Editor</button>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div class="section progress-section">
+                    <h2 data-i18n="ui.sections.progress">📈 Training Progress</h2>
+                    
+                    <div class="current-step">
+                        <strong data-i18n="ui.progress.currentStep">Current Step:</strong>
+                        <div id="currentStep" data-i18n="system.ready">Ready to start!</div>
+                    </div>
+
+                    <div class="step-info" id="stepInfo" style="display: none;">
+                        <div class="step-description" id="stepDescription"></div>
+                        <div class="step-details" id="stepDetails"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expert Panel -->
+        <div id="expertPanel" class="expert-panel" style="display: none;">
+            <div class="expert-panel-content">
+                <div class="expert-header">
+                    <h3 data-i18n="ui.expert.title">🎓 Expert Configuration</h3>
+                    <button onclick="closeExpertPanel()" class="expert-close">✕</button>
+                </div>
+                
+                <div class="expert-body">
+                    <div class="expert-section">
+                        <h4 data-i18n="ui.expert.activation">Activation Functions</h4>
+                        <div class="expert-control">
+                            <label data-i18n="ui.expert.hiddenActivation">Hidden Layer:</label>
+                            <select id="expertHiddenActivation">
+                                <option value="leaky_relu">Leaky ReLU</option>
+                                <option value="sigmoid">Sigmoid</option>
+                                <option value="tanh">Tanh</option>
+                            </select>
+                        </div>
+                        <div class="expert-control">
+                            <label data-i18n="ui.expert.outputActivation">Output Layer:</label>
+                            <select id="expertOutputActivation">
+                                <option value="softmax">Softmax</option>
+                                <option value="sigmoid">Sigmoid</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="expert-section">
+                        <h4 data-i18n="ui.expert.training">Training Parameters</h4>
+                        <div class="expert-control">
+                            <label data-i18n="ui.expert.learningRate">Learning Rate:</label>
+                            <input type="number" id="expertLearningRate" min="0.001" max="1.0" step="0.001" value="0.1">
+                        </div>
+                        <div class="expert-control">
+                            <label data-i18n="ui.expert.momentum">Momentum:</label>
+                            <input type="number" id="expertMomentum" min="0" max="0.99" step="0.01" value="0.0">
+                        </div>
+                        <div class="expert-control">
+                            <label data-i18n="ui.expert.l2Reg">L2 Regularization:</label>
+                            <input type="number" id="expertL2Reg" min="0" max="0.1" step="0.001" value="0.0">
+                        </div>
+                    </div>
+
+                    <div class="expert-section">
+                        <h4 data-i18n="ui.expert.architecture">Network Architecture</h4>
+                        <div class="expert-info">
+                            <span data-i18n="ui.expert.inputSize">Input Size:</span> <span>4</span>
+                        </div>
+                        <div class="expert-info">
+                            <span data-i18n="ui.expert.hiddenSize">Hidden Size:</span> <span>4</span>
+                        </div>
+                        <div class="expert-info">
+                            <span data-i18n="ui.expert.outputSize">Output Size:</span> <span>2</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="expert-actions">
+                    <button onclick="resetExpertDefaults()" class="expert-btn" data-i18n="ui.expert.reset">🔄 Reset to Defaults</button>
+                    <button onclick="applyExpertConfig()" class="expert-btn expert-btn-primary" data-i18n="ui.expert.apply">✅ Apply & Restart Network</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="locales/en.js"></script>
+    <script src="locales/it.js"></script>
+    <script src="i18n.js"></script>
+    <!-- GitHub Pages Compatible Bundle -->
+    <script src="script-bundled.js"></script>
+    <script src="script-github.js"></script>
+</body>
+</html>

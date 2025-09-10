@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Dog Classifier - GitHub Pages Ready</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 2rem;
+            padding: 2rem;
+            min-height: 600px;
+        }
+
+        .section {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        /* Left Panel - Input */
+        .image-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .img-btn {
+            background: #e2e8f0;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .img-btn:hover {
+            background: #cbd5e0;
+            transform: translateY(-1px);
+        }
+
+        .img-btn.selected {
+            background: #4299e1;
+            color: white;
+            border-color: #3182ce;
+        }
+
+        .image-display {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        #inputImage {
+            border: 3px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .feature-item {
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .feature-value {
+            font-weight: bold;
+            color: #4299e1;
+        }
+
+        /* Center Panel - Network */
+        .network-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #networkSvg {
+            width: 100%;
+            height: 400px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .neuron {
+            fill: #f1f5f9;
+            stroke: #94a3b8;
+            stroke-width: 2;
+            transition: all 0.3s ease;
+        }
+
+        .neuron.active {
+            fill: #dbeafe;
+            stroke: #3b82f6;
+            stroke-width: 3;
+        }
+
+        .connection-line {
+            stroke: #cbd5e1;
+            stroke-width: 2;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .connection-line.active {
+            stroke: #f59e0b;
+            stroke-width: 4;
+            opacity: 1;
+        }
+
+        /* Right Panel - Results */
+        .probability-bars {
+            margin: 1rem 0;
+        }
+
+        .prob-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            gap: 10px;
+        }
+
+        .prob-bar-bg {
+            flex: 1;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .prob-bar-fill {
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+        }
+
+        .dog-prob {
+            background: linear-gradient(90deg, #48bb78, #38a169);
+        }
+
+        .not-dog-prob {
+            background: linear-gradient(90deg, #f56565, #e53e3e);
+        }
+
+        .prediction-box {
+            background: white;
+            border: 3px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+
+        .prediction-box.dog {
+            border-color: #48bb78;
+            color: #48bb78;
+        }
+
+        .prediction-box.not-dog {
+            border-color: #f56565;
+            color: #f56565;
+        }
+
+        /* Controls */
+        .controls {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 2rem;
+            padding: 2rem;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            margin: 0 1rem;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: transform 0.2s;
+            font-weight: 600;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes neuronPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .neuron.active {
+            animation: neuronPulse 0.6s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐕 Neural Network Dog Classifier</h1>
+            <p>Watch how AI learns to recognize dogs through interactive visualization</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Input Section -->
+            <div class="section">
+                <h2>📥 Input Image</h2>
+                
+                <div class="image-buttons">
+                    <h3>Dogs:</h3>
+                    <button class="img-btn selected" onclick="selectImage('dog1')">🐕 Golden Retriever</button>
+                    <button class="img-btn" onclick="selectImage('dog2')">🐕 German Shepherd</button>
+                    <button class="img-btn" onclick="selectImage('dog3')">🐕 Bulldog</button>
+                </div>
+                
+                <div class="image-buttons">
+                    <h3>Not Dogs:</h3>
+                    <button class="img-btn" onclick="selectImage('cat')">🐱 Cat</button>
+                    <button class="img-btn" onclick="selectImage('bird')">🐦 Bird</button>
+                    <button class="img-btn" onclick="selectImage('car')">🚗 Car</button>
+                </div>
+
+                <div class="image-display">
+                    <canvas id="inputImage" width="200" height="200"></canvas>
+                </div>
+
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <span>Pattern A:</span>
+                        <span class="feature-value" id="input-value-0">0.90</span>
+                    </div>
+                    <div class="feature-item">
+                        <span>Pattern B:</span>
+                        <span class="feature-value" id="input-value-1">0.90</span>
+                    </div>
+                    <div class="feature-item">
+                        <span>Pattern C:</span>
+                        <span class="feature-value" id="input-value-2">0.10</span>
+                    </div>
+                    <div class="feature-item">
+                        <span>Pattern D:</span>
+                        <span class="feature-value" id="input-value-3">0.10</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Section -->
+            <div class="section network-area">
+                <h2>🧠 Neural Network</h2>
+                <svg id="networkSvg" width="100%" height="400"></svg>
+            </div>
+
+            <!-- Results Section -->
+            <div class="section">
+                <h2>📊 Results</h2>
+                
+                <div class="probability-bars">
+                    <div class="prob-bar">
+                        <span>🐕 Dog:</span>
+                        <div class="prob-bar-bg">
+                            <div class="prob-bar-fill dog-prob" id="dogProbBar" style="width: 50%"></div>
+                        </div>
+                        <span id="dogProbValue">50%</span>
+                    </div>
+                    <div class="prob-bar">
+                        <span>🚫 Not Dog:</span>
+                        <div class="prob-bar-bg">
+                            <div class="prob-bar-fill not-dog-prob" id="notDogProbBar" style="width: 50%"></div>
+                        </div>
+                        <span id="notDogProbValue">50%</span>
+                    </div>
+                </div>
+
+                <div class="prediction-box" id="predictionBox">
+                    <span>Prediction:</span> <span id="finalPrediction">Unknown</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="control-btn" onclick="startDemo()" id="startBtn">🚀 Start Demo</button>
+                <button class="control-btn" onclick="resetDemo()">🔄 Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Neural Network Visualization - GitHub Pages Ready Version
+        console.log('🎯 Neural Network Visualization - GitHub Pages Ready');
+        
+        let isAnimating = false;
+        let currentImage = 'dog1';
+        
+        // Network configuration
+        const networkConfig = {
+            inputSize: 4,
+            hiddenSize: 4,
+            outputSize: 2
+        };
+        
+        // Neural network weights and activations
+        let weights = {
+            inputToHidden: [],
+            hiddenToOutput: []
+        };
+        
+        let activations = {
+            input: [],
+            hidden: [],
+            output: []
+        };
+
+        // Image data - simplified patterns that represent features
+        const imageData = {
+            'dog1': [0.9, 0.9, 0.1, 0.1],   // High patterns A&B, low C&D = Dog
+            'dog2': [0.8, 0.85, 0.15, 0.2],
+            'dog3': [0.95, 0.8, 0.05, 0.25],
+            'cat': [0.2, 0.3, 0.8, 0.7],     // High patterns C&D, low A&B = Not Dog
+            'bird': [0.1, 0.4, 0.9, 0.6],
+            'car': [0.15, 0.1, 0.85, 0.9]
+        };
+
+        // Initialize the network when page loads
+        function initializeNetwork() {
+            console.log('🎯 Initializing neural network...');
+            
+            // Initialize weights randomly
+            weights.inputToHidden = [];
+            for (let i = 0; i < networkConfig.inputSize; i++) {
+                weights.inputToHidden[i] = [];
+                for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                    weights.inputToHidden[i][j] = (Math.random() - 0.5) * 2;
+                }
+            }
+            
+            weights.hiddenToOutput = [];
+            for (let i = 0; i < networkConfig.hiddenSize; i++) {
+                weights.hiddenToOutput[i] = [];
+                for (let j = 0; j < networkConfig.outputSize; j++) {
+                    weights.hiddenToOutput[i][j] = (Math.random() - 0.5) * 2;
+                }
+            }
+            
+            // Create the visual network
+            createNetworkVisualization();
+            
+            // Initialize with first image
+            selectImage('dog1');
+            
+            console.log('✅ Network initialized successfully');
+        }
+
+        // Create SVG network visualization
+        function createNetworkVisualization() {
+            const svg = document.getElementById('networkSvg');
+            const svgRect = svg.getBoundingClientRect();
+            const width = svgRect.width || 500;
+            const height = svgRect.height || 400;
+            
+            svg.innerHTML = '';
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            
+            const layers = [networkConfig.inputSize, networkConfig.hiddenSize, networkConfig.outputSize];
+            const layerSpacing = width / (layers.length + 1);
+            
+            let neurons = [];
+            
+            // Create neurons for each layer
+            layers.forEach((layerSize, layerIndex) => {
+                const x = layerSpacing * (layerIndex + 1);
+                const neuronSpacing = height / (layerSize + 1);
+                
+                neurons[layerIndex] = [];
+                
+                for (let i = 0; i < layerSize; i++) {
+                    const y = neuronSpacing * (i + 1);
+                    
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', x);
+                    circle.setAttribute('cy', y);
+                    circle.setAttribute('r', 20);
+                    circle.classList.add('neuron');
+                    circle.id = `neuron-${layerIndex}-${i}`;
+                    
+                    svg.appendChild(circle);
+                    neurons[layerIndex][i] = { x, y };
+                }
+            });
+            
+            // Create connections
+            for (let layer = 0; layer < layers.length - 1; layer++) {
+                for (let i = 0; i < layers[layer]; i++) {
+                    for (let j = 0; j < layers[layer + 1]; j++) {
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', neurons[layer][i].x);
+                        line.setAttribute('y1', neurons[layer][i].y);
+                        line.setAttribute('x2', neurons[layer + 1][j].x);
+                        line.setAttribute('y2', neurons[layer + 1][j].y);
+                        line.classList.add('connection-line');
+                        line.id = `connection-${layer}-${i}-${j}`;
+                        
+                        svg.appendChild(line);
+                    }
+                }
+            }
+            
+            // Add layer labels
+            const labels = ['Input', 'Hidden', 'Output'];
+            labels.forEach((label, index) => {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', layerSpacing * (index + 1));
+                text.setAttribute('y', 30);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', '#64748b');
+                text.setAttribute('font-size', '14');
+                text.setAttribute('font-weight', '600');
+                text.textContent = label;
+                svg.appendChild(text);
+            });
+        }
+
+        // Activation functions
+        function sigmoid(x) {
+            return 1 / (1 + Math.exp(-Math.max(-500, Math.min(500, x))));
+        }
+
+        function softmax(values) {
+            const maxVal = Math.max(...values);
+            const expVals = values.map(val => Math.exp(Math.min(val - maxVal, 700)));
+            const sumExp = expVals.reduce((sum, val) => sum + val, 0);
+            return expVals.map(val => val / sumExp);
+        }
+
+        // Select image function
+        function selectImage(imageType) {
+            currentImage = imageType;
+            
+            // Update button selection
+            document.querySelectorAll('.img-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            
+            // Update input values display
+            const values = imageData[imageType];
+            values.forEach((value, index) => {
+                document.getElementById(`input-value-${index}`).textContent = value.toFixed(2);
+            });
+            
+            // Draw image on canvas
+            drawImagePattern(imageType);
+            
+            console.log(`🖼️ Selected image: ${imageType}`);
+        }
+
+        // Draw simplified image patterns
+        function drawImagePattern(imageType) {
+            const canvas = document.getElementById('inputImage');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, 200, 200);
+            
+            // Draw different patterns based on image type
+            const patterns = {
+                'dog1': () => drawDogPattern(ctx, '#8B4513', '#FFD700'),
+                'dog2': () => drawDogPattern(ctx, '#654321', '#000000'),
+                'dog3': () => drawDogPattern(ctx, '#F5DEB3', '#8B4513'),
+                'cat': () => drawCatPattern(ctx),
+                'bird': () => drawBirdPattern(ctx),
+                'car': () => drawCarPattern(ctx)
+            };
+            
+            if (patterns[imageType]) {
+                patterns[imageType]();
+            }
+        }
+
+        function drawDogPattern(ctx, color1, color2) {
+            // Simple dog representation
+            ctx.fillStyle = color1;
+            ctx.fillRect(50, 60, 100, 80);  // Head
+            ctx.fillRect(30, 40, 30, 40);   // Left ear
+            ctx.fillRect(140, 40, 30, 40);  // Right ear
+            
+            // Eyes and nose
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(70, 80, 15, 15);   // Left eye
+            ctx.fillRect(115, 80, 15, 15);  // Right eye
+            ctx.fillRect(95, 110, 10, 10);  // Nose
+        }
+
+        function drawCatPattern(ctx) {
+            // Simple cat representation
+            ctx.fillStyle = '#808080';
+            ctx.fillRect(60, 70, 80, 60);   // Head
+            
+            // Triangular ears
+            ctx.beginPath();
+            ctx.moveTo(50, 70);
+            ctx.lineTo(70, 40);
+            ctx.lineTo(90, 70);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(110, 70);
+            ctx.lineTo(130, 40);
+            ctx.lineTo(150, 70);
+            ctx.fill();
+            
+            // Cat eyes (different from dogs)
+            ctx.fillStyle = '#00FF00';
+            ctx.fillRect(75, 85, 12, 12);
+            ctx.fillRect(113, 85, 12, 12);
+        }
+
+        function drawBirdPattern(ctx) {
+            // Simple bird representation
+            ctx.fillStyle = '#4169E1';
+            ctx.fillRect(80, 90, 40, 60);   // Body
+            ctx.fillRect(120, 100, 30, 40); // Wing
+            
+            // Beak
+            ctx.fillStyle = '#FFA500';
+            ctx.fillRect(70, 95, 15, 8);
+        }
+
+        function drawCarPattern(ctx) {
+            // Simple car representation
+            ctx.fillStyle = '#DC143C';
+            ctx.fillRect(40, 100, 120, 40); // Body
+            
+            // Wheels
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(55, 140, 20, 20);
+            ctx.fillRect(125, 140, 20, 20);
+            
+            // Windows
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(50, 80, 100, 25);
+        }
+
+        // Forward propagation calculation
+        function forwardPropagation() {
+            const inputValues = imageData[currentImage];
+            
+            // Set input activations
+            activations.input = [...inputValues];
+            
+            // Calculate hidden layer
+            activations.hidden = [];
+            for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                let sum = 0;
+                for (let i = 0; i < networkConfig.inputSize; i++) {
+                    sum += activations.input[i] * weights.inputToHidden[i][j];
+                }
+                activations.hidden[j] = sigmoid(sum);
+            }
+            
+            // Calculate output layer
+            let outputSums = [];
+            for (let k = 0; k < networkConfig.outputSize; k++) {
+                let sum = 0;
+                for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                    sum += activations.hidden[j] * weights.hiddenToOutput[j][k];
+                }
+                outputSums[k] = sum;
+            }
+            
+            activations.output = softmax(outputSums);
+            
+            return activations.output;
+        }
+
+        // Start demo animation
+        async function startDemo() {
+            if (isAnimating) return;
+            
+            console.log('🚀 Starting neural network demo...');
+            isAnimating = true;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('startBtn').textContent = '🔄 Processing...';
+            
+            try {
+                // Reset all visual states
+                document.querySelectorAll('.neuron, .connection-line').forEach(el => {
+                    el.classList.remove('active');
+                });
+                
+                // Step 1: Highlight input neurons
+                console.log('⚡ Step 1: Input layer activation');
+                for (let i = 0; i < networkConfig.inputSize; i++) {
+                    const neuron = document.getElementById(`neuron-0-${i}`);
+                    if (neuron) neuron.classList.add('active');
+                    await sleep(300);
+                }
+                
+                await sleep(500);
+                
+                // Step 2: Forward propagation to hidden layer
+                console.log('⚡ Step 2: Processing in hidden layer');
+                for (let i = 0; i < networkConfig.inputSize; i++) {
+                    for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                        const connection = document.getElementById(`connection-0-${i}-${j}`);
+                        if (connection) connection.classList.add('active');
+                    }
+                }
+                
+                await sleep(500);
+                
+                // Activate hidden neurons
+                for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                    const neuron = document.getElementById(`neuron-1-${j}`);
+                    if (neuron) neuron.classList.add('active');
+                    await sleep(200);
+                }
+                
+                await sleep(500);
+                
+                // Step 3: Forward propagation to output
+                console.log('⚡ Step 3: Computing final prediction');
+                for (let j = 0; j < networkConfig.hiddenSize; j++) {
+                    for (let k = 0; k < networkConfig.outputSize; k++) {
+                        const connection = document.getElementById(`connection-1-${j}-${k}`);
+                        if (connection) connection.classList.add('active');
+                    }
+                }
+                
+                await sleep(500);
+                
+                // Activate output neurons and compute result
+                for (let k = 0; k < networkConfig.outputSize; k++) {
+                    const neuron = document.getElementById(`neuron-2-${k}`);
+                    if (neuron) neuron.classList.add('active');
+                    await sleep(200);
+                }
+                
+                // Calculate and display results
+                const output = forwardPropagation();
+                updateResults(output);
+                
+                await sleep(1000);
+                
+                console.log('✅ Demo completed successfully!');
+            } catch (error) {
+                console.error('❌ Error during demo:', error);
+            } finally {
+                isAnimating = false;
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('startBtn').textContent = '🚀 Start Demo';
+            }
+        }
+
+        // Update results display
+        function updateResults(output) {
+            const dogProb = Math.round(output[0] * 100);
+            const notDogProb = Math.round(output[1] * 100);
+            
+            // Update probability bars with animation
+            document.getElementById('dogProbBar').style.width = dogProb + '%';
+            document.getElementById('notDogProbBar').style.width = notDogProb + '%';
+            document.getElementById('dogProbValue').textContent = dogProb + '%';
+            document.getElementById('notDogProbValue').textContent = notDogProb + '%';
+            
+            // Update final prediction
+            const prediction = dogProb > notDogProb ? 'Dog' : 'Not Dog';
+            const confidence = Math.max(dogProb, notDogProb);
+            const predictionBox = document.getElementById('predictionBox');
+            
+            document.getElementById('finalPrediction').textContent = prediction;
+            predictionBox.className = 'prediction-box ' + (prediction === 'Dog' ? 'dog' : 'not-dog');
+            
+            console.log(`🎯 Prediction: ${prediction} (${confidence}% confidence)`);
+        }
+
+        // Reset demo
+        function resetDemo() {
+            console.log('🔄 Resetting demo...');
+            
+            isAnimating = false;
+            
+            // Reset visual states
+            document.querySelectorAll('.neuron, .connection-line').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Reset results display
+            document.getElementById('dogProbBar').style.width = '50%';
+            document.getElementById('notDogProbBar').style.width = '50%';
+            document.getElementById('dogProbValue').textContent = '50%';
+            document.getElementById('notDogProbValue').textContent = '50%';
+            document.getElementById('finalPrediction').textContent = 'Unknown';
+            document.getElementById('predictionBox').className = 'prediction-box';
+            
+            // Reset button
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').textContent = '🚀 Start Demo';
+            
+            console.log('✅ Demo reset complete');
+        }
+
+        // Utility sleep function
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 Neural Network Visualization - GitHub Pages Ready Version');
+            console.log('🚀 Initializing application...');
+            
+            // Add window resize handler for SVG
+            window.addEventListener('resize', function() {
+                setTimeout(createNetworkVisualization, 100);
+            });
+            
+            // Initialize the network
+            initializeNetwork();
+            
+            console.log('✅ Application ready! Click "Start Demo" to begin.');
+            console.log('📖 This is a simplified educational demonstration of how neural networks process images.');
+        });
+    </script>
+</body>
+</html>
