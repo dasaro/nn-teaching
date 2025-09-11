@@ -199,6 +199,71 @@ const positions = {
     prediction: {x: 650, y: 200} // New prediction column with more space
 };
 
+// Image URLs for different image types
+const imageUrls = {
+    dog1: 'data:image/jpeg;base64,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'
+};
+
+// Tutorial related globals
+let tutorialStep = 0;
+let tutorialActive = false;
+const tutorialSteps = [
+    'Welcome to the Neural Network Visualization!',
+    'Click on different images to see how the network processes them.',
+    'Watch the demo to see forward propagation in action.',
+    'Try training the network to see how it learns!',
+    'Explore the expert panel for advanced features.'
+];
+
+// Performance metrics
+let performanceMetrics = {
+    accuracy: 0,
+    loss: 0,
+    epoch: 0,
+    learningRate: 0.1,
+    momentum: 0,
+    totalTrainingExamples: 0,
+    correctPredictions: 0,
+    trainingTime: 0,
+    lastUpdated: Date.now(),
+    convergenceHistory: [],
+    lossHistory: [],
+    accuracyHistory: []
+};
+
+// Demo state
+let demoState = {
+    isRunning: false,
+    currentStep: 'ready',
+    stepProgress: 0,
+    totalSteps: 5
+};
+
+// Weight sliders state
+let weightSlidersActive = false;
+let weightSliderElements = {};
+
+// Momentum for training
+let momentum = {
+    inputToHidden: [],
+    hiddenToOutput: []
+};
+
+// Weight changes tracking  
+let weightChanges = {
+    inputToHidden: [],
+    hiddenToOutput: []
+};
+
+// Convergence analysis
+let convergenceAnalysis = {
+    enabled: false,
+    history: [],
+    currentLoss: null,
+    improvementThreshold: 0.001,
+    stagnationCount: 0
+};
+
 // ============================================================================
 // ADDITIONAL WINDOW ASSIGNMENTS
 // ============================================================================
