@@ -162,8 +162,8 @@ function resetDemo() {
     }
     
     updateStepInfoDual(
-        '🎮 <strong>Ready to Explore!</strong><br>🚀 Choose "Watch AI Think" to see how the AI makes decisions, or "Watch AI Learn" to see how it gets smarter. Try the full demo for the complete experience!',
-        '🎮 <strong>System Ready</strong><br>📊 All network parameters initialized. Ready to demonstrate forward propagation, backpropagation, or full training cycle.'
+        window.i18n.t('ui.readyToExplore'),
+        window.i18n.t('ui.systemReady')
     );
     
     // Enable forward pass button
@@ -543,8 +543,8 @@ async function displayResult() {
         notDogProbValue.textContent = `${notDogProb.toFixed(1)}%`;
     }
     
-    const prediction = dogProb > notDogProb ? 'CANINE' : 'NON-CANINE';
-    const isCorrect = (prediction === 'CANINE' && trueLabel === 'dog') || (prediction === 'NON-CANINE' && trueLabel === 'not-dog');
+    const prediction = dogProb > notDogProb ? window.i18n.t('prediction.canine') : window.i18n.t('prediction.nonCanine');
+    const isCorrect = (prediction === window.i18n.t('prediction.canine') && trueLabel === 'dog') || (prediction === window.i18n.t('prediction.nonCanine') && trueLabel === 'not-dog');
     
     // Calculate accuracy and loss
     const accuracy = isCorrect ? 1.0 : 0.0;
@@ -555,13 +555,13 @@ async function displayResult() {
     performanceMetrics.lastLoss = loss;
     
     const statusEmoji = isCorrect ? '✅' : '❌';
-    const statusText = isCorrect ? 'Correct!' : 'Wrong!';
+    const statusText = isCorrect ? window.i18n.t('result.correct') : window.i18n.t('result.wrong');
     
     updateStepInfoDual(
         `${statusEmoji} <strong>AI's Final Answer:</strong> "${prediction}" with ${confidence.toFixed(1)}% confidence<br>
-        ${statusText} ${isCorrect ? '🎉 Great job! The AI got it right!' : '📚 The AI will learn from this mistake!'}`,
+        ${statusText} ${isCorrect ? window.i18n.t('result.aiGotItRight') : window.i18n.t('result.aiWillLearn')}`,
         `${statusEmoji} <strong>Classification Result:</strong> "${prediction}" (${confidence.toFixed(1)}% confidence)<br>
-        ${statusText} Accuracy: ${isCorrect ? 'Correct ✓' : 'Incorrect ✗'}`
+        ${statusText} Accuracy: ${isCorrect ? window.i18n.t('result.correctCheck') : window.i18n.t('result.incorrectX')}`
     );
     
     // Highlight the prediction result visually (only if element exists)
@@ -625,50 +625,56 @@ async function runForwardPass() {
     // Step 1: Show input activation
     const forwardStartTime = performance.now();
     updateStepInfoDual(
-        `📷 <strong>STEP 1: The AI Looks at Our Picture</strong><br>
-        👀 Just like when you look at a photo, the AI examines every detail! Here's what catches its attention:<br>
-        • 🐕 Dog Feature A: <strong>${(activations.input[0] * 100).toFixed(0)}%</strong> strength (maybe ears or shape?)<br>
-        • 🦴 Dog Feature B: <strong>${(activations.input[1] * 100).toFixed(0)}%</strong> strength (maybe fur texture?)<br>
-        • 👁️ Dog Feature C: <strong>${(activations.input[2] * 100).toFixed(0)}%</strong> strength (maybe eyes or nose?)<br>
-        • 🎯 Pattern Match: <strong>${(activations.input[3] * 100).toFixed(0)}%</strong> overall doggy-ness<br>
-        💡 <em>Higher numbers mean 'this looks very dog-like to me!'</em>`,
-        `📥 <strong>Input Layer Activation</strong><br>
-         ${formatMatrix(activations.input, 'Input Vector x')}
-         <div class="op-description">Feature patterns: A=${activations.input[0].toFixed(3)}, B=${activations.input[1].toFixed(3)}, C=${activations.input[2].toFixed(3)}, D=${activations.input[3].toFixed(3)}</div>`
+        window.i18n.t('forward.student.step1', [
+            (activations.input[0] * 100).toFixed(0),
+            (activations.input[1] * 100).toFixed(0),
+            (activations.input[2] * 100).toFixed(0),
+            (activations.input[3] * 100).toFixed(0)
+        ]),
+        window.i18n.t('forward.expert.step1', [
+            formatMatrix(activations.input, 'Input Vector x'),
+            activations.input[0].toFixed(3),
+            activations.input[1].toFixed(3), 
+            activations.input[2].toFixed(3),
+            activations.input[3].toFixed(3)
+        ])
     );
     await animateInputActivation();
     
     // Step 2: Forward propagation to hidden layer
     updateStepInfoDual(
-        `🤔 <strong>STEP 2: The AI's Brain Cells Work Together</strong><br>
-        💭 Now comes the magic! The AI's brain cells team up to find bigger patterns, like detectives gathering clues:<br>
-        • 🧠 Brain Cell 1: <strong>${(activations.hidden[0] * 100).toFixed(0)}%</strong> excited (maybe finds 'fluffy texture + right size')<br>
-        • 🧠 Brain Cell 2: <strong>${(activations.hidden[1] * 100).toFixed(0)}%</strong> excited (maybe finds 'pointy ears + wet nose')<br>
-        • 🧠 Brain Cell 3: <strong>${(activations.hidden[2] * 100).toFixed(0)}%</strong> excited (maybe finds 'four legs + tail')<br>
-        • 🧠 Brain Cell 4: <strong>${(activations.hidden[3] * 100).toFixed(0)}%</strong> excited (maybe finds 'friendly face')<br>
-        🎯 <em>Each brain cell is like a specialist detective looking for specific clues!</em>`,
-        `✖️ <strong>Hidden Layer Computation</strong><br>
-         ${formatOperation("Matrix Multiplication", "h = σ(W₁ᵀ × x)", 
-           `[${activations.hidden.map(h => h.toFixed(3)).join(', ')}]`,
-           `For each hidden neuron i: h[i] = ${expertConfig.hiddenActivation}(Σⱼ W₁[i,j] × x[j])`)}
-         Current activation function: <strong>${expertConfig.hiddenActivation.replace('_', ' ').toUpperCase()}</strong>`
+        window.i18n.t('forward.student.step2', [
+            ((activations.hidden[0] || 0) * 100).toFixed(0),
+            ((activations.hidden[1] || 0) * 100).toFixed(0),
+            ((activations.hidden[2] || 0) * 100).toFixed(0),
+            ((activations.hidden[3] || 0) * 100).toFixed(0)
+        ]),
+        window.i18n.t('forward.expert.step2', [
+            formatOperation(window.i18n.t('expert.matrixMultiplication'), "h = σ(W₁ᵀ × x)", 
+              `[${activations.hidden.map(h => h.toFixed(3)).join(', ')}]`,
+              `For each hidden neuron i: h[i] = ${expertConfig.hiddenActivation}(Σⱼ W₁[i,j] × x[j])`) + 
+            `<br>${window.i18n.t('expert.currentActivation')} <strong>${expertConfig.hiddenActivation.replace('_', ' ').toUpperCase()}</strong>`
+        ])
     );
     await animateForwardPropagation();
     
     // Step 3: Forward propagation to output layer
     updateStepInfoDual(
-        `🎯 <strong>STEP 3: The Big Decision Moment!</strong><br>
-        🎭 All the brain cells vote together like a jury making their final decision! Here's how confident each option feels:<br>
-        • 🐕 <strong>"It's definitely a DOG!"</strong> → <strong>${(activations.output[0] * 100).toFixed(1)}%</strong> confident<br>
-        • ❌ <strong>"Nope, NOT a dog!"</strong> → <strong>${(activations.output[1] * 100).toFixed(1)}%</strong> confident<br>
-        <br>🏆 <strong>Final Decision:</strong> ${activations.output[0] > activations.output[1] ? 
-          '🐕 "I\'m pretty sure this is a DOG!" (The dog vote won!)' : 
-          '❌ "I don\'t think this is a dog." (The not-dog vote won!)'}`,
-        `➕ <strong>Output Layer Computation</strong><br>
-         ${formatOperation("Final Prediction", "y = σ(W₂ᵀ × h)", 
-           `[${activations.output.map(o => (o*100).toFixed(1)).join('%, ')}%]`,
-           `For each output j: y[j] = ${expertConfig.outputActivation}(Σᵢ W₂[j,i] × h[i])`)}
-         Output activation: <strong>${expertConfig.outputActivation.toUpperCase()}</strong>`
+        window.i18n.t('forward.student.step3', [
+          window.i18n.t('vote.definitelyDog'),
+          (activations.output[0] * 100).toFixed(1),
+          window.i18n.t('vote.nopeNotDog'),
+          (activations.output[1] * 100).toFixed(1),
+          activations.output[0] > activations.output[1] ? 
+            `🐕 "${window.i18n.t('vote.prettyDog')}" ${window.i18n.t('vote.dogWon')}` : 
+            `❌ "${window.i18n.t('vote.dontThinkDog')}" ${window.i18n.t('vote.notDogWon')}`
+        ]),
+        window.i18n.t('forward.expert.step3', [
+            formatOperation(window.i18n.t('expert.finalPrediction'), "y = σ(W₂ᵀ × h)", 
+              `[${activations.output.map(o => (o*100).toFixed(1)).join('%, ')}%]`,
+              `For each output j: y[j] = ${expertConfig.outputActivation}(Σᵢ W₂[j,i] × h[i])`) + 
+            `<br>${window.i18n.t('expert.outputActivation')} <strong>${expertConfig.outputActivation.toUpperCase()}</strong>`
+        ])
     );
     await animateOutputComputation();
     
@@ -685,20 +691,22 @@ async function runForwardPass() {
     if (trueLabel) {
         document.getElementById('backwardBtn').disabled = false;
         updateStepInfoDual(
-            "🎉 Thinking complete! The AI made its guess. Now click 'Learn' to see how it can improve from mistakes!",
-            `🎯 <strong>Forward Pass Complete!</strong><br>
-             ⏱️ Computation time: ${performanceMetrics.forwardPassTime}ms<br>
-             📊 Final output: [${activations.output.map(o => (o*100).toFixed(1)).join('%, ')}%]<br>
-             🎯 Prediction: <strong>${activations.output[0] > activations.output[1] ? 'DOG' : 'NOT DOG'}</strong><br>
-             📈 Confidence: ${Math.abs((activations.output[0] - activations.output[1]) * 100).toFixed(1)}%<br>
-             🎓 Ready for backpropagation with target: <strong>${trueLabel.toUpperCase()}</strong>`
+            window.i18n.t('completion.thinkingDone'),
+            window.i18n.t('forward.expert.result', [
+                performanceMetrics.forwardPassTime,
+                activations.output[0] > activations.output[1] ? window.i18n.t('prediction.dog') : window.i18n.t('prediction.notDog'),
+                activations.output.map(o => (o*100).toFixed(1)).join(', ')
+            ]) + `<br>📈 ${window.i18n.t('expert.confidence')} ${Math.abs((activations.output[0] - activations.output[1]) * 100).toFixed(1)}%<br>
+             🎓 ${window.i18n.t('expert.readyBackprop')} <strong>${trueLabel.toUpperCase()}</strong>`
         );
     } else {
         updateStepInfoDual(
-            "🎉 Thinking complete! Set the correct answer above, then click 'Learn' to see how the AI improves!",
-            `🎯 <strong>Forward Pass Complete!</strong><br>
-             📊 Network output: [${activations.output.map(o => (o*100).toFixed(1)).join('%, ')}%]<br>
-             ⚠️ Need target label for backpropagation training`
+            window.i18n.t('completion.setCorrectAnswer'),
+            window.i18n.t('forward.expert.result', [
+                '0',
+                'N/A',
+                activations.output.map(o => (o*100).toFixed(1)).join(', ')
+            ]).replace('{0}ms', 'N/A') + `<br>⚠️ ${window.i18n.t('expert.needTargetLabel')}`
         );
     }
     

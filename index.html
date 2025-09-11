@@ -68,7 +68,6 @@
                     
                     <!-- Advanced Tools -->
                     <div class="tool-buttons">
-                        <button id="whatIfBtn" onclick="toggleWeightSliders()" class="tool-btn" data-i18n="tools.whatIf" data-i18n-tooltip="tools.whatIf.tooltip" title="Explore how changing weights affects predictions">🔧 What If?</button>
                         <button id="expertViewBtn" onclick="toggleExpertViewMode()" class="tool-btn" data-i18n="tools.expertView" data-i18n-tooltip="tools.expertView.tooltip" title="Toggle detailed mathematical explanations">🎓 Expert View</button>
                         <button id="expertPanelBtn" onclick="toggleExpertPanel()" class="tool-btn" data-i18n="tools.config" data-i18n-tooltip="tools.config.tooltip" title="Advanced neural network parameters">⚙️ Config</button>
                         <button id="pixelViewerBtn" onclick="openPixelViewer()" class="tool-btn" data-i18n="tools.pixels" data-i18n-tooltip="tools.pixels.tooltip" title="Learn how images become numbers">🔍 Pixels</button>
@@ -295,6 +294,34 @@
                     <button onclick="applyExpertConfig()" class="expert-btn expert-btn-primary">✅ Apply & Restart Network</button>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- Connection Weight Editor (appears when clicking on connections) -->
+    <div id="connectionEditor" class="connection-editor">
+        <div class="connection-info">
+            <div class="connection-from">
+                <span class="connection-label">Input</span>
+                <div class="connection-neuron input-neuron">A</div>
+            </div>
+            <div class="connection-arrow">→</div>
+            <div class="connection-to">
+                <div class="connection-neuron hidden-neuron">H1</div>
+                <span class="connection-label">Hidden</span>
+            </div>
+        </div>
+        
+        <div class="weight-control-section">
+            <span class="weight-label-display" data-i18n="connectionEditor.weight">Weight:</span>
+            <input type="range" class="weight-slider" min="-2" max="2" step="0.01" value="0" 
+                   oninput="onWeightSliderChange(event)">
+            <div class="weight-value-big">0.00</div>
+        </div>
+        
+        <div class="connection-actions">
+            <button class="connection-btn" onclick="resetConnectionWeight()" data-i18n="connectionEditor.reset">Reset</button>
+            <button class="connection-btn connection-btn-primary" onclick="closeConnectionEditor()" data-i18n="connectionEditor.apply">Apply</button>
+            <button class="connection-btn connection-btn-close" onclick="closeConnectionEditor()" data-i18n="connectionEditor.close">Close</button>
         </div>
     </div>
     

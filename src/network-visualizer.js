@@ -166,7 +166,7 @@ function drawPrediction() {
     result.setAttribute('font-weight', '600');
     result.setAttribute('fill', '#475569');
     result.setAttribute('id', 'predictionResult');
-    result.textContent = 'Thinking...';
+    result.textContent = window.i18n.t('ui.thinking');
     svg.appendChild(result);
 }
 
@@ -209,7 +209,7 @@ function updatePrediction() {
             const predictionText = predicted ? 'DOG' : 'NOT-DOG';
             predictionResult.textContent = `${predictionText} (${confidenceText})`;
         } else {
-            predictionResult.textContent = 'Thinking...';
+            predictionResult.textContent = window.i18n.t('ui.thinking');
         }
     }
 }
@@ -484,10 +484,18 @@ function addWeightTooltip(lineElement, initialWeight, connectionLabel) {
         document.body.appendChild(tooltip);
     }
     
+    // Store original stroke style
+    lineElement.setAttribute('data-original-stroke', lineElement.style.stroke || '#94a3b8');
+    
     // Add mouse event listeners
     lineElement.addEventListener('mouseenter', (e) => {
         // Get current weight value from the weights object
         const currentWeight = getCurrentWeightForConnection(connectionLabel);
+        
+        // Highlight the edge in yellow
+        lineElement.style.stroke = '#FFD700'; // Gold/Yellow color
+        lineElement.style.strokeWidth = '3px'; // Make it slightly thicker
+        lineElement.style.filter = 'drop-shadow(0 0 3px #FFD700)'; // Add glow effect
         
         tooltip.innerHTML = `
             <div class="tooltip-connection">${connectionLabel}</div>
@@ -503,6 +511,15 @@ function addWeightTooltip(lineElement, initialWeight, connectionLabel) {
     });
     
     lineElement.addEventListener('mouseleave', () => {
+        // Restore original appearance
+        const originalStroke = lineElement.getAttribute('data-original-stroke');
+        lineElement.style.stroke = originalStroke;
+        lineElement.style.filter = 'none';
+        
+        // Re-apply weight visualization to restore proper thickness
+        const currentWeight = getCurrentWeightForConnection(connectionLabel);
+        applyWeightVisualization(lineElement, currentWeight);
+        
         tooltip.style.display = 'none';
     });
     
@@ -511,6 +528,16 @@ function addWeightTooltip(lineElement, initialWeight, connectionLabel) {
         tooltip.style.left = (e.clientX + 10) + 'px';
         tooltip.style.top = (e.clientY - 10) + 'px';
     });
+    
+    // Add click event to open connection editor
+    lineElement.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openConnectionEditor(connectionLabel);
+    });
+    
+    // Make connection clickable with cursor pointer
+    lineElement.style.cursor = 'pointer';
 }
 
 function getCurrentWeightForConnection(connectionLabel) {

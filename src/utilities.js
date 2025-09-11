@@ -197,8 +197,8 @@ function toggleWeightSliders() {
         btn.classList.remove('active');
         hideWeightSliders();
         updateStepInfoDual(
-            '🎮 <strong>Ready to Explore!</strong><br>🚀 Pick "Watch AI Think", "Watch AI Learn", or "Full Demo" to see the neural network in action!',
-            '🎮 <strong>System Ready</strong><br>📈 Select demonstration mode: Forward propagation, Backpropagation, or Complete cycle.'
+            window.i18n.t('ui.pickAction'),
+            window.i18n.t('ui.systemReadySelect')
         );
     }
 }
@@ -373,6 +373,32 @@ function createWeightEditingPanel() {
     panel.appendChild(header);
     panel.appendChild(content);
     
+    // Add click-outside-to-close functionality
+    const handleClickOutside = (event) => {
+        // Check if the click is outside the panel and not on the "What If?" button
+        const isOutsidePanel = !panel.contains(event.target);
+        const isNotWhatIfButton = !document.getElementById('whatIfBtn').contains(event.target);
+        
+        if (isOutsidePanel && isNotWhatIfButton) {
+            // Close the What If panel by toggling the state
+            // This will save weights and update the UI properly
+            if (weightSlidersActive) {
+                toggleWeightSliders();
+            }
+            
+            // Remove the click listener
+            document.removeEventListener('click', handleClickOutside);
+        }
+    };
+    
+    // Add the click listener with a small delay to prevent immediate closure
+    setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+    }, 100);
+    
+    // Store the handler reference on the panel for cleanup
+    panel._clickOutsideHandler = handleClickOutside;
+    
     // Add panel to the page
     document.body.appendChild(panel);
 }
@@ -425,6 +451,10 @@ function hideWeightSliders() {
     // Remove the weight editing panel
     const panel = document.getElementById('weightEditingPanel');
     if (panel) {
+        // Remove click-outside listener if it exists
+        if (panel._clickOutsideHandler) {
+            document.removeEventListener('click', panel._clickOutsideHandler);
+        }
         panel.remove();
     }
     
@@ -1257,6 +1287,189 @@ if (typeof window !== 'undefined') window.checkPredictionDiversity = checkPredic
 if (typeof window !== 'undefined') window.highlightConnection = highlightConnection;
 if (typeof window !== 'undefined') window.syncExpertConfigToLegacy = syncExpertConfigToLegacy;
 if (typeof window !== 'undefined') window.drawInputNeuronVisualization = drawInputNeuronVisualization;
+// ============================================================================
+// CONNECTION EDITOR FUNCTIONS
+// ============================================================================
+
+let currentSelectedConnection = null;
+
+function openConnectionEditor(connectionLabel) {
+    currentSelectedConnection = connectionLabel;
+    
+    // Get connection editor element
+    const editor = document.getElementById('connectionEditor');
+    if (!editor) {
+        console.error('Connection editor element not found');
+        return;
+    }
+    
+    // Parse connection information
+    const connectionInfo = parseConnectionLabel(connectionLabel);
+    if (!connectionInfo) {
+        console.error('Could not parse connection label:', connectionLabel);
+        return;
+    }
+    
+    // Get current weight value
+    const currentWeight = getCurrentWeightForConnection(connectionLabel);
+    
+    // Update editor UI
+    updateConnectionEditorUI(connectionInfo, currentWeight);
+    
+    // Show the editor with animation
+    editor.classList.add('active');
+    
+    // Update slider value
+    const slider = editor.querySelector('.weight-slider');
+    if (slider) {
+        slider.value = currentWeight;
+    }
+}
+
+function closeConnectionEditor() {
+    const editor = document.getElementById('connectionEditor');
+    if (editor) {
+        editor.classList.remove('active');
+    }
+    currentSelectedConnection = null;
+}
+
+function parseConnectionLabel(connectionLabel) {
+    const parts = connectionLabel.split(' → ');
+    if (parts.length !== 2) return null;
+    
+    const fromPart = parts[0].trim();
+    const toPart = parts[1].trim();
+    
+    let fromType = '';
+    let fromIndex = -1;
+    let toType = '';
+    let toIndex = -1;
+    let fromDisplay = '';
+    let toDisplay = '';
+    
+    // Parse 'from' part
+    if (fromPart.startsWith('Input')) {
+        fromType = 'input';
+        const match = fromPart.match(/Input ([ABCD])/);
+        if (match) {
+            fromIndex = ['A', 'B', 'C', 'D'].indexOf(match[1]);
+            fromDisplay = match[1];
+        }
+    } else if (fromPart.startsWith('Hidden')) {
+        fromType = 'hidden';
+        const match = fromPart.match(/Hidden H(\d+)/);
+        if (match) {
+            fromIndex = parseInt(match[1]) - 1;
+            fromDisplay = `H${match[1]}`;
+        }
+    }
+    
+    // Parse 'to' part
+    if (toPart.startsWith('Hidden')) {
+        toType = 'hidden';
+        const match = toPart.match(/Hidden H(\d+)/);
+        if (match) {
+            toIndex = parseInt(match[1]) - 1;
+            toDisplay = `H${match[1]}`;
+        }
+    } else if (toPart === 'Dog' || toPart === 'Not Dog') {
+        toType = 'output';
+        toIndex = toPart === 'Dog' ? 0 : 1;
+        toDisplay = toPart;
+    }
+    
+    return {
+        fromType,
+        fromIndex,
+        fromDisplay,
+        toType,
+        toIndex,
+        toDisplay,
+        connectionLabel
+    };
+}
+
+function updateConnectionEditorUI(connectionInfo, currentWeight) {
+    const editor = document.getElementById('connectionEditor');
+    if (!editor) return;
+    
+    // Update connection info display
+    const fromNeuron = editor.querySelector('.connection-from .connection-neuron');
+    const fromLabel = editor.querySelector('.connection-from .connection-label');
+    const toNeuron = editor.querySelector('.connection-to .connection-neuron');
+    const toLabel = editor.querySelector('.connection-to .connection-label');
+    
+    if (fromNeuron && fromLabel && toNeuron && toLabel) {
+        // Set neuron classes and text
+        fromNeuron.className = `connection-neuron ${connectionInfo.fromType}-neuron`;
+        fromNeuron.textContent = connectionInfo.fromDisplay;
+        fromLabel.textContent = connectionInfo.fromType === 'input' ? 'Input' : 'Hidden';
+        
+        toNeuron.className = `connection-neuron ${connectionInfo.toType}-neuron`;
+        toNeuron.textContent = connectionInfo.toDisplay;
+        toLabel.textContent = connectionInfo.toType === 'hidden' ? 'Hidden' : 'Output';
+    }
+    
+    // Update weight display
+    const weightDisplay = editor.querySelector('.weight-value-big');
+    if (weightDisplay) {
+        weightDisplay.textContent = currentWeight.toFixed(2);
+    }
+}
+
+function onWeightSliderChange(event) {
+    if (!currentSelectedConnection) return;
+    
+    const newWeight = parseFloat(event.target.value);
+    const editor = document.getElementById('connectionEditor');
+    const weightDisplay = editor.querySelector('.weight-value-big');
+    
+    // Update display
+    if (weightDisplay) {
+        weightDisplay.textContent = newWeight.toFixed(2);
+    }
+    
+    // Update actual weight in the network
+    updateConnectionWeight(currentSelectedConnection, newWeight);
+    
+    // Refresh network visualization
+    recalculateNetwork();
+    drawNetwork();
+}
+
+function updateConnectionWeight(connectionLabel, newWeight) {
+    const connectionInfo = parseConnectionLabel(connectionLabel);
+    if (!connectionInfo) return;
+    
+    if (connectionInfo.fromType === 'input' && connectionInfo.toType === 'hidden') {
+        // Input to Hidden connection
+        weights.inputToHidden[connectionInfo.toIndex][connectionInfo.fromIndex] = newWeight;
+    } else if (connectionInfo.fromType === 'hidden' && connectionInfo.toType === 'output') {
+        // Hidden to Output connection
+        weights.hiddenToOutput[connectionInfo.toIndex][connectionInfo.fromIndex] = newWeight;
+    }
+    
+    // Refresh all connection visuals to update the specific connection
+    refreshAllConnectionVisuals();
+}
+
+function resetConnectionWeight() {
+    if (!currentSelectedConnection) return;
+    
+    // Generate a new random weight
+    const newWeight = (Math.random() - 0.5) * 2; // Range: -1 to 1
+    
+    // Update the slider
+    const editor = document.getElementById('connectionEditor');
+    const slider = editor.querySelector('.weight-slider');
+    if (slider) {
+        slider.value = newWeight;
+        // Trigger the change event
+        onWeightSliderChange({ target: slider });
+    }
+}
+
 if (typeof window !== 'undefined') window.debugFeatureRepresentation = debugFeatureRepresentation;
 if (typeof window !== 'undefined') window.showWeightSliders = showWeightSliders;
 if (typeof window !== 'undefined') window.recalculateNetwork = recalculateNetwork;
@@ -1278,3 +1491,10 @@ if (typeof window !== 'undefined') window.clampWeight = clampWeight;
 if (typeof window !== 'undefined') window.updateElementValue = updateElementValue;
 if (typeof window !== 'undefined') window.resetNeuronStates = resetNeuronStates;
 if (typeof window !== 'undefined') window.updateNetworkDisplays = updateNetworkDisplays;
+if (typeof window !== 'undefined') window.openConnectionEditor = openConnectionEditor;
+if (typeof window !== 'undefined') window.closeConnectionEditor = closeConnectionEditor;
+if (typeof window !== 'undefined') window.parseConnectionLabel = parseConnectionLabel;
+if (typeof window !== 'undefined') window.updateConnectionEditorUI = updateConnectionEditorUI;
+if (typeof window !== 'undefined') window.onWeightSliderChange = onWeightSliderChange;
+if (typeof window !== 'undefined') window.updateConnectionWeight = updateConnectionWeight;
+if (typeof window !== 'undefined') window.resetConnectionWeight = resetConnectionWeight;

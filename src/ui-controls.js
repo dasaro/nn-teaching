@@ -250,8 +250,8 @@ function clearMessageLog() {
 function toggleAutoScroll() {
     autoScrollEnabled = !autoScrollEnabled;
     const button = event.target;
-    button.textContent = autoScrollEnabled ? '📜 Auto-scroll' : '📜 Manual';
-    button.title = autoScrollEnabled ? 'Disable auto-scroll' : 'Enable auto-scroll';
+    button.textContent = autoScrollEnabled ? window.i18n.t('system.autoScrollOn') : window.i18n.t('system.autoScrollOff');
+    button.title = autoScrollEnabled ? window.i18n.t('system.autoScrollDisable') : window.i18n.t('system.autoScrollEnable');
     
     if (autoScrollEnabled) {
         scrollToBottom();

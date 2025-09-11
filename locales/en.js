@@ -47,6 +47,10 @@ window.i18nLocales.en = {
     "system.viewMode.expert": "🔬 Expert View",
     "system.clear": "🗑️ Clear",
     "system.autoScroll": "📜 Auto-scroll",
+    "system.autoScrollOn": "📜 Auto-scroll",
+    "system.autoScrollOff": "📜 Manual",
+    "system.autoScrollDisable": "Disable auto-scroll",
+    "system.autoScrollEnable": "Enable auto-scroll",
     
     // Language selector
     "language.selector": "🌐 Language",
@@ -97,7 +101,7 @@ window.i18nLocales.en = {
     "forward.student.start": "🧠 <strong>Let's Watch the AI Think!</strong><br>🎬 Time to see how artificial intelligence really works! Like watching a student solve a puzzle, our AI will look at the picture, think about what it sees, and make its best guess. Ready to peek inside an AI brain?",
     "forward.student.step1": "📷 <strong>STEP 1: The AI Looks at Our Picture</strong><br>👀 Just like when you look at a photo, the AI examines every detail! Here's what catches its attention:<br>• 🐕 Dog Feature A: <strong>{0}%</strong> strength (maybe ears or shape?)<br>• 🦴 Dog Feature B: <strong>{1}%</strong> strength (maybe fur texture?)<br>• 👁️ Dog Feature C: <strong>{2}%</strong> strength (maybe eyes or nose?)<br>• 🎯 Pattern Match: <strong>{3}%</strong> overall doggy-ness<br>💡 <em>Higher numbers mean 'this looks very dog-like to me!'</em>",
     "forward.student.step2": "🤔 <strong>STEP 2: The AI's Brain Cells Work Together</strong><br>💭 Now comes the magic! The AI's brain cells team up to find bigger patterns, like detectives gathering clues:<br>• 🧠 Brain Cell 1: <strong>{0}%</strong> excited (maybe finds 'fluffy texture + right size')<br>• 🧠 Brain Cell 2: <strong>{1}%</strong> excited (maybe finds 'pointy ears + wet nose')<br>• 🧠 Brain Cell 3: <strong>{2}%</strong> excited (maybe finds 'four legs + tail')<br>• 🧠 Brain Cell 4: <strong>{3}%</strong> excited (maybe finds 'friendly face')<br>🎯 <em>Each brain cell is like a specialist detective looking for specific clues!</em>",
-    "forward.student.step3": "🎯 <strong>STEP 3: The Big Decision Moment!</strong><br>🎭 All the brain cells vote together like a jury making their final decision! Here's how confident each option feels:<br>• 🐕 <strong>\"It's definitely a DOG!\"</strong> → <strong>{0}%</strong> confident<br>• ❌ <strong>\"Nope, NOT a dog!\"</strong> → <strong>{1}%</strong> confident<br><br>🏆 <strong>Final Decision:</strong> {2}",
+    "forward.student.step3": "🎯 <strong>STEP 3: The Big Decision Moment!</strong><br>🎭 All the brain cells vote together like a jury making their final decision! Here's how confident each option feels:<br>• 🐕 <strong>\"{0}\"</strong> → <strong>{1}%</strong> confident<br>• ❌ <strong>\"{2}\"</strong> → <strong>{3}%</strong> confident<br><br>🏆 <strong>Final Decision:</strong> {4}",
     "forward.student.result": "🎉 <strong>Thinking Complete!</strong><br>🧠 The AI has made its decision! Now you can either teach it (if it was wrong) or try a new image to see how it does.",
     
     // Forward pass messages - Expert view  
@@ -197,5 +201,54 @@ window.i18nLocales.en = {
     "js.recording": "Recording...",
     "js.complete": "Complete",
     "js.calculating": "Calculating...",
-    "js.updating": "Updating weights..."
+    "js.updating": "Updating weights...",
+    
+    // Prediction labels
+    "prediction.canine": "CANINE",
+    "prediction.nonCanine": "NON-CANINE",
+    "prediction.dog": "DOG",
+    "prediction.notDog": "NOT DOG",
+    
+    // Result messages
+    "result.correct": "Correct!",
+    "result.wrong": "Wrong!",
+    "result.correctCheck": "Correct ✓",
+    "result.incorrectX": "Incorrect ✗",
+    "result.aiGotItRight": "🎉 Great job! The AI got it right!",
+    "result.aiWillLearn": "📚 The AI will learn from this mistake!",
+    
+    // Dynamic completion messages
+    "completion.thinkingDone": "🎉 Thinking complete! The AI made its guess. Now click 'Learn' to see how it can improve from mistakes!",
+    "completion.setCorrectAnswer": "🎉 Thinking complete! Set the correct answer above, then click 'Learn' to see how the AI improves!",
+    
+    // Voting messages for predictions
+    "vote.definitelyDog": "It's definitely a DOG!",
+    "vote.nopeNotDog": "Nope, NOT a dog!",
+    "vote.prettyDog": "I'm pretty sure this is a DOG!",
+    "vote.dontThinkDog": "I don't think this is a dog.",
+    "vote.dogWon": "(The dog vote won!)",
+    "vote.notDogWon": "(The not-dog vote won!)",
+    
+    // UI state messages
+    "ui.thinking": "Thinking...",
+    "ui.readyToExplore": "🎮 <strong>Ready to Explore!</strong><br>🚀 Choose \"Watch AI Think\" to see how the AI makes decisions, or \"Watch AI Learn\" to see how it gets smarter. Try the full demo for the complete experience!",
+    "ui.pickAction": "🎮 <strong>Ready to Explore!</strong><br>🚀 Pick \"Watch AI Think\", \"Watch AI Learn\", or \"Full Demo\" to see the neural network in action!",
+    "ui.systemReady": "🎮 <strong>System Ready</strong><br>📊 All network parameters initialized. Ready to demonstrate forward propagation, backpropagation, or full training cycle.",
+    "ui.systemReadySelect": "🎮 <strong>System Ready</strong><br>📈 Select demonstration mode: Forward propagation, Backpropagation, or Complete cycle.",
+    
+    // Additional expert view messages
+    "expert.matrixMultiplication": "Matrix Multiplication",
+    "expert.finalPrediction": "Final Prediction",
+    "expert.currentActivation": "Current activation function:",
+    "expert.outputActivation": "Output activation:",
+    "expert.readyBackprop": "Ready for backpropagation with target:",
+    "expert.needTargetLabel": "Need target label for backpropagation training",
+    "expert.confidence": "Confidence:",
+    "expert.networkOutput": "Network output:",
+    
+    // Connection editor
+    "connectionEditor.weight": "Weight:",
+    "connectionEditor.reset": "Reset",
+    "connectionEditor.apply": "Apply",
+    "connectionEditor.close": "Close"
 };

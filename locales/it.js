@@ -47,6 +47,10 @@ window.i18nLocales.it = {
     "system.viewMode.expert": "🔬 Vista Esperto",
     "system.clear": "🗑️ Cancella",
     "system.autoScroll": "📜 Auto-scorrimento",
+    "system.autoScrollOn": "📜 Auto-scorrimento",
+    "system.autoScrollOff": "📜 Manuale",
+    "system.autoScrollDisable": "Disabilita auto-scorrimento",
+    "system.autoScrollEnable": "Abilita auto-scorrimento",
     
     // Language selector
     "language.selector": "🌐 Lingua",
@@ -71,7 +75,7 @@ window.i18nLocales.it = {
     "expertPanel.activationFunctions": "🧠 Funzioni di Attivazione",
     "expertPanel.hiddenActivation": "Attivazione Livello Nascosto:",
     "expertPanel.outputActivation": "Attivazione Livello Output:",
-    "expertPanel.leakyReLUAlpha": "Alpha Leaky ReLU:",
+    "expertPanel.leakyReLUAlpha": "Alpha ReLU con Perdite:",
     "expertPanel.trainingParams": "📚 Parametri di Addestramento",
     "expertPanel.learningRate": "Tasso di Apprendimento:",
     "expertPanel.momentum": "Momentum:",
@@ -97,7 +101,7 @@ window.i18nLocales.it = {
     "forward.student.start": "🧠 <strong>Guardiamo l'AI Pensare!</strong><br>🎬 È ora di vedere come funziona davvero l'intelligenza artificiale! Come guardare uno studente risolvere un puzzle, la nostra AI guarderà l'immagine, penserà a quello che vede, e farà la sua migliore ipotesi. Pronto a sbirciare dentro un cervello AI?",
     "forward.student.step1": "📷 <strong>PASSO 1: L'AI Guarda la Nostra Immagine</strong><br>👀 Proprio come quando guardi una foto, l'AI esamina ogni dettaglio! Ecco cosa cattura la sua attenzione:<br>• 🐕 Caratteristica Cane A: <strong>{0}%</strong> forza (forse orecchie o forma?)<br>• 🦴 Caratteristica Cane B: <strong>{1}%</strong> forza (forse texture del pelo?)<br>• 👁️ Caratteristica Cane C: <strong>{2}%</strong> forza (forse occhi o naso?)<br>• 🎯 Corrispondenza Pattern: <strong>{3}%</strong> caninità generale<br>💡 <em>Numeri più alti significano 'questo mi sembra molto da cane!'</em>",
     "forward.student.step2": "🤔 <strong>PASSO 2: Le Cellule Cerebrali dell'AI Lavorano Insieme</strong><br>💭 Ora arriva la magia! Le cellule cerebrali dell'AI si uniscono per trovare pattern più grandi, come detective che raccolgono indizi:<br>• 🧠 Cellula Cerebrale 1: <strong>{0}%</strong> eccitata (forse trova 'texture soffice + dimensione giusta')<br>• 🧠 Cellula Cerebrale 2: <strong>{1}%</strong> eccitata (forse trova 'orecchie appuntite + naso bagnato')<br>• 🧠 Cellula Cerebrale 3: <strong>{2}%</strong> eccitata (forse trova 'quattro zampe + coda')<br>• 🧠 Cellula Cerebrale 4: <strong>{3}%</strong> eccitata (forse trova 'faccia amichevole')<br>🎯 <em>Ogni cellula cerebrale è come un detective specializzato che cerca indizi specifici!</em>",
-    "forward.student.step3": "🎯 <strong>PASSO 3: Il Momento della Grande Decisione!</strong><br>🎭 Tutte le cellule cerebrali votano insieme come una giuria che prende la decisione finale! Ecco quanto è sicura ogni opzione:<br>• 🐕 <strong>\"È sicuramente un CANE!\"</strong> → <strong>{0}%</strong> sicuro<br>• ❌ <strong>\"No, NON è un cane!\"</strong> → <strong>{1}%</strong> sicuro<br><br>🏆 <strong>Decisione Finale:</strong> {2}",
+    "forward.student.step3": "🎯 <strong>PASSO 3: Il Momento della Grande Decisione!</strong><br>🎭 Tutte le cellule cerebrali votano insieme come una giuria che prende la decisione finale! Ecco quanto è sicura ogni opzione:<br>• 🐕 <strong>\"{0}\"</strong> → <strong>{1}%</strong> sicuro<br>• ❌ <strong>\"{2}\"</strong> → <strong>{3}%</strong> sicuro<br><br>🏆 <strong>Decisione Finale:</strong> {4}",
     "forward.student.result": "🎉 <strong>Pensiero Completato!</strong><br>🧠 L'AI ha preso la sua decisione! Ora puoi insegnargli (se ha sbagliato) o provare una nuova immagine per vedere come se la cava.",
     
     // Forward pass messages - Expert view  
@@ -148,7 +152,7 @@ window.i18nLocales.it = {
     "document.title": "Demo di Apprendimento Rete Neurale",
     
     // Activation function options
-    "activation.leakyRelu": "ReLU Leaky",
+    "activation.leakyRelu": "ReLU con Perdite",
     "activation.sigmoid": "Sigmoide", 
     "activation.tanh": "Tanh",
     "activation.softmax": "Softmax",
@@ -197,5 +201,54 @@ window.i18nLocales.it = {
     "js.recording": "Registrando...",
     "js.complete": "Completo",
     "js.calculating": "Calcolando...",
-    "js.updating": "Aggiornando pesi..."
+    "js.updating": "Aggiornando pesi...",
+    
+    // Prediction labels
+    "prediction.canine": "CANINO",
+    "prediction.nonCanine": "NON-CANINO",
+    "prediction.dog": "CANE",
+    "prediction.notDog": "NON CANE",
+    
+    // Result messages
+    "result.correct": "Corretto!",
+    "result.wrong": "Sbagliato!",
+    "result.correctCheck": "Corretto ✓",
+    "result.incorrectX": "Sbagliato ✗",
+    "result.aiGotItRight": "🎉 Ottimo lavoro! L'AI ha azzeccato!",
+    "result.aiWillLearn": "📚 L'AI imparerà da questo errore!",
+    
+    // Dynamic completion messages
+    "completion.thinkingDone": "🎉 Pensiero completato! L'AI ha fatto la sua ipotesi. Ora clicca 'Impara' per vedere come può migliorare dagli errori!",
+    "completion.setCorrectAnswer": "🎉 Pensiero completato! Imposta la risposta corretta sopra, poi clicca 'Impara' per vedere come l'AI migliora!",
+    
+    // Voting messages for predictions
+    "vote.definitelyDog": "È sicuramente un CANE!",
+    "vote.nopeNotDog": "No, NON è un cane!",
+    "vote.prettyDog": "Sono abbastanza sicuro che questo è un CANE!",
+    "vote.dontThinkDog": "Non penso che questo sia un cane.",
+    "vote.dogWon": "(Ha vinto il voto cane!)",
+    "vote.notDogWon": "(Ha vinto il voto non-cane!)",
+    
+    // UI state messages
+    "ui.thinking": "Pensando...",
+    "ui.readyToExplore": "🎮 <strong>Pronto per Esplorare!</strong><br>🚀 Scegli \"Guarda l'AI Pensare\" per vedere come l'AI prende decisioni, o \"Guarda l'AI Imparare\" per vedere come diventa più intelligente. Prova la demo completa per l'esperienza completa!",
+    "ui.pickAction": "🎮 <strong>Pronto per Esplorare!</strong><br>🚀 Scegli \"Guarda l'AI Pensare\", \"Guarda l'AI Imparare\", o \"Demo Completa\" per vedere la rete neurale in azione!",
+    "ui.systemReady": "🎮 <strong>Sistema Pronto</strong><br>📊 Tutti i parametri della rete inizializzati. Pronto per dimostrare propagazione in avanti, retropropagazione, o ciclo completo di addestramento.",
+    "ui.systemReadySelect": "🎮 <strong>Sistema Pronto</strong><br>📈 Seleziona modalità dimostrazione: Propagazione in avanti, Retropropagazione, o Ciclo completo.",
+    
+    // Additional expert view messages
+    "expert.matrixMultiplication": "Moltiplicazione Matriciale",
+    "expert.finalPrediction": "Predizione Finale",
+    "expert.currentActivation": "Funzione di attivazione corrente:",
+    "expert.outputActivation": "Attivazione output:",
+    "expert.readyBackprop": "Pronto per retropropagazione con target:",
+    "expert.needTargetLabel": "Serve etichetta target per addestramento retropropagazione",
+    "expert.confidence": "Sicurezza:",
+    "expert.networkOutput": "Output rete:",
+    
+    // Connection editor
+    "connectionEditor.weight": "Peso:",
+    "connectionEditor.reset": "Reset",
+    "connectionEditor.apply": "Applica",
+    "connectionEditor.close": "Chiudi"
 };

@@ -24,6 +24,9 @@ let expertViewMode = false;
 let messageLog = [];
 let messageLogActive = false;
 
+// Auto-scroll functionality (enabled by default)
+let autoScrollEnabled = true;
+
 // ============================================================================
 // EVENT LISTENERS
 // ============================================================================
@@ -45,8 +48,20 @@ document.addEventListener('languageChanged', function(event) {
         currentStep.textContent = t('system.ready');
     }
     
+    // Update auto-scroll button text
+    updateAutoScrollButtonText();
+    
     console.log(`🌐 Dynamic content updated for language: ${event.detail.language}`);
 });
+
+// Function to update auto-scroll button text
+function updateAutoScrollButtonText() {
+    const autoScrollBtn = document.querySelector('button[onclick="toggleAutoScroll()"]');
+    if (autoScrollBtn && window.i18n) {
+        autoScrollBtn.textContent = autoScrollEnabled ? window.i18n.t('system.autoScrollOn') : window.i18n.t('system.autoScrollOff');
+        autoScrollBtn.title = autoScrollEnabled ? window.i18n.t('system.autoScrollDisable') : window.i18n.t('system.autoScrollEnable');
+    }
+}
 
 // ============================================================================
 // WINDOW OBJECT ASSIGNMENTS - MODULE INTERFACES
@@ -76,9 +91,14 @@ window.coreSystem = {
     set messageLog(value) { messageLog = value; },
     get messageLogActive() { return messageLogActive; },
     set messageLogActive(value) { messageLogActive = value; },
+    get autoScrollEnabled() { return autoScrollEnabled; },
+    set autoScrollEnabled(value) { autoScrollEnabled = value; },
     
     // Internationalization
-    t: t
+    t: t,
+    
+    // UI utilities
+    updateAutoScrollButtonText: updateAutoScrollButtonText
 };
 
 window.neuralMath = {
@@ -201,7 +221,14 @@ const positions = {
 
 // Image URLs for different image types
 const imageUrls = {
-    dog1: 'data:image/jpeg;base64,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'
+    dog1: 'images/dog1.jpg',
+    dog2: 'images/dog2.jpg', 
+    dog3: 'images/dog3.jpg',
+    cat: 'images/cat.jpg',
+    bird: 'images/bird.jpg',
+    fish: 'images/fish.jpg',
+    car: 'images/car.jpg',
+    tree: 'images/tree.jpg'
 };
 
 // Tutorial related globals
@@ -348,6 +375,9 @@ window.imageProcessor = {
     // Input handling
     updateInputActivations: updateInputActivations,
     selectImage: selectImage,
+    
+    // UI utilities
+    updateAutoScrollButtonText: updateAutoScrollButtonText,
     
     // Pixel viewer functionality (defined later)
     openPixelViewer: null,

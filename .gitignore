@@ -10,7 +10,13 @@ test_*.html
 serve.*
 update_*.py
 generate_*.py
+extract_*.py
+create_*.py
+finish_*.py
 new_*.js
+new_*.html
+*-math.js
+base64_images.js
 
 # Build artifacts
 *_base64.txt

@@ -107,7 +107,9 @@ if (typeof window.NeuralNetworkI18n === 'undefined') {
             const translation = this.t(key);
             
             // Handle different types of elements
-            if (element.tagName === 'INPUT' && element.type === 'button') {
+            if (element.tagName === 'BUTTON') {
+                element.innerHTML = translation;
+            } else if (element.tagName === 'INPUT' && element.type === 'button') {
                 element.value = translation;
             } else if (element.tagName === 'INPUT' && element.placeholder !== undefined) {
                 element.placeholder = translation;

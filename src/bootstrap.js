@@ -182,5 +182,13 @@ document.addEventListener('DOMContentLoaded', function() {
     drawNetwork();
     setupEventListeners();
     resetDemo();
+    
+    // Initialize auto-scroll button text after i18n is loaded
+    setTimeout(() => {
+        if (window.updateAutoScrollButtonText) {
+            window.updateAutoScrollButtonText();
+        }
+    }, 100);
+    
     console.log("After resetDemo, trueLabel is:", trueLabel);
 });
