@@ -126,14 +126,7 @@ function resetDemo() {
     document.getElementById('backwardBtn').disabled = true;
     
     // Reset all neuron states
-    document.querySelectorAll('.neuron').forEach(neuron => {
-        neuron.classList.remove('active', 'forward-active', 'backward-active');
-    });
-    
-    // Reset all connections
-    document.querySelectorAll('.connection-line').forEach(connection => {
-        connection.classList.remove('active', 'forward-pass', 'backward-pass', 'positive', 'negative');
-    });
+    resetNeuronStates();
     
     // Don't hide weight values - keep them visible to show learning
     // document.querySelectorAll('.weight-value').forEach(w => w.classList.remove('show'));
@@ -144,15 +137,7 @@ function resetDemo() {
     activations.output = [0, 0];
     
     // Update displays
-    for (let i = 0; i < networkConfig.inputSize; i++) {
-        document.getElementById(`input-value-${i}`).textContent = activations.input[i].toFixed(2);
-    }
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        document.getElementById(`hidden-value-${h}`).textContent = '0.00';
-    }
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        document.getElementById(`output-value-${o}`).textContent = '0.00';
-    }
+    updateNetworkDisplays();
     
     // Reset probability bars and confidence (with null checks)
     const dogProbBar = document.getElementById('dogProbBar');
@@ -435,7 +420,7 @@ async function animateBackpropagation() {
             }
             
             // More generous clipping for pedagogical magic
-            weightUpdate = Math.max(-1.2, Math.min(1.2, weightUpdate));
+            weightUpdate = clampWeight(weightUpdate, -1.2, 1.2);
             
             weights.hiddenToOutput[o][h] += weightUpdate;
             
@@ -506,7 +491,7 @@ async function animateBackpropagation() {
             }
             
             // More generous clipping for pedagogical magic
-            weightUpdate = Math.max(-1.0, Math.min(1.0, weightUpdate));
+            weightUpdate = clampWeight(weightUpdate, -1.0, 1.0);
             
             weights.inputToHidden[h][i] += weightUpdate;
             

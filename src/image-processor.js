@@ -73,27 +73,14 @@ function selectImage(imageType) {
     isAnimating = false;
     
     // Reset visual states only
-    document.querySelectorAll('.neuron').forEach(neuron => {
-        neuron.classList.remove('active', 'forward-active', 'backward-active');
-    });
-    document.querySelectorAll('.connection-line').forEach(connection => {
-        connection.classList.remove('active', 'forward-pass', 'backward-pass', 'positive', 'negative');
-    });
+    resetNeuronStates();
     
     // Reset activations display for new image (but keep weights!)
     activations.hidden = [0, 0, 0, 0, 0];
     activations.output = [0, 0];
     
     // Update neuron displays
-    for (let i = 0; i < networkConfig.inputSize; i++) {
-        document.getElementById(`input-value-${i}`).textContent = activations.input[i].toFixed(2);
-    }
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        document.getElementById(`hidden-value-${h}`).textContent = '0.00';
-    }
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        document.getElementById(`output-value-${o}`).textContent = '0.00';
-    }
+    updateNetworkDisplays();
     
     // Reset probability bars (only if they exist)
     const dogProbBar = document.getElementById('dogProbBar');

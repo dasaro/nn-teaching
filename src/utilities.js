@@ -3,6 +3,45 @@
 // Utility functions and helpers
 // ============================================================================
 
+// Utility function for weight clamping to eliminate duplication
+function clampWeight(value, minBound, maxBound) {
+    return Math.max(minBound, Math.min(maxBound, value));
+}
+
+// Utility function for updating DOM elements with formatted numbers
+function updateElementValue(elementId, value, precision = 2) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = value.toFixed(precision);
+    }
+}
+
+// Utility function to reset all neuron visual states
+function resetNeuronStates() {
+    document.querySelectorAll('.neuron').forEach(neuron => {
+        neuron.classList.remove('active', 'forward-active', 'backward-active');
+    });
+    document.querySelectorAll('.connection-line').forEach(connection => {
+        connection.classList.remove('active', 'forward-pass', 'backward-pass', 'positive', 'negative');
+    });
+}
+
+// Utility function to update network display values
+function updateNetworkDisplays() {
+    // Update input displays
+    for (let i = 0; i < networkConfig.inputSize; i++) {
+        updateElementValue(`input-value-${i}`, activations.input[i], 2);
+    }
+    // Update hidden displays  
+    for (let h = 0; h < networkConfig.hiddenSize; h++) {
+        updateElementValue(`hidden-value-${h}`, activations.hidden[h] || 0, 2);
+    }
+    // Update output displays
+    for (let o = 0; o < networkConfig.outputSize; o++) {
+        updateElementValue(`output-value-${o}`, activations.output[o] || 0, 2);
+    }
+}
+
 function clearAllHighlights() {
     // Redraw both canvases to clear all highlights
     drawOriginalImage();
@@ -1235,3 +1274,7 @@ if (typeof window !== 'undefined') window.createWeightControl = createWeightCont
 if (typeof window !== 'undefined') window.trainToPerfection = trainToPerfection;
 if (typeof window !== 'undefined') window.showWeightChanges = showWeightChanges;
 if (typeof window !== 'undefined') window.highlightInputNeuron = highlightInputNeuron;
+if (typeof window !== 'undefined') window.clampWeight = clampWeight;
+if (typeof window !== 'undefined') window.updateElementValue = updateElementValue;
+if (typeof window !== 'undefined') window.resetNeuronStates = resetNeuronStates;
+if (typeof window !== 'undefined') window.updateNetworkDisplays = updateNetworkDisplays;

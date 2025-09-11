@@ -228,7 +228,7 @@ function backpropagationSilent(target, debugMode = false) {
             weights.hiddenToOutput[o][h] += weightUpdate;
             
             // Ensure weight stays within reasonable bounds
-            weights.hiddenToOutput[o][h] = Math.max(-3, Math.min(3, weights.hiddenToOutput[o][h]));
+            weights.hiddenToOutput[o][h] = clampWeight(weights.hiddenToOutput[o][h], -3, 3);
             
             // Track the actual change that occurred
             weightChanges.hiddenToOutput[o][h] = weights.hiddenToOutput[o][h] - weightChanges.lastWeights.hiddenToOutput[o][h];
@@ -282,7 +282,7 @@ function backpropagationSilent(target, debugMode = false) {
             weights.inputToHidden[h][i] += weightUpdate;
             
             // Ensure weight stays within reasonable bounds
-            weights.inputToHidden[h][i] = Math.max(-3, Math.min(3, weights.inputToHidden[h][i]));
+            weights.inputToHidden[h][i] = clampWeight(weights.inputToHidden[h][i], -3, 3);
             
             // Track the actual change that occurred
             weightChanges.inputToHidden[h][i] = weights.inputToHidden[h][i] - weightChanges.lastWeights.inputToHidden[h][i];
@@ -341,7 +341,7 @@ function backpropagationWithMomentum(target, learningRate, momentum, momentumInp
             weights.hiddenToOutput[o][h] -= momentumHiddenToOutput[o][h]; // Note: SUBTRACT since error = pred - target
             
             // Clip weights to prevent explosion
-            weights.hiddenToOutput[o][h] = Math.max(-5, Math.min(5, weights.hiddenToOutput[o][h]));
+            weights.hiddenToOutput[o][h] = clampWeight(weights.hiddenToOutput[o][h], -5, 5);
         }
     }
     
@@ -364,7 +364,7 @@ function backpropagationWithMomentum(target, learningRate, momentum, momentumInp
             weights.inputToHidden[h][i] -= momentumInputToHidden[h][i]; // Note: SUBTRACT to match output layer
             
             // Clip weights to prevent explosion
-            weights.inputToHidden[h][i] = Math.max(-5, Math.min(5, weights.inputToHidden[h][i]));
+            weights.inputToHidden[h][i] = clampWeight(weights.inputToHidden[h][i], -5, 5);
         }
     }
 }
@@ -391,7 +391,7 @@ function advancedBackpropagation(target, sampleWeight = 1.0, trainingState) {
             weights.hiddenToOutput[o][h] += trainingState.momentum.hiddenToOutput[o][h] - weightDecay;
             
             // Gradient clipping
-            weights.hiddenToOutput[o][h] = Math.max(-8, Math.min(8, weights.hiddenToOutput[o][h]));
+            weights.hiddenToOutput[o][h] = clampWeight(weights.hiddenToOutput[o][h], -8, 8);
         }
     }
     
@@ -420,7 +420,7 @@ function advancedBackpropagation(target, sampleWeight = 1.0, trainingState) {
             weights.inputToHidden[h][i] += trainingState.momentum.inputToHidden[h][i] - weightDecay;
             
             // Gradient clipping
-            weights.inputToHidden[h][i] = Math.max(-8, Math.min(8, weights.inputToHidden[h][i]));
+            weights.inputToHidden[h][i] = clampWeight(weights.inputToHidden[h][i], -8, 8);
         }
     }
     

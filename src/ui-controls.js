@@ -34,20 +34,20 @@ function initializeExpertPanelUI() {
     
     // Training parameters
     document.getElementById('learningRateSlider').value = expertConfig.learningRate;
-    document.getElementById('learningRateValue').textContent = expertConfig.learningRate.toFixed(3);
+    updateElementValue('learningRateValue', expertConfig.learningRate, 3);
     
     document.getElementById('momentumSlider').value = expertConfig.momentum;
-    document.getElementById('momentumValue').textContent = expertConfig.momentum.toFixed(2);
+    updateElementValue('momentumValue', expertConfig.momentum, 2);
     
     document.getElementById('l2RegSlider').value = expertConfig.l2Regularization;
-    document.getElementById('l2RegValue').textContent = expertConfig.l2Regularization.toFixed(4);
+    updateElementValue('l2RegValue', expertConfig.l2Regularization, 4);
     
     document.getElementById('maxEpochsSlider').value = expertConfig.maxEpochs;
     document.getElementById('maxEpochsValue').textContent = expertConfig.maxEpochs;
     
     // Activation function parameters
     document.getElementById('leakyReLUAlpha').value = expertConfig.leakyReLUAlpha;
-    document.getElementById('leakyReLUAlphaValue').textContent = expertConfig.leakyReLUAlpha.toFixed(2);
+    updateElementValue('leakyReLUAlphaValue', expertConfig.leakyReLUAlpha, 2);
     
     // Advanced settings
     document.getElementById('adaptiveLearningRate').checked = expertConfig.adaptiveLearningRate;
@@ -67,19 +67,19 @@ function updateExpertConfig(parameter, value) {
     // Update corresponding display values
     switch (parameter) {
         case 'learningRate':
-            document.getElementById('learningRateValue').textContent = value.toFixed(3);
+            updateElementValue('learningRateValue', value, 3);
             break;
         case 'momentum':
-            document.getElementById('momentumValue').textContent = value.toFixed(2);
+            updateElementValue('momentumValue', value, 2);
             break;
         case 'l2Regularization':
-            document.getElementById('l2RegValue').textContent = value.toFixed(4);
+            updateElementValue('l2RegValue', value, 4);
             break;
         case 'maxEpochs':
             document.getElementById('maxEpochsValue').textContent = value;
             break;
         case 'leakyReLUAlpha':
-            document.getElementById('leakyReLUAlphaValue').textContent = value.toFixed(2);
+            updateElementValue('leakyReLUAlphaValue', value, 2);
             break;
         case 'batchSize':
             document.getElementById('batchSizeValue').textContent = value;
