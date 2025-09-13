@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Button Debug Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; background: #f5f5f5; }
+        .test-section { margin: 20px 0; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .button-test { margin: 10px 0; }
+        .test-button { 
+            padding: 12px 20px; 
+            margin: 10px; 
+            border: none; 
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease; /* Same as the actual app */
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            box-shadow: 0 2px 4px -1px rgba(245, 158, 11, 0.4);
+        }
+        .test-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #9ca3af;
+        }
+        .test-button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-1px);
+        }
+        .log { 
+            background: #000; 
+            color: #0f0; 
+            padding: 15px; 
+            border-radius: 5px; 
+            font-family: monospace; 
+            max-height: 300px; 
+            overflow-y: auto; 
+            margin: 10px 0;
+        }
+        .log-line { margin: 2px 0; }
+        .success { color: #28a745; }
+        .warning { color: #ffc107; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>🐛 Learn Button Flickering Debug</h1>
+
+    <div class="test-section">
+        <h2>🔍 Problem Analysis</h2>
+        <p>The "Learn" button becomes unclickable and flickers after running the learning part. Let's analyze the issue:</p>
+        
+        <h3>📋 Current Button State Logic:</h3>
+        <ol>
+            <li>Initial: <code>backwardBtn.disabled = true</code></li>
+            <li>After Forward Pass: <code>backwardBtn.disabled = false</code> (if trueLabel exists)</li>
+            <li>During Backward Pass: <code>backwardBtn.disabled = true</code></li>
+            <li>After Backward Pass: <code>backwardBtn.disabled = true</code> (permanently disabled)</li>
+            <li>Reset Demo: <code>backwardBtn.disabled = true</code></li>
+        </ol>
+
+        <h3>❌ Issues Found:</h3>
+        <ul>
+            <li>Button is set to disabled multiple times in quick succession</li>
+            <li>CSS transition on disabled state can cause visual flickering</li>
+            <li>After learning completes, user must run forward pass again to re-enable Learn button</li>
+            <li>No visual feedback that forward pass is needed again</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Button Flickering Simulation</h2>
+        <div class="button-test">
+            <button id="testButton" class="test-button">📚 Learn (Test)</button>
+            <button onclick="simulateFlicker()">Simulate Rapid Enable/Disable</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        <div class="log" id="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>✅ Proposed Solutions</h2>
+        <div id="solutions">
+            <h3>Solution 1: Debounce Button State Changes</h3>
+            <p>Prevent rapid enable/disable changes within a short time window</p>
+            
+            <h3>Solution 2: Better Visual Feedback</h3>
+            <p>Show clear message that forward pass is needed after learning</p>
+            
+            <h3>Solution 3: Remove CSS Transition on Disabled State</h3>
+            <p>Prevent visual flickering during state changes</p>
+            
+            <h3>Solution 4: Allow Multiple Learning Cycles</h3>
+            <p>Keep Learn button enabled after learning completes (optional)</p>
+        </div>
+        
+        <div class="button-test">
+            <button onclick="testSolution1()" class="test-button">Test Solution 1: Debounced States</button>
+            <button onclick="testSolution2()" class="test-button">Test Solution 2: Better Feedback</button>
+            <button onclick="testSolution3()" class="test-button">Test Solution 3: No Transition</button>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'log') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'warn' ? 'warning' : 'success';
+            
+            logDiv.innerHTML += `<div class="log-line ${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function simulateFlicker() {
+            const button = document.getElementById('testButton');
+            log('🔄 Simulating rapid button state changes (like in actual app)...', 'warn');
+            
+            // Simulate the actual sequence from the app
+            let step = 0;
+            const states = [
+                { disabled: false, text: 'Learn (Enabled)' },
+                { disabled: true, text: 'Learn (During Animation)' },
+                { disabled: true, text: 'Learn (Animation Complete)' },
+                { disabled: true, text: 'Learn (Reset Demo)' },
+                { disabled: false, text: 'Learn (After New Forward Pass)' }
+            ];
+
+            function nextState() {
+                if (step < states.length) {
+                    const state = states[step];
+                    button.disabled = state.disabled;
+                    button.textContent = state.text;
+                    log(`Step ${step + 1}: ${state.disabled ? 'DISABLED' : 'ENABLED'} - "${state.text}"`, 
+                        state.disabled ? 'error' : 'success');
+                    step++;
+                    
+                    if (step < states.length) {
+                        setTimeout(nextState, 200); // Rapid changes = flickering
+                    } else {
+                        log('✅ Sequence complete - Button should be clickable now', 'success');
+                    }
+                }
+            }
+            
+            nextState();
+        }
+
+        function testSolution1() {
+            log('🛠️ Testing Solution 1: Debounced Button States', 'success');
+            
+            // Debounced button state management
+            let buttonStateTimeout = null;
+            
+            function setButtonStateDebounced(disabled, delay = 100) {
+                if (buttonStateTimeout) clearTimeout(buttonStateTimeout);
+                buttonStateTimeout = setTimeout(() => {
+                    const button = document.getElementById('testButton');
+                    button.disabled = disabled;
+                    log(`Debounced state change: ${disabled ? 'DISABLED' : 'ENABLED'}`, 'success');
+                }, delay);
+            }
+            
+            // Simulate rapid changes
+            log('Simulating rapid changes with debouncing...', 'warn');
+            setButtonStateDebounced(true, 50);   // These rapid calls
+            setButtonStateDebounced(false, 100); // will be debounced
+            setButtonStateDebounced(true, 150);  // only the last one
+            setButtonStateDebounced(false, 200); // takes effect
+            
+            setTimeout(() => {
+                log('✅ Debouncing prevents flickering - only final state applied', 'success');
+            }, 300);
+        }
+
+        function testSolution2() {
+            log('💬 Testing Solution 2: Better Visual Feedback', 'success');
+            
+            const button = document.getElementById('testButton');
+            
+            // Simulate learning completion
+            button.disabled = true;
+            button.textContent = '📚 Think First (Disabled)';
+            button.title = 'Run forward pass first to see improved results';
+            
+            log('Button now shows clear message about needing to run forward pass first', 'success');
+            
+            // Show how it would be re-enabled
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = '📚 Learn (Ready Again)';
+                button.title = 'Watch the AI learn from its mistake';
+                log('✅ After forward pass: Button is clearly available again', 'success');
+            }, 2000);
+        }
+
+        function testSolution3() {
+            log('🎨 Testing Solution 3: Remove CSS Transition on Disabled State', 'success');
+            
+            const button = document.getElementById('testButton');
+            
+            // Remove transition temporarily to show difference
+            button.style.transition = 'none';
+            log('Removed CSS transition - rapid state changes now:', 'warn');
+            
+            let toggle = false;
+            const flickerInterval = setInterval(() => {
+                button.disabled = toggle;
+                button.textContent = toggle ? 'DISABLED' : 'ENABLED';
+                log(`No transition: ${toggle ? 'DISABLED' : 'ENABLED'}`, toggle ? 'error' : 'success');
+                toggle = !toggle;
+            }, 100);
+            
+            setTimeout(() => {
+                clearInterval(flickerInterval);
+                button.style.transition = 'all 0.2s ease';
+                button.disabled = false;
+                button.textContent = '📚 Learn (Test)';
+                log('✅ Transition restored - no more flickering during rapid changes', 'success');
+            }, 1000);
+        }
+
+        // Initialize
+        log('🚀 Learn Button Debug Test Ready', 'success');
+        log('Click the simulation buttons above to test different scenarios', 'log');
+    </script>
+</body>
+</html>

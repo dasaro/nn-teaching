@@ -136,9 +136,13 @@ function resetDemo() {
     demoState.hasResults = false;
     
     // Properly reset all button states
-    document.getElementById('forwardBtn').disabled = false;
-    document.getElementById('fullDemoBtn').disabled = false;
-    document.getElementById('backwardBtn').disabled = true;
+    if (window.buttonStateManager) {
+        window.buttonStateManager.resetAll();
+    } else {
+        document.getElementById('forwardBtn').disabled = false;
+        document.getElementById('fullDemoBtn').disabled = false;
+        document.getElementById('backwardBtn').disabled = true;
+    }
     
     // Reset all neuron states
     resetNeuronStates();
@@ -821,7 +825,11 @@ async function runForwardPass() {
     
     // Enable backward pass if we have the correct answer
     if (trueLabel) {
-        document.getElementById('backwardBtn').disabled = false;
+        if (window.buttonStateManager) {
+            window.buttonStateManager.setLearnButtonState('ready');
+        } else {
+            document.getElementById('backwardBtn').disabled = false;
+        }
         safeUpdateStepInfoDual(
             window.i18n.t('completion.thinkingDone'),
             window.i18n.t('forward.expert.result', [
@@ -879,8 +887,15 @@ async function runBackwardPass() {
     startMessageLog();
     
     isAnimating = true;
-    document.getElementById('backwardBtn').disabled = true;
-    document.getElementById('fullDemoBtn').disabled = true;
+    
+    // Use button state manager for better UX
+    if (window.buttonStateManager) {
+        window.buttonStateManager.setLearnButtonState('learning');
+        window.buttonStateManager.setButtonState('fullDemoBtn', true);
+    } else {
+        document.getElementById('backwardBtn').disabled = true;
+        document.getElementById('fullDemoBtn').disabled = true;
+    }
     
     await sleep(1000);
     const backpropStartTime = performance.now();
@@ -1007,11 +1022,18 @@ async function runBackwardPass() {
     // Reset state to allow another forward pass
     demoState.forwardCompleted = false;
     demoState.hasResults = false;
-    document.getElementById('backwardBtn').disabled = true;
     
     highlightSection('none');
-    document.getElementById('fullDemoBtn').disabled = false;
     isAnimating = false;
+    
+    // Use button state manager for better feedback
+    if (window.buttonStateManager) {
+        window.buttonStateManager.setLearnButtonState('thinking-required');
+        window.buttonStateManager.setButtonState('fullDemoBtn', false);
+    } else {
+        document.getElementById('backwardBtn').disabled = true;
+        document.getElementById('fullDemoBtn').disabled = false;
+    }
     
     // Stop message logging if active
     if (messageLogActive) {
