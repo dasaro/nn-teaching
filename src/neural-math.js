@@ -110,6 +110,11 @@ function forwardPropagationSilent(inputValues, debugMode = false) {
         debugFeatureRepresentation(inputValues, 'FORWARD_PROP');
     }
     
+    // Initialize hiddenLayers array structure if needed
+    if (!activations.hiddenLayers || activations.hiddenLayers.length !== networkConfig.hiddenLayers.length) {
+        activations.hiddenLayers = networkConfig.hiddenLayers.map(layerSize => new Array(layerSize).fill(0));
+    }
+    
     // Variable layer forward propagation
     let previousLayerActivations = activations.input;
     let previousLayerSize = networkConfig.inputSize;
@@ -364,6 +369,9 @@ function initializeMomentum() {
     // Initialize weight change tracking for variable layers
     if (!weightChanges.layers) {
         weightChanges.layers = [];
+        if (!weightChanges.lastWeights) {
+            weightChanges.lastWeights = {};
+        }
         weightChanges.lastWeights.layers = [];
         const totalLayers = networkConfig.hiddenLayers.length + 1;
         
@@ -378,7 +386,28 @@ function initializeMomentum() {
             
             if (weights.layers && weights.layers[layerIndex]) {
                 weightChanges.lastWeights.layers[layerIndex] = JSON.parse(JSON.stringify(weights.layers[layerIndex]));
+            } else {
+                // Initialize empty weight matrix if not available
+                weightChanges.lastWeights.layers[layerIndex] = Array.from({length: currentLayerSize}, () =>
+                    Array.from({length: previousLayerSize}, () => 0)
+                );
             }
+        }
+    }
+    
+    // Initialize momentum tracking for variable layers
+    if (!momentum.layers) {
+        momentum.layers = [];
+        const totalLayers = networkConfig.hiddenLayers.length + 1;
+        
+        for (let layerIndex = 0; layerIndex < totalLayers; layerIndex++) {
+            const isOutputLayer = (layerIndex === totalLayers - 1);
+            const currentLayerSize = isOutputLayer ? networkConfig.outputSize : networkConfig.hiddenLayers[layerIndex];
+            const previousLayerSize = layerIndex === 0 ? networkConfig.inputSize : networkConfig.hiddenLayers[layerIndex - 1];
+            
+            momentum.layers[layerIndex] = Array.from({length: currentLayerSize}, () =>
+                Array.from({length: previousLayerSize}, () => 0)
+            );
         }
     }
     
@@ -541,3 +570,21 @@ if (typeof window !== 'undefined') window.backpropagationSilent = backpropagatio
 if (typeof window !== 'undefined') window.initializeMomentum = initializeMomentum;
 if (typeof window !== 'undefined') window.backpropagationWithMomentum = backpropagationWithMomentum;
 if (typeof window !== 'undefined') window.advancedBackpropagation = advancedBackpropagation;
+
+// Populate neuralMath object if it exists
+if (typeof window !== 'undefined' && window.neuralMath) {
+    window.neuralMath.sigmoid = sigmoid;
+    window.neuralMath.sigmoidDerivative = sigmoidDerivative;
+    window.neuralMath.leakyReLU = leakyReLU;
+    window.neuralMath.leakyReLUDerivative = leakyReLUDerivative;
+    window.neuralMath.tanhActivation = tanhActivation;
+    window.neuralMath.tanhDerivative = tanhDerivative;
+    window.neuralMath.softmax = softmax;
+    window.neuralMath.calculateBinaryAccuracy = calculateBinaryAccuracy;
+    window.neuralMath.calculateDatasetAccuracy = calculateDatasetAccuracy;
+    window.neuralMath.forwardPropagationSilent = forwardPropagationSilent;
+    window.neuralMath.backpropagationSilent = backpropagationSilent;
+    window.neuralMath.initializeMomentum = initializeMomentum;
+    window.neuralMath.backpropagationWithMomentum = backpropagationWithMomentum;
+    window.neuralMath.advancedBackpropagation = advancedBackpropagation;
+}

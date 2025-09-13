@@ -71,6 +71,7 @@
                         <button id="expertViewBtn" onclick="toggleExpertViewMode()" class="tool-btn" data-i18n="tools.expertView" data-i18n-tooltip="tools.expertView.tooltip" title="Toggle detailed mathematical explanations">🎓 Expert View</button>
                         <button id="expertPanelBtn" onclick="toggleExpertPanel()" class="tool-btn" data-i18n="tools.config" data-i18n-tooltip="tools.config.tooltip" title="Advanced neural network parameters">⚙️ Config</button>
                         <button id="pixelViewerBtn" onclick="openPixelViewer()" class="tool-btn" data-i18n="tools.pixels" data-i18n-tooltip="tools.pixels.tooltip" title="Learn how images become numbers">🔍 Pixels</button>
+                        <button id="activationBtn" onclick="showActivationFunctionModal()" class="tool-btn" data-i18n="activation.title" title="Learn how activation functions work">📊 Functions</button>
                     </div>
                 </div>
                 
@@ -274,20 +275,82 @@
                         </div>
                     </div>
                     
-                    <!-- Network Architecture (Read-Only) -->
-                    <div class="expert-section readonly-section">
-                        <h3 data-i18n="expertPanel.networkArchitecture">🏗️ Network Architecture (Read-Only)</h3>
+                    <!-- Network Architecture (Interactive) -->
+                    <div class="expert-section architecture-section">
+                        <h3 data-i18n="expertPanel.networkArchitecture">🏗️ Network Architecture</h3>
+                        
+                        <!-- Preset Architecture Selection -->
                         <div class="param-group">
-                            <label><span data-i18n="expertPanel.inputSize">Input Size:</span> <span id="inputSizeDisplay">4</span></label>
+                            <label data-i18n="expertPanel.presetArchitectures">Quick Presets:</label>
+                            <div class="preset-buttons">
+                                <button onclick="setArchitecturePreset([])" class="preset-btn" title="Direct input to output">
+                                    📍 Direct
+                                </button>
+                                <button onclick="setArchitecturePreset([4])" class="preset-btn preset-selected" title="Classic single hidden layer">
+                                    🧠 Classic
+                                </button>
+                                <button onclick="setArchitecturePreset([6,3])" class="preset-btn" title="Deep network with decreasing layers">
+                                    🏗️ Deep
+                                </button>
+                                <button onclick="setArchitecturePreset([8,6,4])" class="preset-btn" title="Maximum complexity network">
+                                    🔥 Max
+                                </button>
+                            </div>
                         </div>
+
+                        <!-- Custom Architecture Builder -->
                         <div class="param-group">
-                            <label><span data-i18n="expertPanel.architecture">Architecture:</span> <span id="architectureDisplay">4→[4]→2</span></label>
+                            <label data-i18n="expertPanel.customArchitecture">Custom Hidden Layers:</label>
+                            <div class="architecture-builder">
+                                <div class="layer-controls">
+                                    <div class="layer-item">
+                                        <span>Input: 4</span>
+                                    </div>
+                                    <div id="hiddenLayersContainer">
+                                        <!-- Hidden layers will be dynamically added here -->
+                                    </div>
+                                    <div class="layer-item">
+                                        <span>Output: 2</span>
+                                    </div>
+                                </div>
+                                <div class="architecture-actions">
+                                    <button onclick="addHiddenLayer()" class="action-btn" title="Add hidden layer">
+                                        ➕ Add Layer
+                                    </button>
+                                    <button onclick="removeLastHiddenLayer()" class="action-btn" title="Remove last layer">
+                                        ➖ Remove Layer
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Current Architecture Display -->
                         <div class="param-group">
-                            <label><span data-i18n="expertPanel.outputSize">Output Size:</span> <span id="outputSizeDisplay">2</span></label>
+                            <label data-i18n="expertPanel.currentArchitecture">Current Architecture:</label>
+                            <div class="architecture-display">
+                                <span id="architectureDisplay">4→[4]→2</span>
+                                <button onclick="applyArchitectureChanges()" class="apply-btn">
+                                    🚀 Apply Changes
+                                </button>
+                            </div>
                         </div>
+
+                        <!-- Architecture Stats -->
                         <div class="param-group">
-                            <label><span data-i18n="expertPanel.totalWeights">Total Weights:</span> <span id="totalWeightsDisplay">24</span></label>
+                            <div class="architecture-stats">
+                                <div class="stat-item">
+                                    <span data-i18n="expertPanel.hiddenLayers">Hidden Layers:</span>
+                                    <span id="hiddenLayersCount">1</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span data-i18n="expertPanel.totalNeurons">Total Neurons:</span>
+                                    <span id="totalNeuronsDisplay">10</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span data-i18n="expertPanel.totalWeights">Total Weights:</span>
+                                    <span id="totalWeightsDisplay">24</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -334,6 +397,8 @@
     <!-- Consolidated modules -->
     <script src="src/real-image-data.js"></script>
     <script src="src/image-data.js"></script>
+    <script defer src="src/neuron-hover.js"></script>
+    <script defer src="src/activation-visualizer.js"></script>
     <script defer src="src/neural-math.js"></script>
     <script defer src="src/animation-engine.js"></script>
     <script defer src="src/network-visualizer.js"></script>

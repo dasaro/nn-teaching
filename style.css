@@ -800,7 +800,6 @@ body {
     fill: #fef3c7;
     stroke: #f59e0b;
     stroke-width: 3;
-    animation: neuronPulse 0.6s ease-in-out;
 }
 
 .neuron.backward-active {
@@ -1794,7 +1793,7 @@ body {
 }
 
 .neuron-active {
-    animation: neuronPulse 1s infinite;
+    /* Animation removed to prevent wobble during forward pass */
 }
 
 .mini-network {
@@ -2315,6 +2314,199 @@ body {
     border-color: #cbd5e1;
 }
 
+/* Architecture Panel Specific Styles */
+.architecture-section {
+    grid-column: 1 / -1; /* Span both columns */
+    background: #f0f8ff;
+    border-color: #3b82f6;
+}
+
+.preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.preset-btn {
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.preset-btn:hover {
+    border-color: #3b82f6;
+    background: #f0f8ff;
+}
+
+.preset-btn.preset-selected {
+    border-color: #3b82f6;
+    background: #3b82f6;
+    color: white;
+}
+
+.architecture-builder {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 8px;
+}
+
+.layer-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.layer-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.layer-item.input {
+    background: #e7f5ff;
+    border-color: #339af0;
+    color: #1971c2;
+}
+
+.layer-item.output {
+    background: #e7f5ff;
+    border-color: #339af0;
+    color: #1971c2;
+}
+
+.layer-item.hidden {
+    background: #fff5f5;
+    border-color: #f56565;
+    color: #c53030;
+    position: relative;
+}
+
+.hidden-layer-input {
+    width: 40px;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-weight: 500;
+    color: inherit;
+}
+
+.remove-layer-btn {
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+.architecture-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.action-btn {
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.action-btn:hover {
+    background: #4f46e5;
+}
+
+.action-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+.architecture-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    padding: 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+}
+
+.architecture-display span {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+.apply-btn {
+    background: #059669;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.apply-btn:hover {
+    background: #047857;
+}
+
+.architecture-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.stat-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+    font-size: 12px;
+}
+
+.stat-item span:first-child {
+    display: block;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.stat-item span:last-child {
+    display: block;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 16px;
+}
+
 .expert-actions {
     display: flex;
     gap: 12px;
@@ -2630,4 +2822,420 @@ body {
 
 .connection-btn-close:hover {
     background: #ef4444;
+}
+
+/* Neuron Hover Tooltip */
+.neuron-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    max-width: 300px;
+    min-width: 200px;
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.neuron-tooltip.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.neuron-tooltip .tooltip-header {
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: #60a5fa;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 4px;
+}
+
+.neuron-tooltip .tooltip-section {
+    margin-bottom: 8px;
+}
+
+.neuron-tooltip .tooltip-label {
+    font-weight: bold;
+    color: #fbbf24;
+    margin-bottom: 2px;
+}
+
+.neuron-tooltip .tooltip-value {
+    color: #e5e7eb;
+    font-family: 'Courier New', monospace;
+    margin-left: 8px;
+}
+
+.neuron-tooltip .tooltip-formula {
+    background: rgba(59, 130, 246, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    margin: 4px 0;
+    border-left: 3px solid #3b82f6;
+    font-family: 'Courier New', monospace;
+}
+
+.neuron-tooltip .tooltip-step {
+    margin: 4px 0;
+    padding-left: 8px;
+    color: #d1d5db;
+}
+
+.neuron-tooltip .tooltip-calculation {
+    background: rgba(34, 197, 94, 0.1);
+    padding: 6px;
+    border-radius: 4px;
+    margin: 2px 0;
+    font-family: 'Courier New', monospace;
+    color: #10b981;
+}
+
+.neuron-tooltip .tooltip-inputs {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 4px 8px;
+    margin: 4px 0;
+    font-size: 11px;
+}
+
+.neuron-tooltip .tooltip-input-label {
+    color: #9ca3af;
+}
+
+.neuron-tooltip .tooltip-input-value {
+    color: #60a5fa;
+    text-align: right;
+}
+
+.neuron-tooltip .tooltip-input-weight {
+    color: #f59e0b;
+    text-align: right;
+}
+
+/* Activation Function Visualizer Modal */
+.activation-modal .modal-content {
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.activation-modal-content {
+    padding: 0;
+}
+
+.activation-subtitle {
+    color: #6b7280;
+    font-style: italic;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.activation-section {
+    margin-bottom: 32px;
+    padding: 20px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+}
+
+.activation-section h3 {
+    color: #1f2937;
+    margin-bottom: 16px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.activation-explanation {
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+/* Biological Examples */
+.biological-examples {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.bio-example {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border: 2px solid transparent;
+}
+
+.bio-example.bio-negative {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.bio-example.bio-zero {
+    border-color: #6b7280;
+    background: #f9fafb;
+}
+
+.bio-example.bio-positive {
+    border-color: #10b981;
+    background: #f0fdf4;
+}
+
+.bio-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.bio-text strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.bio-text p {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Function Selector */
+.function-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.function-btn {
+    padding: 12px 16px;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    color: #374151;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.function-btn:hover {
+    border-color: #3b82f6;
+    background: #f0f9ff;
+}
+
+.function-btn.active {
+    border-color: #3b82f6;
+    background: #3b82f6;
+    color: white;
+}
+
+/* Graph Container */
+.graph-container {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+#activationCanvas {
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    cursor: crosshair;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.graph-info {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.current-values {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+}
+
+.value-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.value-number {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    color: #3b82f6;
+    background: #f0f9ff;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.function-info {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+}
+
+.function-description {
+    color: #4b5563;
+    line-height: 1.5;
+    font-style: italic;
+}
+
+.interaction-help {
+    color: #8b5cf6;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 16px;
+    padding: 8px 16px;
+    background: #f3e8ff;
+    border-radius: 6px;
+}
+
+/* Neuron Visualization */
+.neuron-response {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+}
+
+.neuron-visual {
+    flex-shrink: 0;
+}
+
+.neuron-body {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.3s ease;
+    background: #e5e7eb;
+    border: 3px solid #9ca3af;
+}
+
+.neuron-body.inhibited {
+    background: #fef2f2;
+    border-color: #ef4444;
+    transform: scale(0.9);
+}
+
+.neuron-body.silent {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    transform: scale(1);
+}
+
+.neuron-body.excited {
+    background: linear-gradient(45deg, #fef3c7, #fbbf24);
+    border-color: #f59e0b;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+    animation: neuronGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes neuronGlow {
+    from {
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    }
+    to {
+        box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
+    }
+}
+
+.neuron-nucleus {
+    width: 20px;
+    height: 20px;
+    background: #374151;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.neuron-dendrites::before,
+.neuron-dendrites::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 2px;
+    background: #6b7280;
+    top: 50%;
+    left: -45px;
+    transform: rotate(15deg);
+    transform-origin: right center;
+}
+
+.neuron-dendrites::after {
+    transform: rotate(-15deg);
+    top: calc(50% - 10px);
+}
+
+.neuron-axon::before {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 2px;
+    background: #6b7280;
+    top: 50%;
+    right: -45px;
+    transform: translateY(-50%);
+}
+
+.response-text {
+    font-size: 16px;
+    color: #374151;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .activation-modal .modal-content {
+        margin: 10px;
+        max-width: none;
+    }
+    
+    .graph-container {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    #activationCanvas {
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+    }
+    
+    .biological-examples {
+        grid-template-columns: 1fr;
+    }
+    
+    .neuron-response {
+        flex-direction: column;
+        text-align: center;
+    }
 }

@@ -55,10 +55,12 @@ function initializeExpertPanelUI() {
     document.getElementById('batchSizeSlider').value = expertConfig.batchSize;
     document.getElementById('batchSizeValue').textContent = expertConfig.batchSize;
     
-    // Network architecture (read-only)
-    document.getElementById('inputSizeDisplay').textContent = expertConfig.inputSize;
-    document.getElementById('hiddenSizeDisplay').textContent = expertConfig.hiddenSize;
-    document.getElementById('outputSizeDisplay').textContent = expertConfig.outputSize;
+    // Initialize architecture controls (interactive)
+    setTimeout(() => {
+        if (typeof initializeArchitectureControls === 'function') {
+            initializeArchitectureControls();
+        }
+    }, 100); // Small delay to ensure DOM is ready
 }
 
 function updateExpertConfig(parameter, value) {
@@ -356,3 +358,198 @@ if (typeof window !== 'undefined') window.showTutorialStep = showTutorialStep;
 if (typeof window !== 'undefined') window.nextTutorialStep = nextTutorialStep;
 if (typeof window !== 'undefined') window.skipTutorial = skipTutorial;
 if (typeof window !== 'undefined') window.completeTutorial = completeTutorial;
+
+// Export architecture control functions
+if (typeof window !== 'undefined') window.setArchitecturePreset = setArchitecturePreset;
+if (typeof window !== 'undefined') window.addHiddenLayer = addHiddenLayer;
+if (typeof window !== 'undefined') window.removeLastHiddenLayer = removeLastHiddenLayer;
+if (typeof window !== 'undefined') window.updateHiddenLayerSize = updateHiddenLayerSize;
+if (typeof window !== 'undefined') window.removeHiddenLayer = removeHiddenLayer;
+if (typeof window !== 'undefined') window.applyArchitectureChanges = applyArchitectureChanges;
+if (typeof window !== 'undefined') window.initializeArchitectureControls = initializeArchitectureControls;
+
+// Populate globals-and-config functions if available
+if (typeof window !== 'undefined' && window.utilities && window.utilities.updateExpertConfig === null) {
+    window.utilities.updateExpertConfig = updateExpertConfig;
+}
+
+// ============================================================================
+// ARCHITECTURE CONTROL FUNCTIONS
+// ============================================================================
+
+// Current architecture state (before applying changes)
+let pendingArchitecture = [4]; // Default to current architecture
+
+function setArchitecturePreset(hiddenLayers) {
+    pendingArchitecture = [...hiddenLayers];
+    
+    // Update preset button selection
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('preset-selected'));
+    const presetButtons = document.querySelectorAll('.preset-btn');
+    if (hiddenLayers.length === 0) presetButtons[0].classList.add('preset-selected');
+    else if (hiddenLayers.length === 1 && hiddenLayers[0] === 4) presetButtons[1].classList.add('preset-selected');
+    else if (hiddenLayers.length === 2 && hiddenLayers[0] === 6 && hiddenLayers[1] === 3) presetButtons[2].classList.add('preset-selected');
+    else if (hiddenLayers.length === 3 && hiddenLayers[0] === 8) presetButtons[3].classList.add('preset-selected');
+    
+    updateArchitectureDisplay();
+    updateHiddenLayersContainer();
+}
+
+function addHiddenLayer() {
+    if (pendingArchitecture.length >= 3) {
+        alert('Maximum 3 hidden layers allowed');
+        return;
+    }
+    
+    // Add a new layer with 4 neurons by default
+    pendingArchitecture.push(4);
+    updateArchitectureDisplay();
+    updateHiddenLayersContainer();
+    
+    // Clear preset selection
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('preset-selected'));
+}
+
+function removeLastHiddenLayer() {
+    if (pendingArchitecture.length === 0) {
+        alert('Cannot remove layers - at least direct connection needed');
+        return;
+    }
+    
+    pendingArchitecture.pop();
+    updateArchitectureDisplay();
+    updateHiddenLayersContainer();
+    
+    // Clear preset selection
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('preset-selected'));
+}
+
+function updateHiddenLayerSize(layerIndex, newSize) {
+    const size = parseInt(newSize);
+    if (size < 1 || size > 8) {
+        alert('Layer size must be between 1 and 8 neurons');
+        return;
+    }
+    
+    pendingArchitecture[layerIndex] = size;
+    updateArchitectureDisplay();
+    
+    // Clear preset selection
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('preset-selected'));
+}
+
+function removeHiddenLayer(layerIndex) {
+    pendingArchitecture.splice(layerIndex, 1);
+    updateArchitectureDisplay();
+    updateHiddenLayersContainer();
+    
+    // Clear preset selection
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('preset-selected'));
+}
+
+function updateHiddenLayersContainer() {
+    const container = document.getElementById('hiddenLayersContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    pendingArchitecture.forEach((size, index) => {
+        const layerDiv = document.createElement('div');
+        layerDiv.className = 'layer-item hidden';
+        layerDiv.innerHTML = `
+            Hidden ${index + 1}: 
+            <input type="number" 
+                   class="hidden-layer-input" 
+                   value="${size}" 
+                   min="1" 
+                   max="8"
+                   onchange="updateHiddenLayerSize(${index}, this.value)">
+            <button class="remove-layer-btn" 
+                    onclick="removeHiddenLayer(${index})" 
+                    title="Remove this layer">×</button>
+        `;
+        container.appendChild(layerDiv);
+    });
+}
+
+function updateArchitectureDisplay() {
+    // Update architecture string display
+    const archDisplay = document.getElementById('architectureDisplay');
+    if (archDisplay) {
+        const archString = `4→[${pendingArchitecture.join(',')}]→2`;
+        archDisplay.textContent = archString;
+    }
+    
+    // Update stats
+    const hiddenLayersCount = document.getElementById('hiddenLayersCount');
+    const totalNeuronsDisplay = document.getElementById('totalNeuronsDisplay');
+    const totalWeightsDisplay = document.getElementById('totalWeightsDisplay');
+    
+    if (hiddenLayersCount) {
+        hiddenLayersCount.textContent = pendingArchitecture.length;
+    }
+    
+    if (totalNeuronsDisplay) {
+        const totalNeurons = 4 + pendingArchitecture.reduce((sum, size) => sum + size, 0) + 2;
+        totalNeuronsDisplay.textContent = totalNeurons;
+    }
+    
+    if (totalWeightsDisplay) {
+        let totalWeights = 0;
+        let prevSize = 4; // Input size
+        
+        for (const layerSize of pendingArchitecture) {
+            totalWeights += prevSize * layerSize;
+            prevSize = layerSize;
+        }
+        
+        // Add weights from last hidden (or input if no hidden) to output
+        totalWeights += prevSize * 2;
+        
+        totalWeightsDisplay.textContent = totalWeights;
+    }
+}
+
+function applyArchitectureChanges() {
+    try {
+        // Apply the architecture using NetworkAPI
+        NetworkAPI.setArchitecture(pendingArchitecture);
+        
+        // Redraw the network visualization
+        drawNetwork();
+        
+        // Update the current architecture displays throughout the UI
+        updateAllArchitectureDisplays();
+        
+        // Show success message
+        alert(`✅ Architecture updated to: 4→[${pendingArchitecture.join(',')}]→2`);
+        
+        // Close the expert panel
+        closeExpertPanel();
+        
+    } catch (error) {
+        alert(`❌ Failed to apply architecture: ${error.message}`);
+    }
+}
+
+function updateAllArchitectureDisplays() {
+    // Update any other architecture displays in the UI
+    const displays = document.querySelectorAll('#architectureDisplay');
+    displays.forEach(display => {
+        display.textContent = `4→[${pendingArchitecture.join(',')}]→2`;
+    });
+}
+
+// Initialize architecture controls when expert panel opens
+function initializeArchitectureControls() {
+    // Get current architecture from NetworkAPI
+    const currentArch = NetworkAPI.getArchitecture();
+    pendingArchitecture = [...currentArch.hiddenLayers];
+    
+    // Update all displays
+    updateArchitectureDisplay();
+    updateHiddenLayersContainer();
+    
+    // Set correct preset selection
+    setArchitecturePreset(pendingArchitecture);
+}

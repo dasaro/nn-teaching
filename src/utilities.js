@@ -507,7 +507,8 @@ function setTrueLabel(label) {
             console.warn("selectedLabel element not found");
         }
     } else {
-        console.warn("Label buttons not found in DOM yet");
+        // In test environments, label buttons may not exist - this is expected
+        console.log("ℹ️ Label buttons not found (test environment)");
     }
 }
 

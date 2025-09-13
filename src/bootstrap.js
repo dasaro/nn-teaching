@@ -12,7 +12,7 @@ function initializeNetwork() {
     if (typeof initializeNetworkStructure === 'function') {
         console.log('🔧 Using new variable architecture initialization');
         initializeNetworkStructure();
-    } else {
+    } else if (typeof weights !== 'undefined' && typeof networkConfig !== 'undefined') {
         console.log('🔧 Falling back to legacy initialization');
         // Legacy initialization for backward compatibility
         const scale = 0.1; // Much smaller weights
@@ -27,10 +27,22 @@ function initializeNetwork() {
             Array.from({length: networkConfig.hiddenSize}, () => 
                 (Math.random() * 2 - 1) * scale * 0.5) // Even smaller output weights
         );
+    } else {
+        console.error('❌ Cannot initialize network: required variables not available');
+        console.log('Available globals:', {
+            weights: typeof weights,
+            networkConfig: typeof networkConfig,
+            initializeNetworkStructure: typeof initializeNetworkStructure
+        });
+        return; // Exit early if we can't initialize
     }
     
     // DEBUG: Detailed weight analysis
-    debugWeightInitialization();
+    if (typeof debugWeightInitialization === 'function') {
+        debugWeightInitialization();
+    } else {
+        console.log('⚠️ debugWeightInitialization not available, skipping weight analysis');
+    }
     
     console.log('✅ Network initialized with small random weights for stable learning');
     console.log('🔧 ==========================================');
@@ -264,6 +276,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     initializeNetwork();
     createImage(currentImage);
     console.log("After createImage, trueLabel is:", trueLabel);
+    
+    // Initialize neuron hover tooltips
+    if (window.neuronHover && typeof window.neuronHover.initialize === 'function') {
+        window.neuronHover.initialize();
+        console.log("✅ Neuron hover tooltips initialized");
+    }
+    
     drawNetwork();
     setupEventListeners();
     resetDemo();

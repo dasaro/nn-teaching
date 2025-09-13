@@ -290,6 +290,10 @@ function highlightPatternInOriginalImage(pattern) {
 
 function createImage(imageType) {
     const canvas = document.getElementById('inputImage');
+    if (!canvas) {
+        console.warn('⚠️ inputImage canvas not found, skipping image creation');
+        return;
+    }
     // Optimize canvas for frequent getImageData operations
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     

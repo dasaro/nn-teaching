@@ -155,6 +155,43 @@ The application is now **highly modular** with each module handling specific fun
 - Avoid CORS restrictions with file:// protocol
 **Modify when**: Adding new images, updating image processing, or changing fallback generation
 
+#### **`src/neuron-hover.js`** ⭐ **NEW FEATURE**
+**Purpose**: Interactive neuron tooltips showing detailed calculation breakdowns
+**Responsibilities**:
+- Initialize tooltip system and DOM elements
+- Add hover event listeners to neuron SVG elements
+- Calculate step-by-step mathematical operations for each neuron
+- Generate formatted tooltip content with internationalization support
+- Handle tooltip positioning and visibility animations
+**Key Features**:
+- **Input Neurons**: Show direct input values with explanations
+- **Hidden Neurons**: Display weighted sum calculations, input×weight products, and activation function results
+- **Output Neurons**: Show complete forward propagation chain from inputs through all layers
+- **Multi-language Support**: All text uses i18n system (English/Italian)
+- **Smart Positioning**: Tooltips automatically adjust to stay within viewport
+**Modify when**: Adding new neuron types, changing calculation displays, or updating tooltip styling
+
+#### **`src/activation-visualizer.js`** ⭐ **NEW EDUCATIONAL FEATURE**
+**Purpose**: Interactive activation function visualization with biological intuition
+**Responsibilities**:
+- Create modal interface for activation function exploration
+- Generate interactive x/y plots showing function behavior  
+- Implement draggable point for real-time input/output exploration
+- Provide biological neuron analogies (inhibitory/excitatory inputs)
+- Support multiple activation functions (Leaky ReLU, Sigmoid, Tanh, ReLU)
+- Animate visual neuron response based on input strength
+**Key Educational Features**:
+- **Interactive Graphs**: HTML5 canvas with draggable red point showing input→output transformation
+- **Biological Connection**: Visual neuron that changes appearance based on input (inhibited/silent/excited)
+- **Function Comparison**: Switch between different activation functions to see behavior differences
+- **Real-time Values**: Live display of current input/output values with mathematical explanations
+- **Mobile Support**: Touch-friendly interface with responsive design
+**Biological Intuition**:
+- **Negative Inputs**: Inhibitory signals that suppress neuron firing
+- **Zero Inputs**: No connection (baseline state)
+- **Positive Inputs**: Excitatory signals that promote neuron firing proportional to strength
+**Modify when**: Adding new activation functions, updating biological explanations, or enhancing interactivity
+
 ## Variable Neural Network Architecture ⭐ **MAJOR UPDATE**
 
 The application now supports **variable neural network architectures** with the following capabilities:
@@ -219,7 +256,36 @@ When implementing new features or fixing issues:
 
 **Progressive Animation**: Five distinct phases showing input loading, forward propagation, classification, result display, and backpropagation
 
-**Visual Feedback**: Neurons change color/size when active, connections animate data flow, weights display current values and updates
+**Visual Feedback**: Neurons change color when active, connections animate data flow, weights display current values and updates
+
+**Neuron Hover Tooltips**: Interactive calculation details showing step-by-step mathematical operations when hovering over neurons, with full internationalization support (English/Italian)
+
+**Activation Function Visualizer**: Interactive educational tool with x/y plots, draggable input points, and biological neuron analogies to understand how activation functions transform inputs (inhibitory/excitatory/silent responses)
+
+## 🌐 Internationalization Policy ⭐ **CRITICAL REQUIREMENT**
+
+**NEVER HARDCODE TEXT**: Every single piece of user-visible text MUST be internationalized using the i18n system. When adding any new features, UI elements, tooltips, error messages, or content:
+
+1. **Add strings to BOTH language files**:
+   - `locales/en.js` - English text (original/reference)
+   - `locales/it.js` - Italian translations
+
+2. **Use the translation function**:
+   ```javascript
+   const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : key;
+   const text = t('your.translation.key');
+   ```
+
+3. **Structure keys logically**:
+   ```javascript
+   "feature.title": "Feature Title",
+   "feature.description": "Feature description text",
+   "feature.button": "Button Text"
+   ```
+
+4. **Test in both languages**: Always verify that both English and Italian work correctly
+
+This ensures the application remains fully accessible to both English and Italian users. Breaking internationalization is a critical bug.
 
 ## DOM Structure
 

@@ -207,28 +207,93 @@ function runComprehensiveTests() {
 }
 
 function simpleBinaryBackward(input, output, target, learningRate) {
-    // Output error
     const outputError = output - target;
     
-    // Update hidden to output weights
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        const gradient = outputError * activations.hidden[h] * learningRate;
-        weights.hiddenToOutput[0][h] -= gradient; // Only update first output neuron
-    }
-    
-    // Calculate hidden errors
-    const hiddenErrors = [];
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        const error = outputError * weights.hiddenToOutput[0][h];
-        // tanh derivative: 1 - tanh²(x)
-        hiddenErrors[h] = error * tanhDerivative(activations.hidden[h]);
-    }
-    
-    // Update input to hidden weights
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
+    // Check if we have any hidden layers
+    if (networkConfig.hiddenLayers.length === 0) {
+        // Direct input -> output connection
         for (let i = 0; i < networkConfig.inputSize; i++) {
-            const gradient = hiddenErrors[h] * input[i] * learningRate;
-            weights.inputToHidden[h][i] -= gradient;
+            const gradient = outputError * input[i] * learningRate;
+            weights.layers[0][0][i] -= gradient;
+            
+            // Check for NaN
+            if (isNaN(weights.layers[0][0][i])) {
+                console.error(`NaN in direct weight [0][${i}]!`);
+                weights.layers[0][0][i] = (Math.random() - 0.5) * 0.1;
+            }
+        }
+        return;
+    }
+    
+    // Multi-layer backpropagation
+    const layerErrors = [];
+    const totalLayers = networkConfig.hiddenLayers.length + 1; // +1 for output layer
+    
+    // Initialize error arrays
+    for (let layerIndex = 0; layerIndex < totalLayers; layerIndex++) {
+        if (layerIndex < networkConfig.hiddenLayers.length) {
+            layerErrors[layerIndex] = new Array(networkConfig.hiddenLayers[layerIndex]).fill(0);
+        } else {
+            layerErrors[layerIndex] = [outputError]; // Only first output neuron
+        }
+    }
+    
+    // Backpropagate errors from output to input
+    for (let layerIndex = totalLayers - 1; layerIndex > 0; layerIndex--) {
+        const currentLayerErrors = layerErrors[layerIndex];
+        const currentLayerSize = layerIndex === totalLayers - 1 ? 1 : networkConfig.hiddenLayers[layerIndex]; // Only first output
+        const prevLayerSize = layerIndex === 1 ? networkConfig.inputSize : networkConfig.hiddenLayers[layerIndex - 1];
+        
+        // Calculate errors for previous layer
+        for (let prev = 0; prev < prevLayerSize; prev++) {
+            let error = 0;
+            for (let current = 0; current < currentLayerSize; current++) {
+                error += currentLayerErrors[current] * weights.layers[layerIndex][current][prev];
+            }
+            
+            // Apply activation derivative
+            if (layerIndex > 1) {
+                // Hidden layer - use tanh derivative
+                const activation = activations.hiddenLayers[layerIndex - 2][prev];
+                layerErrors[layerIndex - 1][prev] = error * tanhDerivative(activation);
+            } else {
+                // Input layer (no activation derivative)
+                layerErrors[layerIndex - 1][prev] = error;
+            }
+            
+            // Check for NaN
+            if (isNaN(layerErrors[layerIndex - 1][prev])) {
+                console.error(`NaN in layer ${layerIndex - 1} error!`);
+                layerErrors[layerIndex - 1][prev] = 0;
+            }
+        }
+    }
+    
+    // Update weights for all layers
+    for (let layerIndex = 0; layerIndex < totalLayers; layerIndex++) {
+        const currentLayerSize = layerIndex === totalLayers - 1 ? 1 : networkConfig.hiddenLayers[layerIndex]; // Only first output
+        const prevLayerSize = layerIndex === 0 ? networkConfig.inputSize : networkConfig.hiddenLayers[layerIndex - 1];
+        
+        // Get previous layer activations
+        let prevActivations;
+        if (layerIndex === 0) {
+            prevActivations = activations.input;
+        } else {
+            prevActivations = activations.hiddenLayers[layerIndex - 1];
+        }
+        
+        // Update weights
+        for (let current = 0; current < currentLayerSize; current++) {
+            for (let prev = 0; prev < prevLayerSize; prev++) {
+                const gradient = layerErrors[layerIndex][current] * prevActivations[prev] * learningRate;
+                weights.layers[layerIndex][current][prev] -= gradient;
+                
+                // Check for NaN
+                if (isNaN(weights.layers[layerIndex][current][prev])) {
+                    console.error(`NaN in weight [${layerIndex}][${current}][${prev}]!`);
+                    weights.layers[layerIndex][current][prev] = (Math.random() - 0.5) * 0.1;
+                }
+            }
         }
     }
 }
@@ -774,29 +839,57 @@ function testWeightInitialization() {
 }
 
 function simpleBinaryForward(input) {
-    // Input to hidden
-    const hidden = [];
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        let sum = 0;
+    // Store input activations
+    activations.input = [...input];
+    
+    // Check if we have any hidden layers
+    if (networkConfig.hiddenLayers.length === 0) {
+        // Direct input -> output connection
+        let outputSum = 0;
         for (let i = 0; i < networkConfig.inputSize; i++) {
-            sum += input[i] * weights.inputToHidden[h][i];
+            outputSum += input[i] * weights.layers[0][0][i]; // First (and only) output neuron
         }
-        hidden[h] = tanhActivation(sum); // Use tanh activation (-1 to 1)
+        const output = 1 / (1 + Math.exp(-outputSum));
+        
+        activations.output = [output, 1 - output];
+        activations.hiddenLayers = [];
+        return output;
     }
     
-    // Hidden to output (single output)
+    // Multi-layer forward propagation
+    let currentActivations = [...input];
+    activations.hiddenLayers = [];
+    
+    for (let layerIndex = 0; layerIndex < networkConfig.hiddenLayers.length; layerIndex++) {
+        const layerSize = networkConfig.hiddenLayers[layerIndex];
+        const layerActivations = [];
+        
+        for (let neuron = 0; neuron < layerSize; neuron++) {
+            let sum = 0;
+            for (let prev = 0; prev < currentActivations.length; prev++) {
+                sum += currentActivations[prev] * weights.layers[layerIndex][neuron][prev];
+            }
+            layerActivations[neuron] = tanhActivation(sum);
+        }
+        
+        activations.hiddenLayers[layerIndex] = [...layerActivations];
+        currentActivations = layerActivations;
+    }
+    
+    // Final output layer
+    const outputLayerIndex = networkConfig.hiddenLayers.length;
     let outputSum = 0;
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        outputSum += hidden[h] * weights.hiddenToOutput[0][h]; // Just use first output neuron
+    for (let h = 0; h < currentActivations.length; h++) {
+        outputSum += currentActivations[h] * weights.layers[outputLayerIndex][0][h]; // First output neuron
     }
     
-    // Sigmoid activation for binary classification
     const output = 1 / (1 + Math.exp(-outputSum));
+    activations.output = [output, 1 - output];
     
-    // Store activations for backward pass
-    activations.input = input;
-    activations.hidden = hidden;
-    activations.output = [output, 1 - output]; // For compatibility with existing code
+    // Backward compatibility for single hidden layer systems
+    if (networkConfig.hiddenLayers.length > 0) {
+        activations.hidden = activations.hiddenLayers[0] || [];
+    }
     
     return output;
 }

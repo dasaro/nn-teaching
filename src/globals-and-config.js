@@ -95,25 +95,26 @@ window.coreSystem = {
     set autoScrollEnabled(value) { autoScrollEnabled = value; },
     
     // Internationalization
-    t: t,
+    t: (key, replacements = []) => window.i18n && window.i18n.t ? window.i18n.t(key, replacements) : key,
     
     // UI utilities
     updateAutoScrollButtonText: updateAutoScrollButtonText
 };
 
+// Initialize neuralMath object - functions will be populated later
 window.neuralMath = {
-    // Activation functions
-    sigmoid: sigmoid,
-    sigmoidDerivative: sigmoidDerivative,
-    leakyReLU: leakyReLU,
-    leakyReLUDerivative: leakyReLUDerivative,
-    tanhActivation: tanhActivation,
-    tanhDerivative: tanhDerivative,
-    softmax: softmax,
+    // Activation functions (populated after neural-math.js loads)
+    sigmoid: null,
+    sigmoidDerivative: null,
+    leakyReLU: null,
+    leakyReLUDerivative: null,
+    tanhActivation: null,
+    tanhDerivative: null,
+    softmax: null,
     
-    // Utility functions
-    calculateBinaryAccuracy: calculateBinaryAccuracy,
-    calculateDatasetAccuracy: calculateDatasetAccuracy,
+    // Utility functions (populated after neural-math.js loads)
+    calculateBinaryAccuracy: null,
+    calculateDatasetAccuracy: null,
     
     // Propagation algorithms (defined later in file - lines 3767+)
     forwardPropagationSilent: null,
@@ -320,21 +321,22 @@ function initializeWeightMatrix(outputSize, inputSize) {
 
 // Validate and set new network architecture
 function setNetworkArchitecture(hiddenLayerSizes) {
-    const { maxHiddenLayers, maxNeuronsPerLayer } = networkConfig;
-    
-    // Validate constraints
-    if (hiddenLayerSizes.length > maxHiddenLayers) {
-        throw new Error(`Maximum ${maxHiddenLayers} hidden layers allowed`);
+    // Validate constraints - access properties directly to avoid temporal dead zone
+    if (hiddenLayerSizes.length > networkConfig.maxHiddenLayers) {
+        throw new Error(`Maximum ${networkConfig.maxHiddenLayers} hidden layers allowed`);
     }
     
     for (const size of hiddenLayerSizes) {
-        if (size > maxNeuronsPerLayer || size < 1) {
-            throw new Error(`Each hidden layer must have 1-${maxNeuronsPerLayer} neurons`);
+        if (size > networkConfig.maxNeuronsPerLayer || size < 1) {
+            throw new Error(`Each hidden layer must have 1-${networkConfig.maxNeuronsPerLayer} neurons`);
         }
     }
     
     // Update configuration
     networkConfig.hiddenLayers = [...hiddenLayerSizes];
+    
+    // Reset activations structure to match new architecture
+    activations.hiddenLayers = hiddenLayerSizes.map(layerSize => new Array(layerSize).fill(0));
     
     // Reinitialize network structure
     initializeNetworkStructure();
@@ -355,15 +357,8 @@ function getNetworkInfo() {
     };
 }
 
-// Network positions for SVG drawing - optimized spacing with more vertical room
-const positions = {
-    input: [{x: 80, y: 60}, {x: 80, y: 140}, {x: 80, y: 220}, {x: 80, y: 300}],
-    hidden: [
-        {x: 280, y: 80}, {x: 280, y: 160}, {x: 280, y: 240}, {x: 280, y: 320}
-    ],
-    output: [{x: 480, y: 120}, {x: 480, y: 280}],
-    prediction: {x: 650, y: 200} // New prediction column with more space
-};
+// Note: Network positions are now dynamically calculated in network-visualizer.js
+// This allows for flexible architectures with variable hidden layers
 
 // Image URLs for different image types
 // Note: These file URLs don't work due to CORS restrictions
@@ -451,7 +446,7 @@ window.networkConfig = {
     getActivationFunction: getActivationFunction,
     getActivationDerivative: getActivationDerivative,
     syncExpertConfigToLegacy: syncExpertConfigToLegacy,
-    updateExpertConfig: updateExpertConfig,
+    updateExpertConfig: null, // populated after ui-controls.js loads
     resetExpertDefaults: resetExpertDefaults,
     applyExpertConfig: applyExpertConfig,
     
@@ -559,77 +554,77 @@ window.imageProcessor = {
 };
 
 window.networkVisualizer = {
-    // Core drawing functions
-    drawNetwork: drawNetwork,
-    drawConnections: drawConnections,
-    drawNeurons: drawNeurons,
-    drawLabels: drawLabels,
-    drawPrediction: drawPrediction,
-    updatePrediction: updatePrediction,
+    // Core drawing functions (safe references)
+    drawNetwork: () => typeof drawNetwork !== 'undefined' && drawNetwork(),
+    drawConnections: () => typeof drawConnections !== 'undefined' && drawConnections(),
+    drawNeurons: () => typeof drawNeurons !== 'undefined' && drawNeurons(),
+    drawLabels: () => typeof drawLabels !== 'undefined' && drawLabels(),
+    drawPrediction: () => typeof drawPrediction !== 'undefined' && drawPrediction(),
+    updatePrediction: () => typeof updatePrediction !== 'undefined' && updatePrediction(),
     
-    // Visual effects
-    highlightSubNetwork: highlightSubNetwork,
-    clearSubNetworkHighlights: clearSubNetworkHighlights,
-    createFlowingDots: createFlowingDots,
+    // Visual effects (safe references)
+    highlightSubNetwork: (...args) => typeof highlightSubNetwork !== 'undefined' && highlightSubNetwork(...args),
+    clearSubNetworkHighlights: () => typeof clearSubNetworkHighlights !== 'undefined' && clearSubNetworkHighlights(),
+    createFlowingDots: (...args) => typeof createFlowingDots !== 'undefined' && createFlowingDots(...args),
     
-    // Label management
-    setTrueLabel: setTrueLabel,
+    // Label management (safe reference)
+    setTrueLabel: (label) => typeof setTrueLabel !== 'undefined' && setTrueLabel(label),
     
-    // Animation and state
-    highlightSection: highlightSection,
-    sleep: sleep,
-    updateNeuronColors: updateNeuronColors,
-    getActivationColor: getActivationColor,
+    // Animation and state (safe references)
+    highlightSection: (section) => typeof highlightSection !== 'undefined' && highlightSection(section),
+    sleep: (ms) => typeof sleep !== 'undefined' ? sleep(ms) : new Promise(resolve => setTimeout(resolve, ms)),
+    updateNeuronColors: () => typeof updateNeuronColors !== 'undefined' && updateNeuronColors(),
+    getActivationColor: (activation) => typeof getActivationColor !== 'undefined' ? getActivationColor(activation) : '#ccc',
     
-    // Weight visualization
-    resetWeights: resetWeights,
-    applyWeightVisualization: applyWeightVisualization,
-    addWeightTooltip: addWeightTooltip,
-    getCurrentWeightForConnection: getCurrentWeightForConnection,
-    refreshAllConnectionVisuals: refreshAllConnectionVisuals,
+    // Weight visualization (safe references)
+    resetWeights: () => typeof resetWeights !== 'undefined' && resetWeights(),
+    applyWeightVisualization: (...args) => typeof applyWeightVisualization !== 'undefined' && applyWeightVisualization(...args),
+    addWeightTooltip: (...args) => typeof addWeightTooltip !== 'undefined' && addWeightTooltip(...args),
+    getCurrentWeightForConnection: (label) => typeof getCurrentWeightForConnection !== 'undefined' ? getCurrentWeightForConnection(label) : 0,
+    refreshAllConnectionVisuals: () => typeof refreshAllConnectionVisuals !== 'undefined' && refreshAllConnectionVisuals(),
     
-    // Weight editing
-    toggleWeightSliders: toggleWeightSliders,
-    showWeightSliders: showWeightSliders,
-    createWeightEditingPanel: createWeightEditingPanel,
-    createWeightControl: createWeightControl,
-    highlightConnection: highlightConnection,
-    updateWeight: updateWeight,
-    updateConnectionTooltip: updateConnectionTooltip,
-    updateConnectionAppearance: updateConnectionAppearance,
-    recalculateNetwork: recalculateNetwork,
-    hideWeightSliders: hideWeightSliders,
+    // Weight editing (safe references)
+    toggleWeightSliders: () => typeof toggleWeightSliders !== 'undefined' && toggleWeightSliders(),
+    showWeightSliders: () => typeof showWeightSliders !== 'undefined' && showWeightSliders(),
+    createWeightEditingPanel: (...args) => typeof createWeightEditingPanel !== 'undefined' && createWeightEditingPanel(...args),
+    createWeightControl: (...args) => typeof createWeightControl !== 'undefined' && createWeightControl(...args),
+    highlightConnection: (...args) => typeof highlightConnection !== 'undefined' && highlightConnection(...args),
+    updateWeight: (...args) => typeof updateWeight !== 'undefined' && updateWeight(...args),
+    updateConnectionTooltip: (...args) => typeof updateConnectionTooltip !== 'undefined' && updateConnectionTooltip(...args),
+    updateConnectionAppearance: (...args) => typeof updateConnectionAppearance !== 'undefined' && updateConnectionAppearance(...args),
+    recalculateNetwork: () => typeof recalculateNetwork !== 'undefined' && recalculateNetwork(),
+    hideWeightSliders: () => typeof hideWeightSliders !== 'undefined' && hideWeightSliders(),
     
-    // Debug and analysis
-    debugFeatureRepresentation: debugFeatureRepresentation,
-    checkValueDuplication: checkValueDuplication,
-    calculateFeatureDiversity: calculateFeatureDiversity,
-    predictActivationPatterns: predictActivationPatterns
+    // Debug and analysis (safe references)
+    debugFeatureRepresentation: (...args) => typeof debugFeatureRepresentation !== 'undefined' && debugFeatureRepresentation(...args),
+    checkValueDuplication: (...args) => typeof checkValueDuplication !== 'undefined' && checkValueDuplication(...args),
+    calculateFeatureDiversity: (...args) => typeof calculateFeatureDiversity !== 'undefined' && calculateFeatureDiversity(...args),
+    predictActivationPatterns: (...args) => typeof predictActivationPatterns !== 'undefined' && predictActivationPatterns(...args)
 };
 
 window.animationEngine = {
-    // Demo coordination
-    startFullDemo: startFullDemo,
-    startDemo: startDemo,
-    resetDemo: resetDemo,
+    // Demo coordination (safe references)
+    startFullDemo: () => typeof startFullDemo !== 'undefined' && startFullDemo(),
+    startDemo: () => typeof startDemo !== 'undefined' && startDemo(),
+    resetDemo: () => typeof resetDemo !== 'undefined' && resetDemo(),
     
-    // Animation sequences
-    animateInputActivation: animateInputActivation,
-    animateForwardPropagation: animateForwardPropagation,
-    animateOutputComputation: animateOutputComputation,
-    animateBackpropagation: animateBackpropagation,
+    // Animation sequences (safe references)
+    animateInputActivation: (...args) => typeof animateInputActivation !== 'undefined' && animateInputActivation(...args),
+    animateForwardPropagation: (...args) => typeof animateForwardPropagation !== 'undefined' && animateForwardPropagation(...args),
+    animateOutputComputation: (...args) => typeof animateOutputComputation !== 'undefined' && animateOutputComputation(...args),
+    animateBackpropagation: (...args) => typeof animateBackpropagation !== 'undefined' && animateBackpropagation(...args),
     
-    // Training animations
-    startTrainingAnimation: startTrainingAnimation,
-    updateTrainingAnimation: updateTrainingAnimation,
-    stopTrainingAnimation: stopTrainingAnimation,
-    trainToPerfection: trainToPerfection,
-    trainWithHyperparams: trainWithHyperparams,
-    debugTraining: debugTraining,
+    // Training animations (safe references)
+    startTrainingAnimation: (...args) => typeof startTrainingAnimation !== 'undefined' && startTrainingAnimation(...args),
+    updateTrainingAnimation: (...args) => typeof updateTrainingAnimation !== 'undefined' && updateTrainingAnimation(...args),
+    stopTrainingAnimation: () => typeof stopTrainingAnimation !== 'undefined' && stopTrainingAnimation(),
+    trainToPerfection: (...args) => typeof trainToPerfection !== 'undefined' && trainToPerfection(...args),
+    trainWithHyperparams: (...args) => typeof trainWithHyperparams !== 'undefined' && trainWithHyperparams(...args),
+    debugTraining: (...args) => typeof debugTraining !== 'undefined' && debugTraining(...args),
     
-    // Testing and optimization
-    testOptimalLearningSequence: testOptimalLearningSequence,
-    createOptimalLearningSequence: createOptimalLearningSequence,
-    runLearningTest: runLearningTest,
-    initializeOptimalWeights: initializeOptimalWeights
+    // Testing and optimization (safe references)
+    testOptimalLearningSequence: (...args) => typeof testOptimalLearningSequence !== 'undefined' && testOptimalLearningSequence(...args),
+    createOptimalLearningSequence: (...args) => typeof createOptimalLearningSequence !== 'undefined' && createOptimalLearningSequence(...args),
+    runLearningTest: (...args) => typeof runLearningTest !== 'undefined' && runLearningTest(...args),
+    initializeOptimalWeights: () => typeof initializeOptimalWeights !== 'undefined' && initializeOptimalWeights()
 };

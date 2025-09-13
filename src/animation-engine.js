@@ -3,6 +3,19 @@
 // Animation and demo coordination functions
 // ============================================================================
 
+// Safe wrappers for UI functions that may not be loaded yet
+function safeUpdateStepInfo(message) {
+    if (typeof updateStepInfo !== 'undefined') {
+        safeUpdateStepInfo(message);
+    }
+}
+
+function safeUpdateStepInfoDual(leftMessage, rightMessage) {
+    if (typeof updateStepInfoDual !== 'undefined') {
+        updateStepInfoDual(leftMessage, rightMessage);
+    }
+}
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms * (11 - animationSpeed) / 10));
 }
@@ -31,21 +44,21 @@ async function startDemo() {
     // Show current weight values at start
     document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
     
-    updateStepInfo("🚀 Let's watch how the AI brain processes this image step by step!");
+    safeUpdateStepInfo("🚀 Let's watch how the AI brain processes this image step by step!");
     highlightSection('forward');
     await sleep(1000);
     
     // Step 1: Show input activation
     const forwardStartTime = performance.now();
-    updateStepInfo("📥 STEP 1: Converting the image into numbers the AI can understand. Each feature gets a score from 0 to 1.");
+    safeUpdateStepInfo("📥 STEP 1: Converting the image into numbers the AI can understand. Each feature gets a score from 0 to 1.");
     await animateInputActivation();
     
     // Step 2: Forward propagation to hidden layer
-    updateStepInfo("🧠 STEP 2: The hidden neurons are doing math! Each one multiplies input numbers by its connection weights, then adds them up.");
+    safeUpdateStepInfo("🧠 STEP 2: The hidden neurons are doing math! Each one multiplies input numbers by its connection weights, then adds them up.");
     await animateForwardPropagation();
     
     // Step 3: Forward propagation to output layer
-    updateStepInfo("🎯 STEP 3: The output neurons make the final decision by combining all the hidden neuron signals!");
+    safeUpdateStepInfo("🎯 STEP 3: The output neurons make the final decision by combining all the hidden neuron signals!");
     await animateOutputComputation();
     
     performanceMetrics.forwardPassTime = Math.round(performance.now() - forwardStartTime);
@@ -59,7 +72,7 @@ async function startDemo() {
         await sleep(2000);
         const backpropStartTime = performance.now();
         highlightSection('backward');
-        updateStepInfoDual(
+        safeUpdateStepInfoDual(
             "📚 <strong>STEP 4: Learning Time!</strong><br>🎓 Just like when you study for a test, the AI looks at its mistake and figures out how to do better next time. It's like having a really patient teacher help it learn!",
             "📚 <strong>STEP 4: Backpropagation Learning Phase</strong><br>🔄 Computing gradients and updating weights based on classification error."
         );
@@ -67,9 +80,11 @@ async function startDemo() {
         
         performanceMetrics.backpropTime = Math.round(performance.now() - backpropStartTime);
         performanceMetrics.epochCount++;
-        performanceMetrics.weightUpdates += (networkConfig.inputSize * networkConfig.hiddenSize) + (networkConfig.hiddenSize * networkConfig.outputSize);
+        const arch = NetworkAPI.getArchitecture();
+        const stats = NetworkAPI.getStats();
+        performanceMetrics.weightUpdates += stats.totalWeights;
         
-        updateStepInfo("🎉 Learning complete! The AI has updated its 'memory' (connection weights) and should be smarter now. Try running it again!");
+        safeUpdateStepInfo("🎉 Learning complete! The AI has updated its 'memory' (connection weights) and should be smarter now. Try running it again!");
         
         // Keep weight values visible after training
         document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
@@ -77,7 +92,7 @@ async function startDemo() {
         // Make weight changes visible immediately
         refreshAllConnectionVisuals();
     } else {
-        updateStepInfo("💡 Tip: Select the correct answer above to see how the AI learns from its mistakes!");
+        safeUpdateStepInfo("💡 Tip: Select the correct answer above to see how the AI learns from its mistakes!");
     }
     
     highlightSection('none');
@@ -161,7 +176,7 @@ function resetDemo() {
         predictionDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
     }
     
-    updateStepInfoDual(
+    safeUpdateStepInfoDual(
         window.i18n.t('ui.readyToExplore'),
         window.i18n.t('ui.systemReady')
     );
@@ -181,7 +196,7 @@ async function animateInputActivation() {
         const value = document.getElementById(`input-value-${i}`);
         
         neuron.classList.add('forward-active');
-        value.textContent = activations.input[i].toFixed(2);
+        value.textContent = (activations.input && activations.input[i] !== undefined) ? activations.input[i].toFixed(2) : '0.00';
         
         await sleep(300);
         neuron.classList.remove('forward-active');
@@ -193,92 +208,181 @@ async function animateInputActivation() {
 }
 
 async function animateForwardPropagation() {
-    // Enhanced pedagogical forward propagation with connection highlighting and math overlays
+    const arch = NetworkAPI.getArchitecture();
     
-    // Compute hidden layer
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        // First, highlight ALL connections TO this specific neuron
-        highlightSubNetwork('input', 'hidden', h);
-        await sleep(600);
+    if (arch.hiddenLayers.length === 0) {
+        // No hidden layers: animate direct input to output
+        safeUpdateStepInfo("⚡ STEP 2: Direct connection! Input goes straight to output neurons (no hidden layers).");
+        await animateDirectPropagation();
+        return;
+    }
+    
+    // Animate through each hidden layer
+    for (let layerIndex = 0; layerIndex < arch.hiddenLayers.length; layerIndex++) {
+        const layerSize = arch.hiddenLayers[layerIndex];
+        const isFirstLayer = layerIndex === 0;
+        const layerName = arch.hiddenLayers.length === 1 ? "hidden" : `hidden layer ${layerIndex + 1}`;
         
-        // Animate each connection individually with enhanced highlighting and flowing dots
-        let sum = 0;
-        for (let i = 0; i < networkConfig.inputSize; i++) {
-            const connection = document.getElementById(`conn-input-${i}-hidden-${h}`);
+        safeUpdateStepInfo(`🧠 Processing ${layerName}: ${layerSize} neurons computing weighted sums...`);
+        
+        for (let neuronIndex = 0; neuronIndex < layerSize; neuronIndex++) {
+            // Highlight connections to this neuron
+            if (isFirstLayer) {
+                highlightSubNetwork('input', 'hidden', neuronIndex);
+            }
+            await sleep(600);
+            
+            // Animate each incoming connection
+            if (isFirstLayer) {
+                // Input to first hidden layer
+                for (let i = 0; i < arch.inputSize; i++) {
+                    const connectionId = `conn-input-${i}-hidden-0-${neuronIndex}`;
+                    const connection = document.getElementById(connectionId);
+                    if (connection) {
+                        connection.classList.add('forward-pass');
+                        
+                        createFlowingDots(
+                            positions.input[i].x, positions.input[i].y,
+                            positions.hiddenLayers[0][neuronIndex].x, positions.hiddenLayers[0][neuronIndex].y,
+                            connectionId, 600
+                        );
+                        
+                        await sleep(200);
+                        connection.classList.remove('forward-pass');
+                    }
+                }
+            } else {
+                // Hidden layer to hidden layer
+                const prevLayerSize = arch.hiddenLayers[layerIndex - 1];
+                for (let prevNeuron = 0; prevNeuron < prevLayerSize; prevNeuron++) {
+                    const connectionId = `conn-hidden-${layerIndex - 1}-${prevNeuron}-hidden-${layerIndex}-${neuronIndex}`;
+                    const connection = document.getElementById(connectionId);
+                    if (connection) {
+                        connection.classList.add('forward-pass');
+                        
+                        createFlowingDots(
+                            positions.hiddenLayers[layerIndex - 1][prevNeuron].x, positions.hiddenLayers[layerIndex - 1][prevNeuron].y,
+                            positions.hiddenLayers[layerIndex][neuronIndex].x, positions.hiddenLayers[layerIndex][neuronIndex].y,
+                            connectionId, 600
+                        );
+                        
+                        await sleep(200);
+                        connection.classList.remove('forward-pass');
+                    }
+                }
+            }
+            
+            await sleep(500);
+            
+            // Update neuron appearance
+            const neuronId = `hidden-${layerIndex}-neuron-${neuronIndex}`;
+            const valueId = `hidden-${layerIndex}-value-${neuronIndex}`;
+            const neuron = document.getElementById(neuronId);
+            const value = document.getElementById(valueId);
+            
+            if (neuron && value) {
+                neuron.classList.add('forward-active');
+                const layerActivations = NetworkAPI.getLayerActivations(layerIndex);
+                const activation = layerActivations && layerActivations[neuronIndex];
+                value.textContent = (activation !== undefined) ? activation.toFixed(2) : '0.00';
+                
+                await sleep(200);
+                neuron.classList.remove('forward-active');
+                neuron.classList.add('active');
+            }
+            
+            updateNeuronColors();
+            clearSubNetworkHighlights();
+            await sleep(400);
+        }
+    }
+}
+
+async function animateDirectPropagation() {
+    // Animate direct input to output connections (no hidden layers)
+    const arch = NetworkAPI.getArchitecture();
+    
+    for (let o = 0; o < arch.outputSize; o++) {
+        const outputName = o === 0 ? 'DOG' : 'NOT-DOG';
+        
+        for (let i = 0; i < arch.inputSize; i++) {
+            const connectionId = `conn-input-${i}-output-${o}`;
+            const connection = document.getElementById(connectionId);
             if (connection) {
                 connection.classList.add('forward-pass');
                 
-                // Create flowing dots along this connection
-                createFlowingDots(positions.input[i].x, positions.input[i].y, 
-                                positions.hidden[h].x, positions.hidden[h].y, 
-                                `conn-input-${i}-hidden-${h}`, 600);
-                
-                // Individual connection computation
-                const contribution = activations.input[i] * weights.inputToHidden[h][i];
-                sum += contribution;
+                createFlowingDots(
+                    positions.input[i].x, positions.input[i].y,
+                    positions.output[o].x, positions.output[o].y,
+                    connectionId, 600
+                );
                 
                 await sleep(200);
                 connection.classList.remove('forward-pass');
             }
         }
+        
         await sleep(500);
         
-        // Apply Leaky ReLU activation (prevents dead neurons)
-        activations.hidden[h] = leakyReLU(sum);
-        
-        // Update neuron
-        const neuron = document.getElementById(`hidden-neuron-${h}`);
-        const value = document.getElementById(`hidden-value-${h}`);
+        // Update output neuron
+        const neuron = document.getElementById(`output-neuron-${o}`);
+        const value = document.getElementById(`output-value-${o}`);
         if (neuron && value) {
             neuron.classList.add('forward-active');
-            value.textContent = activations.hidden[h].toFixed(2);
+            const outputActivations = NetworkAPI.getLayerActivations('output');
+            const activation = outputActivations && outputActivations[o];
+            value.textContent = (activation !== undefined) ? activation.toFixed(2) : '0.00';
             
             await sleep(200);
             neuron.classList.remove('forward-active');
             neuron.classList.add('active');
         }
         
-        // Update visual properties
         updateNeuronColors();
-        
-        clearSubNetworkHighlights();
         await sleep(400);
     }
 }
 
 async function animateOutputComputation() {
-    // Enhanced output computation with pedagogical highlighting
+    const arch = NetworkAPI.getArchitecture();
     
-    // Compute output layer
-    for (let o = 0; o < networkConfig.outputSize; o++) {
+    if (arch.hiddenLayers.length === 0) {
+        // Direct input to output was already animated in forward propagation
+        safeUpdateStepInfo("🎯 STEP 3: Computing final predictions from direct input connections!");
+        await sleep(1000);
+        return;
+    }
+    
+    // Animate connections from last hidden layer to output
+    const lastHiddenIndex = arch.hiddenLayers.length - 1;
+    const lastHiddenSize = arch.hiddenLayers[lastHiddenIndex];
+    
+    for (let o = 0; o < arch.outputSize; o++) {
         const outputName = o === 0 ? 'DOG' : 'NOT-DOG';
         
-        // First, highlight ALL connections TO this output neuron
+        // Highlight connections to this output neuron
         highlightSubNetwork('hidden', 'output', o);
         await sleep(600);
         
-        // Animate each connection with enhanced highlighting and flowing dots
-        let sum = 0;
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
-            const connection = document.getElementById(`conn-hidden-${h}-output-${o}`);
+        // Animate each connection from last hidden layer
+        for (let h = 0; h < lastHiddenSize; h++) {
+            const connectionId = `conn-hidden-${lastHiddenIndex}-${h}-output-${o}`;
+            const connection = document.getElementById(connectionId);
             if (connection) {
                 connection.classList.add('forward-pass');
                 
-                // Create flowing dots along this connection
-                createFlowingDots(positions.hidden[h].x, positions.hidden[h].y, 
-                                positions.output[o].x, positions.output[o].y, 
-                                `conn-hidden-${h}-output-${o}`, 600);
-                
-                const contribution = activations.hidden[h] * weights.hiddenToOutput[o][h];
-                sum += contribution;
+                createFlowingDots(
+                    positions.hiddenLayers[lastHiddenIndex][h].x, positions.hiddenLayers[lastHiddenIndex][h].y,
+                    positions.output[o].x, positions.output[o].y,
+                    connectionId, 600
+                );
                 
                 await sleep(200);
                 connection.classList.remove('forward-pass');
             }
         }
-        await sleep(400);
         
-        activations.output[o] = sum;
+        await sleep(400);
         clearSubNetworkHighlights();
         await sleep(300);
     }
@@ -295,7 +399,7 @@ async function animateOutputComputation() {
         const value = document.getElementById(`output-value-${o}`);
         if (neuron && value) {
             neuron.classList.add('forward-active');
-            value.textContent = activations.output[o].toFixed(2);
+            value.textContent = (activations.output && activations.output[o] !== undefined) ? activations.output[o].toFixed(2) : '0.00';
             
             await sleep(200);
             neuron.classList.remove('forward-active');
@@ -310,68 +414,63 @@ async function animateOutputComputation() {
 async function animateBackpropagation() {
     if (!trueLabel) return;
     
-    // Determine target values
+    const arch = NetworkAPI.getArchitecture();
     const target = trueLabel === 'dog' ? [1, 0] : [0, 1];
     
     // Calculate output layer error (simplified cross-entropy derivative)
     const outputErrors = [];
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        outputErrors[o] = target[o] - activations.output[o];
+    for (let o = 0; o < arch.outputSize; o++) {
+        outputErrors[o] = target[o] - NetworkAPI.getLayerActivations('output')[o];
     }
-    
-    // Store gradient information for debug console
-    const gradientInfo = {
-        outputGradients: [...outputErrors],
-        hiddenGradients: [],
-        timestamp: Date.now(),
-        epoch: performanceMetrics.epochCount + 1
-    };
     
     // Educational enhancement: Ensure visible learning even with weak neurons
     const maxError = Math.max(...outputErrors.map(Math.abs));
-    const prediction = activations.output[0] / (activations.output[0] + activations.output[1]);
-    const isNearFiftyFifty = Math.abs(prediction - 0.5) < 0.15; // Within 15% of 50/50
+    const prediction = NetworkAPI.getLayerActivations('output')[0] / (NetworkAPI.getLayerActivations('output')[0] + NetworkAPI.getLayerActivations('output')[1]);
+    const isNearFiftyFifty = Math.abs(prediction - 0.5) < 0.15;
     const hasSmallGradients = maxError < 0.3;
     
-    // Check for dead/dying neurons (activations near zero)
-    const deadHiddenNeurons = activations.hidden.filter(h => Math.abs(h) < 0.1).length;
-    const hasDeadNeurons = deadHiddenNeurons > 0;
+    // Check for dead/dying neurons across all hidden layers
+    let deadNeuronCount = 0;
+    for (let layerIndex = 0; layerIndex < arch.hiddenLayers.length; layerIndex++) {
+        const layerActivations = NetworkAPI.getLayerActivations(layerIndex);
+        deadNeuronCount += layerActivations.filter(h => Math.abs(h) < 0.1).length;
+    }
+    const hasDeadNeurons = deadNeuronCount > 0;
     
-    // AGGRESSIVE pedagogical learning rate - make it ALWAYS learn!
-    let adaptiveLearningRate = networkConfig.learningRate;
+    // Determine learning enhancement
+    let adaptiveLearningRate = NetworkAPI.getConfig().learningRate;
     let needsMagic = false;
     
     if (isNearFiftyFifty || hasSmallGradients || hasDeadNeurons) {
-        // Educational enhancement: Amplify learning for demonstration purposes
-        adaptiveLearningRate = networkConfig.learningRate * 5.0; // Even more aggressive!
+        adaptiveLearningRate = NetworkAPI.getConfig().learningRate * 5.0;
         needsMagic = true;
         
         if (hasDeadNeurons && isNearFiftyFifty) {
-            updateStepInfoDual(
-                `🎢 <strong>STEP 3: AI Learning Boost!</strong><br>
+            safeUpdateStepInfoDual(
+                `🎢 <strong>STEP 4: AI Learning Boost!</strong><br>
                 🎲 The AI is confused (guessing 50/50) AND some brain cells are "asleep"<br>
                 🔋 We're boosting its learning power to wake up those sleepy neurons!<br>
                 💡 Think of it like turning up the brightness on a dim lightbulb!`,
                 `⚡ <strong>BOOST MODE:</strong> Weak neurons detected with confused prediction. Amplifying learning signal for breakthrough training!`
             );
         } else if (hasDeadNeurons) {
-            updateStepInfoDual(
-                `😴 <strong>STEP 3: Wake Up Sleepy Brain Cells!</strong><br>
+            safeUpdateStepInfoDual(
+                `😴 <strong>STEP 4: Wake Up Sleepy Brain Cells!</strong><br>
                 💤 Some brain cells are "asleep" (giving weak signals)<br>
                 🔔 We're giving them a gentle nudge to participate more!<br>
                 🌟 Like encouraging a quiet student to speak up in class!`,
                 `🔥 NEURON REVIVAL! Some neurons are 'sleeping' - waking them up with extra learning power!`
             );
         } else if (isNearFiftyFifty) {
-            updateStepInfoDual(
-                `🤔 <strong>STEP 3: Breaking the Confusion!</strong><br>
+            safeUpdateStepInfoDual(
+                `🤔 <strong>STEP 4: Breaking the Confusion!</strong><br>
                 🎯 The AI can't decide (50/50 between dog/not-dog)<br>
                 🎪 We're giving it a helpful push toward the right answer!<br>
                 🧭 Like pointing a lost person in the right direction!`,
                 `🚀 CONFUSION BREAKER! 50/50 prediction detected - using teaching magic to push the AI toward a decision!`
             );
         } else {
-            updateStepInfoDual(
+            safeUpdateStepInfoDual(
                 `🔊 <strong>Turning Up the Learning Volume!</strong><br>
                 📻 The AI's learning whispers are too quiet to hear clearly<br>
                 🎚️ We're cranking up the volume so it can learn better!<br>
@@ -380,7 +479,7 @@ async function animateBackpropagation() {
             );
         }
     } else {
-        updateStepInfoDual(
+        safeUpdateStepInfoDual(
             `🕵️ <strong>Learning Detective Work!</strong><br>
             🔍 The AI works backwards like a detective solving a case<br>
             🤔 For each connection it asks: "Did you help me get the right answer or not?"<br>
@@ -389,126 +488,153 @@ async function animateBackpropagation() {
         );
     }
     
-    // Update output to hidden weights with ROBUST gradients
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
-            const connection = document.getElementById(`conn-hidden-${h}-output-${o}`);
+    if (arch.hiddenLayers.length === 0) {
+        // Direct input to output backpropagation
+        await animateDirectBackpropagation(outputErrors, target, adaptiveLearningRate, needsMagic);
+    } else {
+        // Multi-layer backpropagation
+        await animateLayeredBackpropagation(outputErrors, target, adaptiveLearningRate, needsMagic);
+    }
+}
+
+async function animateDirectBackpropagation(outputErrors, target, adaptiveLearningRate, needsMagic) {
+    const arch = NetworkAPI.getArchitecture();
+    
+    // Update input to output weights directly
+    for (let o = 0; o < arch.outputSize; o++) {
+        for (let i = 0; i < arch.inputSize; i++) {
+            const connectionId = `conn-input-${i}-output-${o}`;
+            const connection = document.getElementById(connectionId);
+            if (connection) {
+                connection.classList.add('backward-pass');
+            }
+            
+            // Calculate weight update
+            let weightUpdate = adaptiveLearningRate * outputErrors[o] * NetworkAPI.getLayerActivations('input')[i];
+            
+            if (needsMagic && Math.abs(weightUpdate) < 0.1) {
+                const direction = outputErrors[o] > 0 ? 1 : -1;
+                weightUpdate += direction * 0.15;
+            }
+            
+            weightUpdate = clampWeight(weightUpdate, -1.2, 1.2);
+            
+            // Update connection appearance
+            if (connection) {
+                // Apply visual update through backpropagation (will call NetworkAPI internally)
+                NetworkAPI.backPropagate(target);
+                applyWeightVisualization(connection, NetworkAPI.getWeight(0, i, 0, o));
+                
+                if (Math.abs(weightUpdate) > 0.01) {
+                    connection.classList.add(weightUpdate > 0 ? 'weight-positive' : 'weight-negative');
+                }
+            }
+            
+            await sleep(300);
+            if (connection) {
+                connection.classList.remove('backward-pass', 'weight-positive', 'weight-negative');
+            }
+        }
+    }
+}
+
+async function animateLayeredBackpropagation(outputErrors, target, adaptiveLearningRate, needsMagic) {
+    const arch = NetworkAPI.getArchitecture();
+    
+    // Step 1: Update last hidden layer to output weights
+    const lastHiddenIndex = arch.hiddenLayers.length - 1;
+    const lastHiddenSize = arch.hiddenLayers[lastHiddenIndex];
+    
+    for (let o = 0; o < arch.outputSize; o++) {
+        for (let h = 0; h < lastHiddenSize; h++) {
+            const connectionId = `conn-hidden-${lastHiddenIndex}-${h}-output-${o}`;
+            const connection = document.getElementById(connectionId);
             if (connection) {
                 connection.classList.add('backward-pass');
             }
             
             // Enhanced gradient update for educational visualization
-            let weightUpdate = adaptiveLearningRate * outputErrors[o] * activations.hidden[h];
+            const lastHiddenActivations = NetworkAPI.getLayerActivations(lastHiddenIndex);
+            let weightUpdate = adaptiveLearningRate * outputErrors[o] * lastHiddenActivations[h];
             
-            // DEAD NEURON REVIVAL: Force strong updates regardless of activation
+            // Apply educational enhancements
             if (needsMagic) {
-                const currentWeight = weights.hiddenToOutput[o][h];
-                
-                // If this hidden neuron is dead (near zero activation)
-                if (Math.abs(activations.hidden[h]) < 0.1) {
-                    // FORCE a significant weight change toward the correct answer
+                if (Math.abs(lastHiddenActivations[h]) < 0.1) {
                     const forceDirection = target[o] > 0.5 ? 1 : -1;
                     const forcedUpdate = forceDirection * 0.3 * (Math.random() * 0.5 + 0.5);
                     weightUpdate += forcedUpdate;
                 }
                 
-                // Ensure minimum meaningful change
                 if (Math.abs(weightUpdate) < 0.1) {
                     const direction = outputErrors[o] > 0 ? 1 : -1;
                     weightUpdate += direction * 0.15;
                 }
             }
             
-            // More generous clipping for pedagogical magic
             weightUpdate = clampWeight(weightUpdate, -1.2, 1.2);
             
-            weights.hiddenToOutput[o][h] += weightUpdate;
-            
-            // Update weight visualization with change amount
-            const newWeight = weights.hiddenToOutput[o][h];
             if (connection) {
-                applyWeightVisualization(connection, newWeight);
-            }
-            // Visual update already handled by applyWeightVisualization above
-            
-            // Color code the connection based on update  
-            if (Math.abs(weightUpdate) > 0.01) {
-                connection.classList.add(weightUpdate > 0 ? 'weight-positive' : 'weight-negative');
+                // Trigger backpropagation update
+                NetworkAPI.backPropagate(target);
+                applyWeightVisualization(connection, NetworkAPI.getWeight('hidden', h, 'output', o));
+                
+                if (Math.abs(weightUpdate) > 0.01) {
+                    connection.classList.add(weightUpdate > 0 ? 'weight-positive' : 'weight-negative');
+                }
             }
             
             await sleep(300);
-            connection.classList.remove('backward-pass', 'weight-positive', 'weight-negative');
+            if (connection) {
+                connection.classList.remove('backward-pass', 'weight-positive', 'weight-negative');
+            }
         }
     }
     
-    // Calculate hidden layer errors (backpropagated)
-    const hiddenErrors = [];
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        let error = 0;
-        for (let o = 0; o < networkConfig.outputSize; o++) {
-            error += outputErrors[o] * weights.hiddenToOutput[o][h];
-        }
-        // Leaky ReLU derivative: 1 if hidden activation > 0, 0.1 otherwise
-        hiddenErrors[h] = error * leakyReLUDerivative(activations.hidden[h]);
-    }
-    
-    gradientInfo.hiddenGradients = [...hiddenErrors];
-    gradientHistory.push(gradientInfo);
-    
-    // Keep only last 20 gradient entries
-    if (gradientHistory.length > 20) {
-        gradientHistory.shift();
-    }
-    
-    // Update input to hidden weights with proper gradients
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        for (let i = 0; i < networkConfig.inputSize; i++) {
-            const connection = document.getElementById(`conn-input-${i}-hidden-${h}`);
-            if (connection) {
-                connection.classList.add('backward-pass');
-            }
-            
-            // Enhanced gradient update for educational visualization
-            let weightUpdate = adaptiveLearningRate * hiddenErrors[h] * activations.input[i];
-            
-            // DEAD NEURON INPUT REVIVAL: Force input connections to wake up neurons
-            if (needsMagic) {
-                const currentWeight = weights.inputToHidden[h][i];
-                
-                // If this hidden neuron is dead, boost its input connections
-                if (Math.abs(activations.hidden[h]) < 0.1) {
-                    // FORCE a significant weight change to help activate the neuron
-                    const forceDirection = hiddenErrors[h] > 0 ? 1 : -1;
-                    const forcedUpdate = forceDirection * 0.2 * (Math.random() * 0.5 + 0.5);
-                    weightUpdate += forcedUpdate;
-                }
-                
-                // Ensure minimum meaningful change
-                if (Math.abs(weightUpdate) < 0.08) {
-                    const direction = hiddenErrors[h] > 0 ? 1 : -1;
-                    weightUpdate += direction * 0.1;
+    // Step 2: Propagate backwards through hidden layers
+    for (let layerIndex = arch.hiddenLayers.length - 1; layerIndex >= 0; layerIndex--) {
+        const currentLayerSize = arch.hiddenLayers[layerIndex];
+        
+        if (layerIndex === 0) {
+            // Update input to first hidden layer
+            for (let h = 0; h < currentLayerSize; h++) {
+                for (let i = 0; i < arch.inputSize; i++) {
+                    const connectionId = `conn-input-${i}-hidden-0-${h}`;
+                    const connection = document.getElementById(connectionId);
+                    if (connection) {
+                        connection.classList.add('backward-pass');
+                    }
+                    
+                    await sleep(200);
+                    
+                    if (connection) {
+                        // Update through backpropagation
+                        NetworkAPI.backPropagate(target);
+                        applyWeightVisualization(connection, NetworkAPI.getWeight('input', i, 'hidden', h));
+                        connection.classList.remove('backward-pass', 'weight-positive', 'weight-negative');
+                    }
                 }
             }
-            
-            // More generous clipping for pedagogical magic
-            weightUpdate = clampWeight(weightUpdate, -1.0, 1.0);
-            
-            weights.inputToHidden[h][i] += weightUpdate;
-            
-            // Update weight visualization with change amount
-            const newWeight = weights.inputToHidden[h][i];
-            if (connection) {
-                applyWeightVisualization(connection, newWeight);
+        } else {
+            // Update previous hidden layer to current hidden layer
+            const prevLayerSize = arch.hiddenLayers[layerIndex - 1];
+            for (let h = 0; h < currentLayerSize; h++) {
+                for (let prevH = 0; prevH < prevLayerSize; prevH++) {
+                    const connectionId = `conn-hidden-${layerIndex - 1}-${prevH}-hidden-${layerIndex}-${h}`;
+                    const connection = document.getElementById(connectionId);
+                    if (connection) {
+                        connection.classList.add('backward-pass');
+                    }
+                    
+                    await sleep(200);
+                    
+                    if (connection) {
+                        // Update through backpropagation
+                        NetworkAPI.backPropagate(target);
+                        applyWeightVisualization(connection, NetworkAPI.getWeight(layerIndex - 1, prevH, layerIndex, h));
+                        connection.classList.remove('backward-pass', 'weight-positive', 'weight-negative');
+                    }
+                }
             }
-            // Visual update already handled by applyWeightVisualization above
-            
-            // Color code the connection
-            if (Math.abs(weightUpdate) > 0.02) {
-                connection.classList.add(weightUpdate > 0 ? 'weight-positive' : 'weight-negative');
-            }
-            
-            await sleep(200);
-            connection.classList.remove('backward-pass', 'weight-positive', 'weight-negative');
         }
     }
 }
@@ -557,7 +683,7 @@ async function displayResult() {
     const statusEmoji = isCorrect ? '✅' : '❌';
     const statusText = isCorrect ? window.i18n.t('result.correct') : window.i18n.t('result.wrong');
     
-    updateStepInfoDual(
+    safeUpdateStepInfoDual(
         `${statusEmoji} <strong>AI's Final Answer:</strong> "${prediction}" with ${confidence.toFixed(1)}% confidence<br>
         ${statusText} ${isCorrect ? window.i18n.t('result.aiGotItRight') : window.i18n.t('result.aiWillLearn')}`,
         `${statusEmoji} <strong>Classification Result:</strong> "${prediction}" (${confidence.toFixed(1)}% confidence)<br>
@@ -610,7 +736,13 @@ async function runForwardPass() {
     // Show current weight values at start
     document.querySelectorAll('.weight-value').forEach(w => w.classList.add('show'));
     
-    updateStepInfoDual(
+    // CRITICAL: Run forward propagation to compute activation values
+    console.log("🧮 Computing forward propagation...");
+    const inputValues = activations.input;
+    NetworkAPI.forwardPropagate(inputValues);
+    console.log("✅ Forward propagation complete, activations:", NetworkAPI.getAllActivations());
+    
+    safeUpdateStepInfoDual(
         t('forward.student.start'),
         t('forward.expert.start', [
             formatMatrix(weights.inputToHidden, 'W₁ (Input→Hidden)'),
@@ -624,7 +756,7 @@ async function runForwardPass() {
     
     // Step 1: Show input activation
     const forwardStartTime = performance.now();
-    updateStepInfoDual(
+    safeUpdateStepInfoDual(
         window.i18n.t('forward.student.step1', [
             (activations.input[0] * 100).toFixed(0),
             (activations.input[1] * 100).toFixed(0),
@@ -642,7 +774,7 @@ async function runForwardPass() {
     await animateInputActivation();
     
     // Step 2: Forward propagation to hidden layer
-    updateStepInfoDual(
+    safeUpdateStepInfoDual(
         window.i18n.t('forward.student.step2', [
             ((activations.hidden[0] || 0) * 100).toFixed(0),
             ((activations.hidden[1] || 0) * 100).toFixed(0),
@@ -659,7 +791,7 @@ async function runForwardPass() {
     await animateForwardPropagation();
     
     // Step 3: Forward propagation to output layer
-    updateStepInfoDual(
+    safeUpdateStepInfoDual(
         window.i18n.t('forward.student.step3', [
           window.i18n.t('vote.definitelyDog'),
           (activations.output[0] * 100).toFixed(1),
@@ -690,7 +822,7 @@ async function runForwardPass() {
     // Enable backward pass if we have the correct answer
     if (trueLabel) {
         document.getElementById('backwardBtn').disabled = false;
-        updateStepInfoDual(
+        safeUpdateStepInfoDual(
             window.i18n.t('completion.thinkingDone'),
             window.i18n.t('forward.expert.result', [
                 performanceMetrics.forwardPassTime,
@@ -700,7 +832,7 @@ async function runForwardPass() {
              🎓 ${window.i18n.t('expert.readyBackprop')} <strong>${trueLabel.toUpperCase()}</strong>`
         );
     } else {
-        updateStepInfoDual(
+        safeUpdateStepInfoDual(
             window.i18n.t('completion.setCorrectAnswer'),
             window.i18n.t('forward.expert.result', [
                 '0',
@@ -730,12 +862,12 @@ async function runForwardPass() {
 async function runBackwardPass() {
     if (isAnimating || !demoState.forwardCompleted || !trueLabel) {
         if (!demoState.forwardCompleted) {
-            updateStepInfoDual(
+            safeUpdateStepInfoDual(
                 "⚠️ <strong>Hold on!</strong><br>👀 First let's watch the AI think! Click 'Watch AI Think' to see how it processes the image.",
                 "⚠️ <strong>Forward Pass Required</strong><br>📈 Execute forward propagation first to generate predictions for learning."
             );
         } else if (!trueLabel) {
-            updateStepInfoDual(
+            safeUpdateStepInfoDual(
                 "⚠️ <strong>Need Your Help!</strong><br>🎯 Please tell the AI what the correct answer is by clicking 'This is a DOG' or 'This is NOT a dog' above!",
                 "⚠️ <strong>Ground Truth Required</strong><br>🎯 Please provide the correct label using the teaching buttons above."
             );
@@ -759,7 +891,7 @@ async function runBackwardPass() {
     const prediction = activations.output;
     const error = prediction.map((pred, i) => target[i] - pred);
     
-    updateStepInfoDual(
+    safeUpdateStepInfoDual(
         `📚 <strong>LEARNING TIME: Oops, Let's Learn from This!</strong><br>
         🎯 <strong>The correct answer:</strong> "${trueLabel === 'dog' ? 'DOG' : 'NOT DOG'}"<br>
         🤖 <strong>What the AI guessed:</strong> "${prediction[0] > prediction[1] ? 'DOG' : 'NOT DOG'}"<br>
@@ -778,7 +910,7 @@ async function runBackwardPass() {
     
     await sleep(2000);
     
-    updateStepInfoDual(
+    safeUpdateStepInfoDual(
         `🔍 <strong>STEP 1: Detective Work - What Needs Fixing?</strong><br>
         💡 The AI examines its two answer brain cells like a detective solving a case:<br>
         • 🐕 <strong>"Dog" brain cell:</strong> ${error[0] > 0 ? 'needs to be STRONGER 💪 (wasn\'t confident enough!)' : error[0] < 0 ? 'was too EXCITED 😅 (too sure it was a dog!)' : 'was PERFECT ✅'}<br>
@@ -806,7 +938,7 @@ async function runBackwardPass() {
         hiddenGradients[h] = gradient * activationDerivative;
     }
     
-    updateStepInfoDual(
+    safeUpdateStepInfoDual(
         `🔍 <strong>STEP 2: Following the Clues Backwards</strong><br>
         🕵️‍♀️ The AI becomes a detective: "Which brain cells led me astray?" Let's investigate:<br>
         • 🧠 Brain Cell 1: ${Math.abs(hiddenGradients[0]) > 0.1 ? '🚨 Major suspect! (big influence on mistake)' : '😅 Minor role (small influence)'}<br>
@@ -824,7 +956,7 @@ async function runBackwardPass() {
     
     await sleep(2000);
     
-    updateStepInfoDual(
+    safeUpdateStepInfoDual(
         `🎓 <strong>STEP 3: The AI Studies and Improves!</strong><br>
         🏭 Time for the AI to update its brain! Like a student reviewing their notes after a test:<br>
         • 📉 <strong>Bad connections</strong> → Turn down the volume (make weaker) 🔇<br>
@@ -844,13 +976,15 @@ async function runBackwardPass() {
     
     performanceMetrics.backpropTime = Math.round(performance.now() - backpropStartTime);
     performanceMetrics.epochCount++;
-    performanceMetrics.weightUpdates += (networkConfig.inputSize * networkConfig.hiddenSize) + (networkConfig.hiddenSize * networkConfig.outputSize);
+    const arch = NetworkAPI.getArchitecture();
+        const stats = NetworkAPI.getStats();
+        performanceMetrics.weightUpdates += stats.totalWeights;
     
-    updateStepInfoDual(
+    safeUpdateStepInfoDual(
         "🎉 <strong>Graduation Day!</strong><br>🎓 Our AI just finished its lesson and updated its brain connections! It's now a little bit smarter than before.<br><br>🔁 <strong>Try it again!</strong> Click 'Watch AI Think' to see how much better it got at recognizing dogs!",
         `🎓 <strong>Learning Complete!</strong><br>
          ⏱️ Study time: ${performanceMetrics.backpropTime}ms<br>
-         📝 Brain connections updated: ${(networkConfig.inputSize * networkConfig.hiddenSize) + (networkConfig.hiddenSize * networkConfig.outputSize)} total<br>
+         📝 Brain connections updated: ${stats.totalWeights} total<br>
          📊 Mistake size: ${(0.5 * error.reduce((sum, e) => sum + e*e, 0)).toFixed(4)} (smaller is better!)<br>
          🧠 The AI's improved brain connections:<br>
          ${formatMatrix(weights.inputToHidden, 'W₁ (Input→Hidden) - After Update')}<br>

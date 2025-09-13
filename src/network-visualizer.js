@@ -1,11 +1,17 @@
 // ============================================================================
-// NETWORK-VISUALIZER MODULE
-// Network visualization and drawing functions
+// NETWORK-VISUALIZER MODULE - Variable Architecture Support
+// Dynamic network visualization for 0-3 hidden layers with 1-8 neurons each
 // ============================================================================
+
+// Global positions object - dynamically calculated for current architecture
+let positions = {};
 
 function drawNetwork() {
     const svg = document.getElementById('networkSvg');
     svg.innerHTML = '';
+    
+    // Calculate positions for current architecture
+    calculatePositions();
     
     // Draw connections first (so they appear behind neurons)
     drawConnections();
@@ -24,48 +30,194 @@ function drawNetwork() {
     updatePrediction();
 }
 
+/**
+ * Calculate positions for all neurons based on current architecture
+ * Supports 0-3 hidden layers with proper spacing and alignment
+ */
+function calculatePositions() {
+    const arch = NetworkAPI.getArchitecture();
+    const svgHeight = 480;
+    const layerMargin = 120; // Minimum space between layers
+    const neuronRadius = 30;
+    
+    positions = {
+        input: [],
+        hidden: [], // For backward compatibility
+        hiddenLayers: [], // Array of hidden layer positions
+        output: []
+    };
+    
+    // Calculate total sections (input + hidden layers + output + prediction)
+    const totalLayers = 2 + arch.hiddenLayers.length; // input + hidden layers + output
+    const totalSections = totalLayers + 1; // +1 for prediction area
+    
+    // Dynamic SVG width based on architecture
+    const minSvgWidth = Math.max(800, totalSections * 150 + 200); // Ensure enough space
+    const svgElement = document.getElementById('networkSvg');
+    if (svgElement) {
+        svgElement.setAttribute('width', minSvgWidth);
+    }
+    
+    const availableWidth = minSvgWidth - 200; // Leave margins
+    const layerSpacing = availableWidth / totalSections;
+    
+    let currentX = 100; // Start position
+    
+    // Input layer positions
+    const inputY = svgHeight / 2;
+    for (let i = 0; i < arch.inputSize; i++) {
+        const y = inputY + (i - (arch.inputSize - 1) / 2) * 60;
+        positions.input.push({ x: currentX, y });
+    }
+    currentX += layerSpacing;
+    
+    // Hidden layers positions
+    arch.hiddenLayers.forEach((layerSize, layerIndex) => {
+        const hiddenLayerPositions = [];
+        const hiddenY = svgHeight / 2;
+        
+        for (let i = 0; i < layerSize; i++) {
+            const y = hiddenY + (i - (layerSize - 1) / 2) * 50; // Slightly tighter spacing
+            hiddenLayerPositions.push({ x: currentX, y });
+        }
+        
+        positions.hiddenLayers.push(hiddenLayerPositions);
+        
+        // Backward compatibility: first hidden layer
+        if (layerIndex === 0) {
+            positions.hidden = hiddenLayerPositions;
+        }
+        
+        currentX += layerSpacing;
+    });
+    
+    // Handle case with no hidden layers
+    if (arch.hiddenLayers.length === 0) {
+        positions.hidden = [];
+        positions.hiddenLayers = [];
+    }
+    
+    // Output layer positions
+    const outputY = svgHeight / 2;
+    for (let i = 0; i < arch.outputSize; i++) {
+        const y = outputY + (i - (arch.outputSize - 1) / 2) * 80;
+        positions.output.push({ x: currentX, y });
+    }
+    
+    // Prediction position (to the right of output)
+    currentX += layerSpacing;
+    positions.prediction = { x: currentX, y: svgHeight / 2 };
+    
+    console.log(`📐 Positions calculated for architecture: ${arch.inputSize}→[${arch.hiddenLayers.join(',')}]→${arch.outputSize}`);
+}
+
 function drawConnections() {
     const svg = document.getElementById('networkSvg');
-    
-    // Input to Hidden connections
     const arch = NetworkAPI.getArchitecture();
+    
+    if (arch.hiddenLayers.length === 0) {
+        // No hidden layers: direct input to output connections
+        drawDirectConnections(svg, arch);
+    } else {
+        // With hidden layers: draw layer-by-layer connections
+        drawLayeredConnections(svg, arch);
+    }
+}
+
+/**
+ * Draw direct input->output connections (no hidden layers)
+ */
+function drawDirectConnections(svg, arch) {
     for (let i = 0; i < arch.inputSize; i++) {
-        for (let h = 0; h < arch.hiddenSize; h++) {
+        for (let o = 0; o < arch.outputSize; o++) {
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', positions.input[i].x + 25);
             line.setAttribute('y1', positions.input[i].y);
-            line.setAttribute('x2', positions.hidden[h].x - 25);
-            line.setAttribute('y2', positions.hidden[h].y);
+            line.setAttribute('x2', positions.output[o].x - 25);
+            line.setAttribute('y2', positions.output[o].y);
             line.setAttribute('class', 'connection-line');
-            line.setAttribute('id', `conn-input-${i}-hidden-${h}`);
+            line.setAttribute('id', `conn-input-${i}-output-${o}`);
             
-            // Apply visual weight encoding (thickness, color, opacity)
+            // Get weight from layer 0 (direct connection)
+            const weight = NetworkAPI.getWeight(0, i, 0, o); // layer-based access
+            applyWeightVisualization(line, weight);
+            
+            const outputName = o === 0 ? 'Dog' : 'Not Dog';
+            addWeightTooltip(line, weight, `Input ${['A', 'B', 'C', 'D'][i]} → ${outputName}`);
+            
+            svg.appendChild(line);
+        }
+    }
+}
+
+/**
+ * Draw connections for networks with hidden layers
+ */
+function drawLayeredConnections(svg, arch) {
+    // Input to first hidden layer
+    const firstHiddenSize = arch.hiddenLayers[0];
+    for (let i = 0; i < arch.inputSize; i++) {
+        for (let h = 0; h < firstHiddenSize; h++) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', positions.input[i].x + 25);
+            line.setAttribute('y1', positions.input[i].y);
+            line.setAttribute('x2', positions.hiddenLayers[0][h].x - 25);
+            line.setAttribute('y2', positions.hiddenLayers[0][h].y);
+            line.setAttribute('class', 'connection-line');
+            line.setAttribute('id', `conn-input-${i}-hidden-0-${h}`);
+            
             const weight = NetworkAPI.getWeight('input', i, 'hidden', h);
             applyWeightVisualization(line, weight);
             
-            // Add hover tooltip for exact weight value
             addWeightTooltip(line, weight, `Input ${['A', 'B', 'C', 'D'][i]} → Hidden H${h + 1}`);
             
             svg.appendChild(line);
         }
     }
     
-    // Hidden to Output connections
-    for (let h = 0; h < arch.hiddenSize; h++) {
+    // Hidden layer to hidden layer connections
+    for (let layer = 0; layer < arch.hiddenLayers.length - 1; layer++) {
+        const currentLayerSize = arch.hiddenLayers[layer];
+        const nextLayerSize = arch.hiddenLayers[layer + 1];
+        
+        for (let h1 = 0; h1 < currentLayerSize; h1++) {
+            for (let h2 = 0; h2 < nextLayerSize; h2++) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', positions.hiddenLayers[layer][h1].x + 25);
+                line.setAttribute('y1', positions.hiddenLayers[layer][h1].y);
+                line.setAttribute('x2', positions.hiddenLayers[layer + 1][h2].x - 25);
+                line.setAttribute('y2', positions.hiddenLayers[layer + 1][h2].y);
+                line.setAttribute('class', 'connection-line');
+                line.setAttribute('id', `conn-hidden-${layer}-${h1}-hidden-${layer + 1}-${h2}`);
+                
+                // Get weight using layer indices
+                const weight = NetworkAPI.getWeight(layer, h1, layer + 1, h2);
+                applyWeightVisualization(line, weight);
+                
+                addWeightTooltip(line, weight, `H${layer + 1}.${h1 + 1} → H${layer + 2}.${h2 + 1}`);
+                
+                svg.appendChild(line);
+            }
+        }
+    }
+    
+    // Last hidden layer to output
+    const lastHiddenIndex = arch.hiddenLayers.length - 1;
+    const lastHiddenSize = arch.hiddenLayers[lastHiddenIndex];
+    
+    for (let h = 0; h < lastHiddenSize; h++) {
         for (let o = 0; o < arch.outputSize; o++) {
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', positions.hidden[h].x + 25);
-            line.setAttribute('y1', positions.hidden[h].y);
+            line.setAttribute('x1', positions.hiddenLayers[lastHiddenIndex][h].x + 25);
+            line.setAttribute('y1', positions.hiddenLayers[lastHiddenIndex][h].y);
             line.setAttribute('x2', positions.output[o].x - 25);
             line.setAttribute('y2', positions.output[o].y);
             line.setAttribute('class', 'connection-line');
-            line.setAttribute('id', `conn-hidden-${h}-output-${o}`);
+            line.setAttribute('id', `conn-hidden-${lastHiddenIndex}-${h}-output-${o}`);
             
-            // Apply visual weight encoding (thickness, color, opacity)
             const weight = NetworkAPI.getWeight('hidden', h, 'output', o);
             applyWeightVisualization(line, weight);
             
-            // Add hover tooltip for exact weight value
             const outputName = o === 0 ? 'Dog' : 'Not Dog';
             addWeightTooltip(line, weight, `Hidden H${h + 1} → ${outputName}`);
             
@@ -76,57 +228,132 @@ function drawConnections() {
 
 function drawNeurons() {
     const svg = document.getElementById('networkSvg');
-    const layers = ['input', 'hidden', 'output'];
     const arch = NetworkAPI.getArchitecture();
-    const sizes = [arch.inputSize, arch.hiddenSize, arch.outputSize];
-    const labels = [['A', 'B', 'C', 'D'], ['H1', 'H2', 'H3', 'H4'], ['Dog', 'Not Dog']];
+    const inputLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    const outputLabels = ['Dog', 'Not Dog'];
     
-    layers.forEach((layer, layerIndex) => {
-        for (let i = 0; i < sizes[layerIndex]; i++) {
-            const pos = positions[layer][i];
+    // Draw input neurons
+    for (let i = 0; i < arch.inputSize; i++) {
+        const pos = positions.input[i];
+        const activationValue = NetworkAPI.getLayerActivations('input')[i] || 0;
+        
+        drawSingleNeuron(svg, pos, `input-neuron-${i}`, inputLabels[i], activationValue, `input-value-${i}`, 'input', 0, i);
+    }
+    
+    // Draw hidden layer neurons
+    for (let layerIndex = 0; layerIndex < arch.hiddenLayers.length; layerIndex++) {
+        const layerSize = arch.hiddenLayers[layerIndex];
+        const layerActivations = NetworkAPI.getLayerActivations(layerIndex) || [];
+        
+        for (let neuronIndex = 0; neuronIndex < layerSize; neuronIndex++) {
+            const pos = positions.hiddenLayers[layerIndex][neuronIndex];
+            const label = `H${layerIndex + 1}.${neuronIndex + 1}`;
+            const activationValue = layerActivations[neuronIndex] || 0;
+            const neuronId = `hidden-${layerIndex}-neuron-${neuronIndex}`;
+            const valueId = `hidden-${layerIndex}-value-${neuronIndex}`;
             
-            // Draw neuron circle
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', pos.x);
-            circle.setAttribute('cy', pos.y);
-            circle.setAttribute('r', 30);
-            circle.setAttribute('class', 'neuron');
-            circle.setAttribute('id', `${layer}-neuron-${i}`);
-            
-            // Draw neuron label
-            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            text.setAttribute('x', pos.x);
-            text.setAttribute('y', pos.y - 5);
-            text.setAttribute('class', 'neuron-value');
-            text.textContent = labels[layerIndex][i];
-            
-            // Draw activation value
-            const valueText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            valueText.setAttribute('x', pos.x);
-            valueText.setAttribute('y', pos.y + 8);
-            valueText.setAttribute('class', 'neuron-value');
-            valueText.setAttribute('id', `${layer}-value-${i}`);
-            valueText.textContent = (activations[layer][i] !== undefined ? activations[layer][i] : 0).toFixed(2);
-            
-            svg.appendChild(circle);
-            svg.appendChild(text);
-            svg.appendChild(valueText);
+            drawSingleNeuron(svg, pos, neuronId, label, activationValue, valueId, 'hidden', layerIndex, neuronIndex);
         }
-    });
+    }
+    
+    // Draw output neurons
+    for (let i = 0; i < arch.outputSize; i++) {
+        const pos = positions.output[i];
+        const activationValue = NetworkAPI.getLayerActivations('output')[i] || 0;
+        
+        drawSingleNeuron(svg, pos, `output-neuron-${i}`, outputLabels[i], activationValue, `output-value-${i}`, 'output', 0, i);
+    }
+}
+
+function drawSingleNeuron(svg, pos, neuronId, label, activationValue, valueId, layerType, layerIndex, neuronIndex) {
+    // Draw neuron circle
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', pos.x);
+    circle.setAttribute('cy', pos.y);
+    circle.setAttribute('r', 30);
+    circle.setAttribute('class', 'neuron');
+    circle.setAttribute('id', neuronId);
+    
+    // Add hover functionality for calculation details
+    if (window.neuronHover && typeof layerType !== 'undefined') {
+        window.neuronHover.addHover(circle, layerType, layerIndex || 0, neuronIndex || 0);
+    }
+    
+    // Draw neuron label
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', pos.x);
+    text.setAttribute('y', pos.y - 5);
+    text.setAttribute('class', 'neuron-value');
+    text.textContent = label;
+    
+    // Draw activation value
+    const valueText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    valueText.setAttribute('x', pos.x);
+    valueText.setAttribute('y', pos.y + 8);
+    valueText.setAttribute('class', 'neuron-value');
+    valueText.setAttribute('id', valueId);
+    valueText.textContent = activationValue.toFixed(2);
+    
+    svg.appendChild(circle);
+    svg.appendChild(text);
+    svg.appendChild(valueText);
 }
 
 function drawLabels() {
     const svg = document.getElementById('networkSvg');
-    const labels = [{x: 80, y: 15, text: 'Input Layer'}, 
-                   {x: 280, y: 15, text: 'Hidden Layer'}, 
-                   {x: 480, y: 15, text: 'Output Layer'},
-                   {x: 650, y: 15, text: 'AI Prediction'}];
+    const arch = NetworkAPI.getArchitecture();
+    const t = (key, params) => {
+        if (window.i18n && window.i18n.t) {
+            return params ? window.i18n.t(key, params) : window.i18n.t(key);
+        }
+        // Fallback for keys with placeholders
+        if (key === 'network.hiddenLayerN' && params) {
+            return `Hidden Layer ${params[0]}`;
+        }
+        const fallbacks = {
+            'network.inputLayer': 'Input Layer',
+            'network.hiddenLayer': 'Hidden Layer',
+            'network.outputLayer': 'Output Layer',
+            'network.aiPrediction': 'AI Prediction'
+        };
+        return fallbacks[key] || key;
+    };
+    
+    // Use dynamic positioning based on calculated positions
+    const labels = [];
+    
+    // Input layer label - use actual position
+    if (positions.input && positions.input.length > 0) {
+        labels.push({x: positions.input[0].x, y: 15, text: t('network.inputLayer')});
+    }
+    
+    // Hidden layer labels - use actual positions
+    for (let i = 0; i < arch.hiddenLayers.length; i++) {
+        if (positions.hiddenLayers[i] && positions.hiddenLayers[i].length > 0) {
+            const x = positions.hiddenLayers[i][0].x;
+            const text = arch.hiddenLayers.length === 1 
+                ? t('network.hiddenLayer')
+                : t('network.hiddenLayerN', [i + 1]);
+            labels.push({x: x, y: 15, text: text});
+        }
+    }
+    
+    // Output layer label - use actual position
+    if (positions.output && positions.output.length > 0) {
+        labels.push({x: positions.output[0].x, y: 15, text: t('network.outputLayer')});
+    }
+    
+    // Prediction label - use actual position
+    if (positions.prediction) {
+        labels.push({x: positions.prediction.x, y: 15, text: t('network.aiPrediction')});
+    }
     
     labels.forEach(label => {
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.setAttribute('x', label.x);
         text.setAttribute('y', label.y);
         text.setAttribute('class', 'layer-label');
+        text.setAttribute('text-anchor', 'middle'); // Center the labels
         text.textContent = label.text;
         svg.appendChild(text);
     });
@@ -168,33 +395,37 @@ function drawPrediction() {
     result.setAttribute('font-weight', '600');
     result.setAttribute('fill', '#475569');
     result.setAttribute('id', 'predictionResult');
-    result.textContent = window.i18n.t('ui.thinking');
+    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : (key === 'ui.thinking' ? 'Thinking...' : key);
+    result.textContent = t('ui.thinking');
     svg.appendChild(result);
 }
 
 function updatePrediction() {
-    const dogProb = activations.output[0];
-    const notDogProb = activations.output[1];
-    const predicted = dogProb > 0.5;
-    const confidence = Math.abs(dogProb - 0.5) * 2; // 0 to 1 scale
+    // Get output activations from NetworkAPI
+    const outputActivations = NetworkAPI.getLayerActivations('output');
+    const dogProb = outputActivations[0] || 0;
+    const notDogProb = outputActivations[1] || 0;
+    const predicted = dogProb > notDogProb; // Changed to compare probabilities directly
+    const maxProb = Math.max(dogProb, notDogProb);
+    const confidence = maxProb; // Use the max probability as confidence
     
-    // Determine if prediction is correct
-    const expectedDog = trueLabel === 'dog';
+    // Determine if prediction is correct (if we have a true label)
+    const expectedDog = window.trueLabel === 'dog';
     const isCorrect = predicted === expectedDog;
     
     // Update emoji based on prediction and correctness
     let emoji = '🤔'; // default thinking
     let circleColor = '#3b82f6'; // default blue
     
-    if (dogProb > 0 || notDogProb > 0) { // Has made a prediction
+    if (maxProb > 0.01) { // Has made a meaningful prediction
         if (predicted) {
-            emoji = isCorrect ? '🐕✅' : '🐕❌'; // Dog prediction
+            emoji = isCorrect ? '🐕' : '🐕'; // Dog prediction - always show dog emoji
         } else {
-            emoji = isCorrect ? '❌✅' : '❌🐕'; // Not-dog prediction  
+            emoji = isCorrect ? '🚫' : '🚫'; // Not-dog prediction - use prohibition sign
         }
         
         // Color based on correctness
-        circleColor = isCorrect ? '#10b981' : '#ef4444'; // green/red
+        circleColor = isCorrect ? '#10b981' : '#ef4444'; // green for correct, red for incorrect
     }
     
     // Update elements
@@ -206,35 +437,58 @@ function updatePrediction() {
     if (predictionCircle) predictionCircle.setAttribute('stroke', circleColor);
     
     if (predictionResult) {
-        if (dogProb > 0 || notDogProb > 0) {
+        if (maxProb > 0.01) {
             const confidenceText = `${(confidence * 100).toFixed(0)}%`;
             const predictionText = predicted ? 'DOG' : 'NOT-DOG';
             predictionResult.textContent = `${predictionText} (${confidenceText})`;
         } else {
-            predictionResult.textContent = window.i18n.t('ui.thinking');
+            const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : (key === 'ui.thinking' ? 'Thinking...' : key);
+            predictionResult.textContent = t('ui.thinking');
         }
     }
 }
 
 function updateNeuronColors() {
     console.log('=== UPDATING NEURON COLORS ===');
+    const arch = NetworkAPI.getArchitecture();
     
-    // Update all neurons with same color scheme
-    const layers = ['input', 'hidden', 'output'];
-    const activationArrays = [activations.input, activations.hidden, activations.output];
+    // Update input neurons
+    const inputActivations = NetworkAPI.getLayerActivations('input');
+    for (let i = 0; i < inputActivations.length; i++) {
+        const neuron = document.getElementById(`input-neuron-${i}`);
+        if (neuron) {
+            const activation = inputActivations[i];
+            const color = getActivationColor(activation);
+            neuron.style.fill = color;
+            console.log(`input ${i}: activation=${activation.toFixed(2)}, color=${color}`);
+        }
+    }
     
-    layers.forEach((layer, layerIndex) => {
-        const layerActivations = activationArrays[layerIndex];
-        for (let i = 0; i < layerActivations.length; i++) {
-            const neuron = document.getElementById(`${layer}-neuron-${i}`);
+    // Update hidden layer neurons
+    for (let layerIndex = 0; layerIndex < arch.hiddenLayers.length; layerIndex++) {
+        const layerActivations = NetworkAPI.getLayerActivations(layerIndex);
+        for (let neuronIndex = 0; neuronIndex < layerActivations.length; neuronIndex++) {
+            const neuron = document.getElementById(`hidden-${layerIndex}-neuron-${neuronIndex}`);
             if (neuron) {
-                const activation = layerActivations[i];
+                const activation = layerActivations[neuronIndex];
                 const color = getActivationColor(activation);
                 neuron.style.fill = color;
-                console.log(`${layer} ${i}: activation=${activation.toFixed(2)}, color=${color}`);
+                console.log(`hidden ${layerIndex}-${neuronIndex}: activation=${activation.toFixed(2)}, color=${color}`);
             }
         }
-    });
+    }
+    
+    // Update output neurons
+    const outputActivations = NetworkAPI.getLayerActivations('output');
+    for (let i = 0; i < outputActivations.length; i++) {
+        const neuron = document.getElementById(`output-neuron-${i}`);
+        if (neuron) {
+            const activation = outputActivations[i];
+            const color = getActivationColor(activation);
+            neuron.style.fill = color;
+            console.log(`output ${i}: activation=${activation.toFixed(2)}, color=${color}`);
+        }
+    }
 }
 
 function getActivationColor(activation) {
@@ -259,18 +513,19 @@ function highlightSubNetwork(fromLayer, toLayer, targetNeuron = null) {
         neuron.classList.remove('sub-network-highlight');
     });
     
+    const arch = NetworkAPI.getArchitecture();
+    
     if (targetNeuron !== null) {
-        // Highlight connections to specific target neuron and related neurons
+        // Highlight connections to specific target neuron
         if (fromLayer === 'input' && toLayer === 'hidden') {
-            // Highlight target hidden neuron
-            const targetHiddenNeuron = document.getElementById(`hidden-neuron-${targetNeuron}`);
+            // Highlight target hidden neuron (assuming first hidden layer)
+            const targetHiddenNeuron = document.getElementById(`hidden-0-neuron-${targetNeuron}`);
             if (targetHiddenNeuron) targetHiddenNeuron.classList.add('sub-network-highlight');
             
-            for (let i = 0; i < networkConfig.inputSize; i++) {
-                const line = document.getElementById(`conn-input-${i}-hidden-${targetNeuron}`);
+            for (let i = 0; i < arch.inputSize; i++) {
+                const line = document.getElementById(`conn-input-${i}-hidden-0-${targetNeuron}`);
                 if (line) line.classList.add('computing-path');
                 
-                // Highlight contributing input neurons
                 const inputNeuron = document.getElementById(`input-neuron-${i}`);
                 if (inputNeuron) inputNeuron.classList.add('sub-network-highlight');
             }
@@ -279,28 +534,34 @@ function highlightSubNetwork(fromLayer, toLayer, targetNeuron = null) {
             const targetOutputNeuron = document.getElementById(`output-neuron-${targetNeuron}`);
             if (targetOutputNeuron) targetOutputNeuron.classList.add('sub-network-highlight');
             
-            for (let h = 0; h < networkConfig.hiddenSize; h++) {
-                const line = document.getElementById(`conn-hidden-${h}-output-${targetNeuron}`);
+            // Use last hidden layer
+            const lastHiddenIndex = arch.hiddenLayers.length - 1;
+            const lastHiddenSize = arch.hiddenLayers[lastHiddenIndex];
+            
+            for (let h = 0; h < lastHiddenSize; h++) {
+                const line = document.getElementById(`conn-hidden-${lastHiddenIndex}-${h}-output-${targetNeuron}`);
                 if (line) line.classList.add('computing-path');
                 
-                // Highlight contributing hidden neurons
-                const hiddenNeuron = document.getElementById(`hidden-neuron-${h}`);
+                const hiddenNeuron = document.getElementById(`hidden-${lastHiddenIndex}-neuron-${h}`);
                 if (hiddenNeuron) hiddenNeuron.classList.add('sub-network-highlight');
             }
         }
     } else {
         // Highlight all connections between layers
         if (fromLayer === 'input' && toLayer === 'hidden') {
-            for (let i = 0; i < networkConfig.inputSize; i++) {
-                for (let h = 0; h < networkConfig.hiddenSize; h++) {
-                    const line = document.getElementById(`conn-input-${i}-hidden-${h}`);
+            for (let i = 0; i < arch.inputSize; i++) {
+                for (let h = 0; h < arch.hiddenLayers[0]; h++) {
+                    const line = document.getElementById(`conn-input-${i}-hidden-0-${h}`);
                     if (line) line.classList.add('active-path');
                 }
             }
         } else if (fromLayer === 'hidden' && toLayer === 'output') {
-            for (let h = 0; h < networkConfig.hiddenSize; h++) {
-                for (let o = 0; o < networkConfig.outputSize; o++) {
-                    const line = document.getElementById(`conn-hidden-${h}-output-${o}`);
+            const lastHiddenIndex = arch.hiddenLayers.length - 1;
+            const lastHiddenSize = arch.hiddenLayers[lastHiddenIndex];
+            
+            for (let h = 0; h < lastHiddenSize; h++) {
+                for (let o = 0; o < arch.outputSize; o++) {
+                    const line = document.getElementById(`conn-hidden-${lastHiddenIndex}-${h}-output-${o}`);
                     if (line) line.classList.add('active-path');
                 }
             }
@@ -530,15 +791,18 @@ function addWeightTooltip(lineElement, initialWeight, connectionLabel) {
 
 function getCurrentWeightForConnection(connectionLabel) {
     // Parse the connection label to extract indices
-    // Format examples: "Input A → Hidden H1", "Hidden H1 → Dog", "Hidden H2 → Not Dog"
+    // Format examples: 
+    // - "Input A → Hidden H1" (input to first hidden layer)
+    // - "Hidden H1 → Dog" (last hidden layer to output)
+    // - "H1.4 → H2.3" (hidden layer 1 neuron 4 to hidden layer 2 neuron 3)
     
     if (connectionLabel.includes('Input') && connectionLabel.includes('Hidden')) {
         // Input to Hidden connection
-        const inputMatch = connectionLabel.match(/Input ([ABCD])/);
+        const inputMatch = connectionLabel.match(/Input ([ABCDEFGH])/);
         const hiddenMatch = connectionLabel.match(/Hidden H(\d+)/);
         
         if (inputMatch && hiddenMatch) {
-            const inputIndex = ['A', 'B', 'C', 'D'].indexOf(inputMatch[1]);
+            const inputIndex = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].indexOf(inputMatch[1]);
             const hiddenIndex = parseInt(hiddenMatch[1]) - 1; // Convert to 0-based
             return NetworkAPI.getWeight('input', inputIndex, 'hidden', hiddenIndex);
         }
@@ -552,6 +816,18 @@ function getCurrentWeightForConnection(connectionLabel) {
             const outputIndex = isDogOutput ? 0 : 1;
             return NetworkAPI.getWeight('hidden', hiddenIndex, 'output', outputIndex);
         }
+    } else if (connectionLabel.includes('H') && connectionLabel.includes('→')) {
+        // Hidden layer to hidden layer connection (H1.4 → H2.3)
+        const layerToLayerMatch = connectionLabel.match(/H(\d+)\.(\d+) → H(\d+)\.(\d+)/);
+        
+        if (layerToLayerMatch) {
+            const fromLayer = parseInt(layerToLayerMatch[1]) - 1; // Convert to 0-based layer index
+            const fromNeuron = parseInt(layerToLayerMatch[2]) - 1; // Convert to 0-based neuron index
+            const toLayer = parseInt(layerToLayerMatch[3]) - 1; // Convert to 0-based layer index  
+            const toNeuron = parseInt(layerToLayerMatch[4]) - 1; // Convert to 0-based neuron index
+            
+            return NetworkAPI.getWeight(fromLayer, fromNeuron, toLayer, toNeuron);
+        }
     }
     
     // Fallback: return 0 if parsing fails
@@ -560,27 +836,57 @@ function getCurrentWeightForConnection(connectionLabel) {
 }
 
 function refreshAllConnectionVisuals() {
-    // Update all input to hidden connections
     const arch = NetworkAPI.getArchitecture();
-    for (let h = 0; h < arch.hiddenSize; h++) {
+    
+    if (arch.hiddenLayers.length === 0) {
+        // Direct input to output connections
         for (let i = 0; i < arch.inputSize; i++) {
-            const connectionId = `conn-input-${i}-hidden-${h}`;
-            const connection = document.getElementById(connectionId);
-            if (connection) {
-                const weight = NetworkAPI.getWeight('input', i, 'hidden', h);
-                applyWeightVisualization(connection, weight);
+            for (let o = 0; o < arch.outputSize; o++) {
+                const connectionId = `conn-input-${i}-output-${o}`;
+                const connection = document.getElementById(connectionId);
+                if (connection) {
+                    const weight = NetworkAPI.getWeight(0, i, 0, o);
+                    applyWeightVisualization(connection, weight);
+                }
             }
         }
-    }
-    
-    // Update all hidden to output connections
-    for (let o = 0; o < arch.outputSize; o++) {
-        for (let h = 0; h < arch.hiddenSize; h++) {
-            const connectionId = `conn-hidden-${h}-output-${o}`;
-            const connection = document.getElementById(connectionId);
-            if (connection) {
-                const weight = NetworkAPI.getWeight('hidden', h, 'output', o);
-                applyWeightVisualization(connection, weight);
+    } else {
+        // Input to first hidden layer
+        for (let i = 0; i < arch.inputSize; i++) {
+            for (let h = 0; h < arch.hiddenLayers[0]; h++) {
+                const connectionId = `conn-input-${i}-hidden-0-${h}`;
+                const connection = document.getElementById(connectionId);
+                if (connection) {
+                    const weight = NetworkAPI.getWeight('input', i, 'hidden', h);
+                    applyWeightVisualization(connection, weight);
+                }
+            }
+        }
+        
+        // Hidden layer to hidden layer connections
+        for (let layer = 0; layer < arch.hiddenLayers.length - 1; layer++) {
+            for (let h1 = 0; h1 < arch.hiddenLayers[layer]; h1++) {
+                for (let h2 = 0; h2 < arch.hiddenLayers[layer + 1]; h2++) {
+                    const connectionId = `conn-hidden-${layer}-${h1}-hidden-${layer + 1}-${h2}`;
+                    const connection = document.getElementById(connectionId);
+                    if (connection) {
+                        const weight = NetworkAPI.getWeight(layer, h1, layer + 1, h2);
+                        applyWeightVisualization(connection, weight);
+                    }
+                }
+            }
+        }
+        
+        // Last hidden layer to output connections
+        const lastHiddenIndex = arch.hiddenLayers.length - 1;
+        for (let h = 0; h < arch.hiddenLayers[lastHiddenIndex]; h++) {
+            for (let o = 0; o < arch.outputSize; o++) {
+                const connectionId = `conn-hidden-${lastHiddenIndex}-${h}-output-${o}`;
+                const connection = document.getElementById(connectionId);
+                if (connection) {
+                    const weight = NetworkAPI.getWeight('hidden', h, 'output', o);
+                    applyWeightVisualization(connection, weight);
+                }
             }
         }
     }
@@ -601,6 +907,47 @@ function updateConnectionTooltip(lineElement, weight, connectionLabel) {
     // Update the tooltip data for this connection
     lineElement.setAttribute('data-weight', weight);
     lineElement.setAttribute('data-label', connectionLabel);
+}
+
+function updateNeuronValues() {
+    const arch = NetworkAPI.getArchitecture();
+    
+    // Update input neuron values
+    const inputActivations = NetworkAPI.getLayerActivations('input');
+    for (let i = 0; i < inputActivations.length; i++) {
+        const valueElement = document.getElementById(`input-value-${i}`);
+        if (valueElement) {
+            valueElement.textContent = inputActivations[i].toFixed(2);
+        }
+    }
+    
+    // Update hidden layer neuron values
+    for (let layerIndex = 0; layerIndex < arch.hiddenLayers.length; layerIndex++) {
+        const layerActivations = NetworkAPI.getLayerActivations(layerIndex);
+        for (let neuronIndex = 0; neuronIndex < layerActivations.length; neuronIndex++) {
+            const valueElement = document.getElementById(`hidden-${layerIndex}-value-${neuronIndex}`);
+            if (valueElement) {
+                valueElement.textContent = layerActivations[neuronIndex].toFixed(2);
+            }
+        }
+    }
+    
+    // Update output neuron values
+    const outputActivations = NetworkAPI.getLayerActivations('output');
+    for (let i = 0; i < outputActivations.length; i++) {
+        const valueElement = document.getElementById(`output-value-${i}`);
+        if (valueElement) {
+            valueElement.textContent = outputActivations[i].toFixed(2);
+        }
+    }
+}
+
+function refreshVisualization() {
+    // Complete refresh of the entire network visualization
+    updateNeuronColors();
+    updateNeuronValues();
+    refreshAllConnectionVisuals();
+    updatePrediction();
 }
 
 // ============================================================================
@@ -624,3 +971,5 @@ if (typeof window !== 'undefined') window.getCurrentWeightForConnection = getCur
 if (typeof window !== 'undefined') window.refreshAllConnectionVisuals = refreshAllConnectionVisuals;
 if (typeof window !== 'undefined') window.updateConnectionAppearance = updateConnectionAppearance;
 if (typeof window !== 'undefined') window.updateConnectionTooltip = updateConnectionTooltip;
+if (typeof window !== 'undefined') window.updateNeuronValues = updateNeuronValues;
+if (typeof window !== 'undefined') window.refreshVisualization = refreshVisualization;
