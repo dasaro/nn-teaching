@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug Fix Validation Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Bug Fix Validation Test</h1>
+    <div id="testResults"></div>
+
+    <!-- Load modules in correct order -->
+    <script src="locales/en.js"></script>
+    <script src="locales/it.js"></script>
+    <script src="i18n.js"></script>
+    <script src="src/real-image-data.js"></script>
+    <script src="src/image-data.js"></script>
+    <script defer src="src/neural-math.js"></script>
+    <script defer src="src/animation-engine.js"></script>
+    <script defer src="src/network-visualizer.js"></script>
+    <script defer src="src/ui-controls.js"></script>
+    <script defer src="src/training-engine.js"></script>
+    <script defer src="src/image-processor.js"></script>
+    <script defer src="src/utilities.js"></script>
+    <script defer src="src/globals-and-config.js"></script>
+    <script defer src="src/network-api.js"></script>
+    <script defer src="src/module-interfaces.js"></script>
+    <script defer src="src/bootstrap.js"></script>
+
+    <script>
+        let testCount = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+
+        function logResult(testName, success, message) {
+            testCount++;
+            const div = document.createElement('div');
+            div.className = `test-result ${success ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>Test ${testCount}: ${testName}</strong><br>${message}`;
+            document.getElementById('testResults').appendChild(div);
+            
+            if (success) {
+                passedTests++;
+                console.log(`✅ ${testName}: ${message}`);
+            } else {
+                failedTests++;
+                console.error(`❌ ${testName}: ${message}`);
+            }
+        }
+
+        function logInfo(message) {
+            const div = document.createElement('div');
+            div.className = 'test-result info';
+            div.innerHTML = `<strong>Info:</strong> ${message}`;
+            document.getElementById('testResults').appendChild(div);
+            console.log(`ℹ️ ${message}`);
+        }
+
+        // Wait for all modules to load
+        setTimeout(() => {
+            runTests();
+        }, 2000);
+
+        function runTests() {
+            logInfo('Starting bug fix validation tests...');
+
+            // Test 1: NetworkAPI.getStats() should not crash (Bug #1 & #9)
+            try {
+                const stats = NetworkAPI.getStats();
+                if (stats && typeof stats.totalWeights === 'number' && typeof stats.totalNeurons === 'number') {
+                    logResult('NetworkAPI.getStats()', true, 
+                        `Stats retrieved successfully: ${stats.totalLayers} layers, ${stats.totalWeights} weights, ${stats.totalNeurons} neurons`);
+                } else {
+                    logResult('NetworkAPI.getStats()', false, 
+                        'Stats object missing required properties');
+                }
+            } catch (error) {
+                logResult('NetworkAPI.getStats()', false, 
+                    `Function crashed: ${error.message}`);
+            }
+
+            // Test 2: NetworkAPI.getArchitecture() layer count should be correct (Bug #2)
+            try {
+                const arch = NetworkAPI.getArchitecture();
+                const expectedLayers = arch.hiddenLayers.length + 2; // input + hidden + output
+                if (arch.totalLayers === expectedLayers) {
+                    logResult('Correct Layer Count', true, 
+                        `Architecture ${arch.inputSize}→[${arch.hiddenLayers.join(',')}]→${arch.outputSize} correctly shows ${arch.totalLayers} layers`);
+                } else {
+                    logResult('Correct Layer Count', false, 
+                        `Expected ${expectedLayers} layers, got ${arch.totalLayers}`);
+                }
+            } catch (error) {
+                logResult('Correct Layer Count', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Test 3: Bootstrap function assignment should be safe (Bug #3)
+            try {
+                const neuralMathFunctions = window.neuralMath || {};
+                const availableFunctions = Object.keys(neuralMathFunctions).filter(key => 
+                    typeof neuralMathFunctions[key] === 'function'
+                ).length;
+                
+                if (availableFunctions > 0) {
+                    logResult('Safe Function Assignment', true, 
+                        `${availableFunctions} neural math functions properly assigned`);
+                } else {
+                    logResult('Safe Function Assignment', false, 
+                        'No neural math functions were assigned');
+                }
+            } catch (error) {
+                logResult('Safe Function Assignment', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Test 4: Test multiple architectures work correctly
+            try {
+                const architectures = [
+                    { layers: [], name: "Direct (0 hidden)" },
+                    { layers: [4], name: "Single hidden" },
+                    { layers: [6, 3], name: "Two hidden" },
+                    { layers: [8, 6, 4], name: "Three hidden" }
+                ];
+
+                let allPassed = true;
+                const results = [];
+
+                architectures.forEach(test => {
+                    try {
+                        NetworkAPI.setArchitecture(test.layers);
+                        const arch = NetworkAPI.getArchitecture();
+                        const stats = NetworkAPI.getStats();
+                        
+                        results.push(`${test.name}: ${stats.totalLayers} layers, ${stats.totalWeights} weights`);
+                        
+                        if (arch.hiddenLayers.length !== test.layers.length) {
+                            allPassed = false;
+                        }
+                    } catch (error) {
+                        allPassed = false;
+                        results.push(`${test.name}: FAILED - ${error.message}`);
+                    }
+                });
+
+                if (allPassed) {
+                    logResult('Variable Architecture Support', true, 
+                        `All architectures work: ${results.join(', ')}`);
+                } else {
+                    logResult('Variable Architecture Support', false, 
+                        `Some architectures failed: ${results.join(', ')}`);
+                }
+            } catch (error) {
+                logResult('Variable Architecture Support', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Summary
+            setTimeout(() => {
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = `test-result ${failedTests === 0 ? 'success' : 'error'}`;
+                summaryDiv.innerHTML = `<strong>Test Summary:</strong><br>
+                    Total Tests: ${testCount}<br>
+                    Passed: ${passedTests}<br>
+                    Failed: ${failedTests}<br>
+                    ${failedTests === 0 ? '🎉 All tests passed! Bug fixes successful.' : '⚠️ Some tests failed. Review the issues above.'}`;
+                document.getElementById('testResults').appendChild(summaryDiv);
+                
+                console.log(`\n📊 Test Summary: ${passedTests}/${testCount} passed`);
+            }, 500);
+        }
+    </script>
+</body>
+</html>

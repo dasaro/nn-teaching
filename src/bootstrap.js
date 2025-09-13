@@ -59,34 +59,32 @@ if (typeof window !== 'undefined') window.initializeNetwork = initializeNetwork;
 function initializeModuleExports() {
     // Update neural math exports with functions defined later in the file
     if (window.neuralMath) {
-        window.neuralMath.forwardPropagationSilent = forwardPropagationSilent;
-        window.neuralMath.backpropagationSilent = backpropagationSilent;
-        window.neuralMath.initializeMomentum = initializeMomentum;
-        window.neuralMath.analyzeConvergence = analyzeConvergence;
-        window.neuralMath.detectConvergenceIssues = detectConvergenceIssues;
-        window.neuralMath.checkPredictionDiversity = checkPredictionDiversity;
-        window.neuralMath.generateSimpleTrainingData = generateSimpleTrainingData;
-        window.neuralMath.advancedBackpropagation = advancedBackpropagation;
-        window.neuralMath.adaptLearningRate = adaptLearningRate;
-        window.neuralMath.applyAntiStagnationMeasures = applyAntiStagnationMeasures;
-        window.neuralMath.applyConvergenceBoost = applyConvergenceBoost;
-        window.neuralMath.backpropagationWithMomentum = backpropagationWithMomentum;
-        window.neuralMath.testDeadNeuronPrevention = testDeadNeuronPrevention;
-        window.neuralMath.testGeneralization = testGeneralization;
-        window.neuralMath.testWeightInitialization = testWeightInitialization;
-        window.neuralMath.runComprehensiveTests = runComprehensiveTests;
-        window.neuralMath.test100PercentAccuracy = test100PercentAccuracy;
-        window.neuralMath.testBackAndForthLearning = testBackAndForthLearning;
-        window.neuralMath.testSimplifiedNetwork = testSimplifiedNetwork;
-        window.neuralMath.simpleBinaryForward = simpleBinaryForward;
-        window.neuralMath.simpleBinaryBackward = simpleBinaryBackward;
-        window.neuralMath.testSimpleBinaryAccuracy = testSimpleBinaryAccuracy;
-        window.neuralMath.testAccuracy = testAccuracy;
-        window.neuralMath.debugWeightChanges = debugWeightChanges;
-        window.neuralMath.enableConvergenceAnalysis = enableConvergenceAnalysis;
-        window.neuralMath.enableDeepDebugging = enableDeepDebugging;
-        window.neuralMath.updateLastWeights = updateLastWeights;
-        window.neuralMath.showWeightChanges = showWeightChanges;
+        // Only assign functions that actually exist to prevent null assignments
+        if (typeof forwardPropagationSilent !== 'undefined') {
+            window.neuralMath.forwardPropagationSilent = forwardPropagationSilent;
+        }
+        if (typeof backpropagationSilent !== 'undefined') {
+            window.neuralMath.backpropagationSilent = backpropagationSilent;
+        }
+        
+        // Safe assignment of other neural math functions
+        const neuralMathFunctions = [
+            'initializeMomentum', 'analyzeConvergence', 'detectConvergenceIssues', 
+            'checkPredictionDiversity', 'generateSimpleTrainingData', 'advancedBackpropagation',
+            'adaptLearningRate', 'applyAntiStagnationMeasures', 'applyConvergenceBoost',
+            'backpropagationWithMomentum', 'testDeadNeuronPrevention', 'testGeneralization',
+            'testWeightInitialization', 'runComprehensiveTests', 'test100PercentAccuracy',
+            'testBackAndForthLearning', 'testSimplifiedNetwork', 'simpleBinaryForward',
+            'simpleBinaryBackward', 'testSimpleBinaryAccuracy', 'testAccuracy',
+            'debugWeightChanges', 'enableConvergenceAnalysis', 'enableDeepDebugging',
+            'updateLastWeights', 'showWeightChanges'
+        ];
+        
+        neuralMathFunctions.forEach(funcName => {
+            if (typeof window[funcName] !== 'undefined') {
+                window.neuralMath[funcName] = window[funcName];
+            }
+        });
     }
     
     // Update animation engine exports with functions defined later

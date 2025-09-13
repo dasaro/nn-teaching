@@ -22,7 +22,7 @@ function getNetworkArchitecture() {
         inputSize: networkConfig.inputSize,
         outputSize: networkConfig.outputSize,
         hiddenLayers: [...networkConfig.hiddenLayers], // Defensive copy
-        totalLayers: networkConfig.hiddenLayers.length + 1, // +1 for output layer
+        totalLayers: networkConfig.hiddenLayers.length + 2, // +2 for input and output layers
         
         // Backward compatibility
         hiddenSize: networkConfig.hiddenSize,
@@ -35,12 +35,36 @@ function getNetworkArchitecture() {
  * @returns {Object} Network statistics
  */
 function getNetworkStats() {
-    const info = getNetworkInfo();
+    // Calculate stats directly instead of relying on missing getNetworkInfo
+    const { inputSize, outputSize, hiddenLayers } = networkConfig;
+    
+    // Calculate total connections/weights
+    let totalWeights = 0;
+    let totalNeurons = inputSize + outputSize;
+    
+    if (hiddenLayers.length === 0) {
+        // Direct input -> output
+        totalWeights = inputSize * outputSize;
+    } else {
+        // Input -> first hidden
+        totalWeights += inputSize * hiddenLayers[0];
+        totalNeurons += hiddenLayers[0];
+        
+        // Hidden -> hidden connections
+        for (let i = 1; i < hiddenLayers.length; i++) {
+            totalWeights += hiddenLayers[i-1] * hiddenLayers[i];
+            totalNeurons += hiddenLayers[i];
+        }
+        
+        // Last hidden -> output
+        totalWeights += hiddenLayers[hiddenLayers.length - 1] * outputSize;
+    }
+    
     return {
-        totalLayers: info.totalLayers,
-        totalWeights: info.totalWeights,
-        totalNeurons: info.totalNeurons,
-        parameters: info.totalWeights
+        totalLayers: hiddenLayers.length + 2, // +2 for input and output layers
+        totalWeights: totalWeights,
+        totalNeurons: totalNeurons,
+        parameters: totalWeights
     };
 }
 
@@ -59,16 +83,26 @@ function getNetworkStats() {
 function getWeight(fromLayer, fromIndex, toLayer, toIndex) {
     // Handle legacy layer names
     if (fromLayer === 'input' && toLayer === 'hidden') {
-        return weights.inputToHidden ? weights.inputToHidden[toIndex][fromIndex] : 0;
+        if (weights.inputToHidden && weights.inputToHidden[toIndex] && 
+            typeof weights.inputToHidden[toIndex][fromIndex] === 'number') {
+            return weights.inputToHidden[toIndex][fromIndex];
+        }
+        return 0;
     }
     if (fromLayer === 'hidden' && toLayer === 'output') {
-        return weights.hiddenToOutput ? weights.hiddenToOutput[toIndex][fromIndex] : 0;
+        if (weights.hiddenToOutput && weights.hiddenToOutput[toIndex] && 
+            typeof weights.hiddenToOutput[toIndex][fromIndex] === 'number') {
+            return weights.hiddenToOutput[toIndex][fromIndex];
+        }
+        return 0;
     }
     
-    // Handle variable architecture
+    // Handle variable architecture with bounds checking
     if (typeof fromLayer === 'number' && typeof toLayer === 'number') {
-        if (weights.layers && weights.layers[toLayer] && weights.layers[toLayer][toIndex]) {
-            return weights.layers[toLayer][toIndex][fromIndex] || 0;
+        if (weights.layers && weights.layers[toLayer] && 
+            weights.layers[toLayer][toIndex] && 
+            typeof weights.layers[toLayer][toIndex][fromIndex] === 'number') {
+            return weights.layers[toLayer][toIndex][fromIndex];
         }
     }
     

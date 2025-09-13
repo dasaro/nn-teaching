@@ -347,13 +347,43 @@ function setNetworkArchitecture(hiddenLayerSizes) {
 // Get current network architecture info
 function getNetworkInfo() {
     const { inputSize, outputSize, hiddenLayers } = networkConfig;
+    
+    // Calculate total neurons and weights
+    let totalNeurons = inputSize + outputSize;
+    let totalWeights = 0;
+    
+    // Add hidden layer neurons
+    hiddenLayers.forEach(size => totalNeurons += size);
+    
+    // Calculate weights safely
+    if (weights.layers && weights.layers.length > 0) {
+        totalWeights = weights.layers.reduce((sum, matrix) => {
+            if (matrix && matrix.length > 0 && matrix[0] && matrix[0].length > 0) {
+                return sum + matrix.length * matrix[0].length;
+            }
+            return sum;
+        }, 0);
+    } else {
+        // Fallback calculation if weights not initialized
+        if (hiddenLayers.length === 0) {
+            totalWeights = inputSize * outputSize;
+        } else {
+            totalWeights += inputSize * hiddenLayers[0];
+            for (let i = 1; i < hiddenLayers.length; i++) {
+                totalWeights += hiddenLayers[i-1] * hiddenLayers[i];
+            }
+            totalWeights += hiddenLayers[hiddenLayers.length - 1] * outputSize;
+        }
+    }
+    
     return {
         inputSize,
         hiddenLayers: [...hiddenLayers],
         outputSize,
         totalLayers: hiddenLayers.length + 2, // +2 for input and output
-        totalConnections: weights.layers.reduce((sum, matrix) => 
-            sum + matrix.length * matrix[0].length, 0)
+        totalNeurons: totalNeurons,
+        totalWeights: totalWeights,
+        totalConnections: totalWeights // Alias for backward compatibility
     };
 }
 
