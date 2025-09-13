@@ -124,7 +124,13 @@ function getNeuronCalculation(layerType, layerIndex, neuronIndex) {
         }
         
         if (layerType === 'hidden') {
-            const hiddenValue = activations.hiddenLayers && activations.hiddenLayers[layerIndex] ? activations.hiddenLayers[layerIndex][neuronIndex] : 0;
+            // Defensive checks for hidden neurons
+            if (!activations || !activations.hiddenLayers || !activations.hiddenLayers[layerIndex] || 
+                isNaN(neuronIndex) || neuronIndex < 0 || neuronIndex >= activations.hiddenLayers[layerIndex].length) {
+                throw new Error(`Invalid hidden neuron access: layerIndex=${layerIndex}, neuronIndex=${neuronIndex}, hiddenLayers available=${!!(activations && activations.hiddenLayers)}`);
+            }
+            
+            const hiddenValue = activations.hiddenLayers[layerIndex][neuronIndex];
             
             // Get inputs for hidden layer calculation
             let inputs, inputWeights;
@@ -189,12 +195,20 @@ function generateTooltipContent(data, layerType) {
     // Use centralized translation function
     const t = window.i18nUtils ? window.i18nUtils.initModuleTranslation('neuron-hover') : (key) => key;
     
+    // Helper function to safely format numbers
+    const formatNumber = (value, decimals = 3) => {
+        if (typeof value === 'number' && !isNaN(value)) {
+            return value.toFixed(decimals);
+        }
+        return 'N/A';
+    };
+    
     if (data.type === 'input') {
         return `
             <div class="tooltip-header">${data.layerName}</div>
             <div class="tooltip-section">
                 <div class="tooltip-label">${t('neuronHover.inputValue')}:</div>
-                <div class="tooltip-value">${data.value.toFixed(3)}</div>
+                <div class="tooltip-value">${formatNumber(data.value)}</div>
             </div>
             <div class="tooltip-section">
                 <div class="tooltip-step">${data.explanation}</div>
@@ -236,8 +250,8 @@ function generateTooltipContent(data, layerType) {
         data.inputs.forEach((calc, i) => {
             html += `
                 <div class="tooltip-input-label">Input ${i + 1}:</div>
-                <div class="tooltip-input-value">${calc.input.toFixed(3)}</div>
-                <div class="tooltip-input-weight">× ${calc.weight.toFixed(3)}</div>
+                <div class="tooltip-input-value">${formatNumber(calc.input)}</div>
+                <div class="tooltip-input-weight">× ${formatNumber(calc.weight)}</div>
             `;
         });
         
@@ -245,10 +259,10 @@ function generateTooltipContent(data, layerType) {
                     </div>
                 </div>
                 <div class="tooltip-calculation">
-                    ${t('neuronHover.step2')}: ${data.weightedSum.toFixed(3)}
+                    ${t('neuronHover.step2')}: ${formatNumber(data.weightedSum)}
                 </div>
                 <div class="tooltip-calculation">
-                    ${t('neuronHover.step3')} (${data.activationFunction}): ${data.value.toFixed(3)}
+                    ${t('neuronHover.step3')} (${data.activationFunction}): ${formatNumber(data.value)}
                 </div>
             </div>
         `;
@@ -256,7 +270,7 @@ function generateTooltipContent(data, layerType) {
         html += `
             <div class="tooltip-section">
                 <div class="tooltip-label">${t('neuronHover.finalValue')}:</div>
-                <div class="tooltip-value">${data.value.toFixed(3)}</div>
+                <div class="tooltip-value">${formatNumber(data.value)}</div>
             </div>
         `;
     }
