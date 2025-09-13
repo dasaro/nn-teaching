@@ -6,6 +6,28 @@ An educational neural network visualization tool that demonstrates how AI learns
 
 Click the link above to instantly run the app - no download or setup required!
 
+## 🖥️ Interface Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🐶 Image Selection        📊 Neural Network         🎯 AI  │
+│  ┌─────────┐              ┌─────────────────┐      ┌─────┐   │
+│  │  🐕 Dog │              │ Input → Hidden  │      │ 🐕  │   │
+│  │ 🐱 Cat  │   →  🧠  →   │   ↓      ↓      │  →   │72.3%│   │
+│  │ 🚗 Car  │              │ Hidden → Output │      │ RED │   │
+│  │ 🌳 Tree │              │                 │      └─────┘   │
+│  └─────────┘              └─────────────────┘               │
+│                                                             │
+│  📚 [Learn] 🔄 [Reset]  Speed: ━━━●━━━                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Elements:**
+- **Left**: Click images to test different objects  
+- **Center**: Watch neurons activate and connections light up
+- **Right**: See AI prediction with confidence percentage
+- **Bottom**: Control learning and animation speed
+
 ## ✨ Features
 
 - **🎓 Dual-Mode Learning**: Student view (simple explanations) + Expert view (detailed mathematical operations)
