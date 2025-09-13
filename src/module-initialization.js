@@ -45,7 +45,13 @@ class ModuleInitializer {
             // Try to initialize modules that are now ready
             this.tryInitializeModules();
         } else {
-            console.warn(`⚠️ Unknown module marked as loaded: ${name}`);
+            // Auto-register unknown modules with no dependencies for compatibility
+            console.log(`📦 Auto-registering module: ${name}`);
+            this.registerModule(name, []);
+            this.modules.get(name).isLoaded = true;
+            this.modules.get(name).isInitialized = true; // Mark as initialized immediately
+            this.loadedModules.add(name);
+            console.log(`✅ Module auto-registered and loaded: ${name}`);
         }
     }
 

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module System Test - Clean Console</title>
+    <style>
+        body { font-family: monospace; margin: 20px; background: #f5f5f5; }
+        .test-result { margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        #consoleOutput { background: #000; color: #0f0; padding: 15px; border-radius: 5px; font-family: monospace; max-height: 400px; overflow-y: auto; }
+        .console-line { margin: 2px 0; }
+        .console-error { color: #f55; }
+        .console-warn { color: #ff5; }
+        .console-info { color: #5ff; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Module System Test - Console Output Capture</h1>
+    <div id="testResults"></div>
+    
+    <h3>📊 Live Console Output</h3>
+    <div id="consoleOutput"></div>
+
+    <!-- Load modules in correct order -->
+    <script src="locales/en.js"></script>
+    <script src="locales/it.js"></script>
+    <script src="i18n.js"></script>
+    <script src="src/i18n-utils.js"></script>
+    <script src="src/module-initialization.js"></script>
+    
+    <!-- Core modules that should trigger auto-registration -->
+    <script defer src="src/real-image-data.js"></script>
+    <script defer src="src/image-data.js"></script>
+    <script defer src="src/network-api.js"></script>
+    <script defer src="src/bootstrap.js"></script>
+
+    <script>
+        let testCount = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+        let consoleLines = [];
+
+        // Capture all console output
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn,
+            info: console.info
+        };
+
+        function addToConsole(message, type = 'log') {
+            consoleLines.push({message, type, timestamp: new Date().toLocaleTimeString()});
+            updateConsoleDisplay();
+            
+            // Call original console function
+            originalConsole[type](message);
+        }
+
+        function updateConsoleDisplay() {
+            const consoleDiv = document.getElementById('consoleOutput');
+            const lastLines = consoleLines.slice(-20); // Show last 20 lines
+            
+            consoleDiv.innerHTML = lastLines.map(line => 
+                `<div class="console-line console-${line.type}">[${line.timestamp}] ${line.message}</div>`
+            ).join('');
+            
+            // Scroll to bottom
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        // Override console methods
+        console.log = (...args) => addToConsole(args.join(' '), 'log');
+        console.error = (...args) => addToConsole(args.join(' '), 'error');
+        console.warn = (...args) => addToConsole(args.join(' '), 'warn');
+        console.info = (...args) => addToConsole(args.join(' '), 'info');
+
+        function logResult(testName, success, message) {
+            testCount++;
+            const div = document.createElement('div');
+            div.className = `test-result ${success ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>Test ${testCount}: ${testName}</strong><br>${message}`;
+            document.getElementById('testResults').appendChild(div);
+            
+            if (success) {
+                passedTests++;
+            } else {
+                failedTests++;
+            }
+        }
+
+        function logInfo(message) {
+            const div = document.createElement('div');
+            div.className = 'test-result info';
+            div.innerHTML = `<strong>Info:</strong> ${message}`;
+            document.getElementById('testResults').appendChild(div);
+        }
+
+        // Wait for modules to load then run tests
+        setTimeout(() => {
+            runModuleTests();
+        }, 3000);
+
+        function runModuleTests() {
+            logInfo('Testing module initialization system after 3 seconds...');
+
+            // Test 1: Module initialization system exists
+            try {
+                const hasModuleSystem = !!(window.moduleInitializer && window.moduleLoaded);
+                logResult('Module System Available', hasModuleSystem, 
+                    hasModuleSystem ? 'ModuleInitializer and helper functions available' : 'Module system missing');
+            } catch (error) {
+                logResult('Module System Available', false, `Error: ${error.message}`);
+            }
+
+            // Test 2: Check for "unknown module" warnings in console
+            try {
+                const warningLines = consoleLines.filter(line => 
+                    line.message.toLowerCase().includes('unknown module') && line.type === 'warn'
+                );
+                
+                logResult('No Unknown Module Warnings', warningLines.length === 0, 
+                    warningLines.length === 0 ? 'No unknown module warnings found' : 
+                    `Found ${warningLines.length} warnings: ${warningLines.map(w => w.message).join(', ')}`);
+            } catch (error) {
+                logResult('No Unknown Module Warnings', false, `Error: ${error.message}`);
+            }
+
+            // Test 3: Check module status
+            try {
+                if (window.moduleInitializer) {
+                    const status = window.moduleInitializer.getStatus();
+                    const autoRegistered = status.modules.filter(m => 
+                        ['network-api', 'bootstrap', 'i18n-utils'].includes(m.name)
+                    );
+                    
+                    logResult('Core Modules Registered', autoRegistered.length >= 2, 
+                        `Found ${autoRegistered.length} core modules: ${autoRegistered.map(m => m.name).join(', ')}`);
+                    
+                    logInfo(`Total modules: ${status.totalModules}, Initialized: ${status.initializedModules}`);
+                }
+            } catch (error) {
+                logResult('Core Modules Registered', false, `Error: ${error.message}`);
+            }
+
+            // Test 4: Check console output for clean initialization
+            try {
+                const errorLines = consoleLines.filter(line => line.type === 'error');
+                const cleanInit = errorLines.length === 0;
+                
+                logResult('Clean Console Output', cleanInit, 
+                    cleanInit ? 'No console errors found' : 
+                    `Found ${errorLines.length} errors: ${errorLines.slice(0, 3).map(e => e.message).join(', ')}`);
+            } catch (error) {
+                logResult('Clean Console Output', false, `Error: ${error.message}`);
+            }
+
+            // Summary
+            setTimeout(() => {
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = `test-result ${failedTests === 0 ? 'success' : 'error'}`;
+                summaryDiv.innerHTML = `<strong>Module System Test Summary:</strong><br>
+                    Total Tests: ${testCount}<br>
+                    Passed: ${passedTests}<br>
+                    Failed: ${failedTests}<br>
+                    ${failedTests === 0 ? '🎉 Module system working cleanly!' : '⚠️ Issues found in module system.'}`;
+                document.getElementById('testResults').appendChild(summaryDiv);
+            }, 1000);
+        }
+
+        // Show initial console state
+        addToConsole('Test page loaded, capturing console output...', 'info');
+    </script>
+</body>
+</html>
