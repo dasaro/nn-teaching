@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Integration Test - Neural Network Variable Layers</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>Neural Network Variable Layer Integration Test</h1>
+    
+    <div id="test-results"></div>
+    
+    <script src="locales/en.js"></script>
+    <script src="src/utilities.js"></script>
+    <script src="src/neural-math.js"></script>
+    <script src="src/globals-and-config.js"></script>
+    <script src="src/bootstrap.js"></script>
+    <script src="src/network-visualizer.js"></script>
+    <script src="src/animation-engine.js"></script>
+    <script src="src/ui-controls.js"></script>
+    
+    <script>
+        function addTestResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            document.getElementById('test-results').appendChild(div);
+        }
+        
+        function runIntegrationTests() {
+            try {
+                addTestResult('Starting integration tests...', 'info');
+                
+                // Test 1: Check if variable layer functions exist
+                if (typeof forwardPropagateVariableLayers === 'function') {
+                    addTestResult('✅ forwardPropagateVariableLayers function exists', 'success');
+                } else {
+                    addTestResult('❌ forwardPropagateVariableLayers function missing', 'error');
+                }
+                
+                if (typeof backpropagateVariableLayers === 'function') {
+                    addTestResult('✅ backpropagateVariableLayers function exists', 'success');
+                } else {
+                    addTestResult('❌ backpropagateVariableLayers function missing', 'error');
+                }
+                
+                if (typeof updateNetworkToVariableLayers === 'function') {
+                    addTestResult('✅ updateNetworkToVariableLayers function exists', 'success');
+                } else {
+                    addTestResult('❌ updateNetworkToVariableLayers function missing', 'error');
+                }
+                
+                // Test 2: Test network configuration for different layer counts
+                const testConfigs = [
+                    { layers: [], name: 'Perceptron (0 hidden layers)' },
+                    { layers: [4], name: '1 hidden layer (4 neurons)' },
+                    { layers: [6, 4], name: '2 hidden layers (6, 4 neurons)' },
+                    { layers: [8, 6, 4], name: '3 hidden layers (8, 6, 4 neurons)' }
+                ];
+                
+                for (const config of testConfigs) {
+                    try {
+                        const success = updateNetworkToVariableLayers(config.layers);
+                        if (success) {
+                            addTestResult(`✅ ${config.name}: Network updated successfully`, 'success');
+                            
+                            // Test forward propagation
+                            const inputValues = [0.5, 0.3, 0.8, 0.2];
+                            const result = forwardPropagateCurrentNetwork(inputValues);
+                            
+                            if (result && result.activations) {
+                                addTestResult(`  ✅ Forward propagation works for ${config.name}`, 'success');
+                                
+                                // Test backpropagation
+                                const target = [1, 0];
+                                const backpropResult = backpropagateCurrentNetwork(target);
+                                
+                                if (backpropResult) {
+                                    addTestResult(`  ✅ Backpropagation works for ${config.name}`, 'success');
+                                } else {
+                                    addTestResult(`  ❌ Backpropagation failed for ${config.name}`, 'error');
+                                }
+                            } else {
+                                addTestResult(`  ❌ Forward propagation failed for ${config.name}`, 'error');
+                            }
+                        } else {
+                            addTestResult(`❌ ${config.name}: Network update failed`, 'error');
+                        }
+                    } catch (error) {
+                        addTestResult(`❌ ${config.name}: Error - ${error.message}`, 'error');
+                    }
+                }
+                
+                // Test 3: Check animation engine integration
+                if (typeof animateForwardPropagation === 'function') {
+                    addTestResult('✅ Animation engine forward propagation function exists', 'success');
+                } else {
+                    addTestResult('❌ Animation engine forward propagation function missing', 'error');
+                }
+                
+                if (typeof animateBackpropagation === 'function') {
+                    addTestResult('✅ Animation engine backpropagation function exists', 'success');
+                } else {
+                    addTestResult('❌ Animation engine backpropagation function missing', 'error');
+                }
+                
+                addTestResult('Integration tests completed!', 'info');
+                
+            } catch (error) {
+                addTestResult(`❌ Critical error during testing: ${error.message}`, 'error');
+            }
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', runIntegrationTests);
+    </script>
+</body>
+</html>

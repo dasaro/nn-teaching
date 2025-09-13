@@ -10,43 +10,116 @@ This is a neural network visualization app designed for educational purposes. It
 
 Simply open `index.html` in any modern web browser. No build process, dependencies, or server setup required.
 
-## Architecture
+## Development Guidelines
 
-The application consists of three main files:
+### Version Control Best Practices
+- **ALWAYS push to git before implementing any major changes**
+- Use descriptive commit messages that explain the purpose of changes
+- Test functionality after each significant modification
+- Consider creating feature branches for experimental changes
 
-- **`index.html`**: Main structure with sections for image input, neural network visualization, results, and controls
-- **`script.js`**: Core application logic handling network simulation and animations
-- **`style.css`**: Visual styling and animation definitions
+### Code Quality Standards
+- **Maintain clean, modular implementation** - avoid code duplication across modules
+- **Keep modules focused** - each module should have a single, well-defined responsibility
+- **Create new modules for new features** - don't add unrelated functionality to existing modules
+- **Ensure robust error handling** - check for undefined variables and missing functions
 
-### Key Components in script.js
+## Modular Architecture
 
-**Network Configuration**: Fixed 3-layer architecture (64 input → 8 hidden → 2 output neurons)
+The application is now **highly modular** with each module handling specific functionality. When making changes, **ALWAYS modify the correct module** based on the functionality being addressed:
 
-**Core Data Structures**:
-- `networkConfig`: Defines layer sizes
-- `weights`: Stores connection weights between layers
-- `activations`: Holds neuron activation values
+### Core Application Files
+- **`index.html`**: Main HTML structure and UI layout
+- **`script.js`**: Legacy monolithic file (being phased out)
+- **`style.css`**: All CSS styling and animations
 
-**Main Functions**:
-- `initializeNetwork()`: Sets up DOM structure and initializes random weights
-- `createDogImage()`: Generates programmatic 8x8 dog image on canvas
-- `startDemo()`: Orchestrates the full animation sequence
-- `animateForwardPropagation()`: Shows data flow from input through hidden to output layers
-- `animateBackpropagation()`: Simulates weight updates with visual feedback
+### Modular JavaScript Architecture (`src/` directory)
 
-### Animation System
+#### **`src/bootstrap.js`**
+**Purpose**: Application initialization and startup sequence
+**Responsibilities**:
+- Initialize network configuration
+- Set up DOM event listeners
+- Bootstrap the application on page load
+**Modify when**: Changing startup behavior, initialization sequence, or adding new global event listeners
 
-The app uses a step-by-step animation system controlled by:
-- `animationSpeed`: User-controllable speed (1-10 scale)
-- `sleep()` function: Creates delays proportional to animation speed
-- CSS classes for visual states: `.active`, `.flowing`, `.backprop-animation`
+#### **`src/globals-and-config.js`**
+**Purpose**: Global variables, constants, and configuration management
+**Responsibilities**:
+- Define network architecture parameters
+- Store global state variables
+- Manage application-wide configuration
+**Modify when**: Adding new global variables, changing network architecture, or updating configuration parameters
 
-### DOM Structure
+#### **`src/network-visualizer.js`**
+**Purpose**: DOM creation and visual representation of the neural network
+**Responsibilities**:
+- Generate neuron and connection DOM elements
+- Create SVG network visualization
+- Handle network layout and positioning
+**Modify when**: Changing visual network representation, adding new layer types, or modifying network structure display
 
-The visualization area is divided into three sections:
-1. **Input section**: Canvas image + 8x8 pixel grid showing normalized values
-2. **Network section**: Three layers with connecting lines showing weights
-3. **Result section**: Classification probabilities and final prediction
+#### **`src/animation-engine.js`**
+**Purpose**: All animation logic and visual effects
+**Responsibilities**:
+- Forward propagation animations
+- Backpropagation animations
+- Neuron activation effects
+- Connection flow animations
+**Modify when**: Adding new animations, changing timing, or fixing animation sequence issues
+
+#### **`src/neural-math.js`**
+**Purpose**: Mathematical computations for neural network operations
+**Responsibilities**:
+- Forward pass calculations
+- Backpropagation computations
+- Weight updates and gradients
+- Activation functions
+**Modify when**: Changing mathematical algorithms, adding new activation functions, or modifying learning mechanisms
+
+#### **`src/image-processor.js`**
+**Purpose**: Image handling and processing
+**Responsibilities**:
+- Load and preprocess images
+- Convert images to neural network input format
+- Handle image canvas operations
+**Modify when**: Adding new image types, changing preprocessing steps, or modifying input format
+
+#### **`src/training-engine.js`**
+**Purpose**: Neural network training logic and learning algorithms
+**Responsibilities**:
+- Training loop management
+- Loss calculation
+- Weight optimization
+- Training state management
+**Modify when**: Implementing new training algorithms, changing loss functions, or modifying learning behavior
+
+#### **`src/ui-controls.js`**
+**Purpose**: User interface controls and interaction handling
+**Responsibilities**:
+- Button event handlers
+- Form controls
+- Speed controls
+- User input validation
+**Modify when**: Adding new UI controls, changing button behavior, or modifying user interactions
+
+#### **`src/utilities.js`**
+**Purpose**: Shared utility functions and helper methods
+**Responsibilities**:
+- Common helper functions
+- DOM manipulation utilities
+- State management helpers
+- Utility calculations
+**Modify when**: Adding reusable functions, creating shared utilities, or implementing common operations
+
+## Module Selection Guidelines
+
+When implementing new features or fixing issues:
+
+1. **Identify the primary concern**: What aspect of the application does this change affect?
+2. **Select the appropriate module**: Use the module descriptions above to determine which file should be modified
+3. **Create new modules if needed**: If functionality doesn't fit existing modules, create a new module in the `src/` directory
+4. **Avoid cross-module pollution**: Don't add unrelated functionality to existing modules
 
 ## Key Features
 
@@ -58,8 +131,18 @@ The visualization area is divided into three sections:
 
 **Visual Feedback**: Neurons change color/size when active, connections animate data flow, weights display current values and updates
 
-## Customization Points
+## DOM Structure
 
-To modify the network architecture, update `networkConfig` object and corresponding DOM creation functions. The pixel grid size and image generation logic in `createDogImage()` may need adjustment for different input dimensions.
+The visualization area is divided into three sections:
+1. **Input section**: Canvas image + 8x8 pixel grid showing normalized values
+2. **Network section**: Three layers with connecting lines showing weights
+3. **Result section**: Classification probabilities and final prediction
 
-Animation timing can be modified through the `sleep()` function and CSS animation durations in `style.css`.
+## Development Workflow
+
+1. **Before major changes**: Always commit current work to git
+2. **Identify target module**: Determine which module(s) need modification
+3. **Implement changes**: Make focused, clean modifications
+4. **Test thoroughly**: Verify functionality works as expected
+5. **Commit changes**: Push to git with descriptive commit message
+6. **Document updates**: Update this CLAUDE.md file if architecture changes
