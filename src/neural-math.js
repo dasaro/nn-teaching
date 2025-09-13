@@ -110,27 +110,54 @@ function forwardPropagationSilent(inputValues, debugMode = false) {
         debugFeatureRepresentation(inputValues, 'FORWARD_PROP');
     }
     
-    // Compute hidden layer
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        let sum = 0;
-        for (let i = 0; i < networkConfig.inputSize; i++) {
-            sum += activations.input[i] * weights.inputToHidden[h][i];
-        }
-        activations.hidden[h] = leakyReLU(sum); // Leaky ReLU activation
+    // Variable layer forward propagation
+    let previousLayerActivations = activations.input;
+    let previousLayerSize = networkConfig.inputSize;
+    
+    // Process each hidden layer
+    for (let layerIndex = 0; layerIndex < networkConfig.hiddenLayers.length; layerIndex++) {
+        const currentLayerSize = networkConfig.hiddenLayers[layerIndex];
         
-        // Check for NaN
-        if (isNaN(activations.hidden[h])) {
-            console.error('NaN in hidden activation!');
-            activations.hidden[h] = 0;
+        // Compute current hidden layer
+        for (let h = 0; h < currentLayerSize; h++) {
+            let sum = 0;
+            for (let prev = 0; prev < previousLayerSize; prev++) {
+                sum += previousLayerActivations[prev] * weights.layers[layerIndex][h][prev];
+            }
+            activations.hiddenLayers[layerIndex][h] = leakyReLU(sum); // Leaky ReLU activation
+            
+            // Check for NaN
+            if (isNaN(activations.hiddenLayers[layerIndex][h])) {
+                console.error(`NaN in hidden layer ${layerIndex} activation!`);
+                activations.hiddenLayers[layerIndex][h] = 0;
+            }
         }
+        
+        // Update for next iteration
+        previousLayerActivations = activations.hiddenLayers[layerIndex];
+        previousLayerSize = currentLayerSize;
+        
+        // Backward compatibility: set activations.hidden for first hidden layer
+        if (layerIndex === 0) {
+            activations.hidden = activations.hiddenLayers[0];
+        }
+    }
+    
+    // Handle case with no hidden layers (direct input to output)
+    if (networkConfig.hiddenLayers.length === 0) {
+        previousLayerActivations = activations.input;
+        previousLayerSize = networkConfig.inputSize;
+        activations.hidden = []; // Empty for backward compatibility
     }
     
     // Compute output layer (raw logits)
     const rawOutputs = [];
+    const outputLayerIndex = networkConfig.hiddenLayers.length; // Output layer is after all hidden layers
+    
     for (let o = 0; o < networkConfig.outputSize; o++) {
         let sum = 0;
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
-            sum += activations.hidden[h] * weights.hiddenToOutput[o][h];
+        for (let prev = 0; prev < previousLayerSize; prev++) {
+            sum += previousLayerActivations[prev] * weights.layers[outputLayerIndex][o][prev];
         }
         rawOutputs[o] = sum;
         
@@ -174,8 +201,7 @@ function backpropagationSilent(target, debugMode = false) {
     let initialWeights = null;
     if (debugMode) {
         initialWeights = {
-            inputToHidden: weights.inputToHidden.map(row => [...row]),
-            hiddenToOutput: weights.hiddenToOutput.map(row => [...row])
+            layers: weights.layers.map(layer => layer.map(neuron => [...neuron]))
         };
     }
     
@@ -198,94 +224,114 @@ function backpropagationSilent(target, debugMode = false) {
         }
     }
     
-    // Update output to hidden weights with gradient clipping
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
-            let gradient = outputErrors[o] * activations.hidden[h];
-            
-            // Add L2 regularization (weight decay) to prevent overfitting
-            const l2Lambda = 0.001; // Very light regularization for better generalization
-            gradient -= l2Lambda * weights.hiddenToOutput[o][h] / networkConfig.learningRate;
-            
-            // Gradient clipping to prevent explosion
-            gradient = Math.max(-5, Math.min(5, gradient));
-            
-            // Simple momentum update with lower momentum for better generalization
-            const momentumFactor = 0.5; // Reduced momentum for stability
-            momentum.hiddenToOutput[o][h] = momentumFactor * momentum.hiddenToOutput[o][h] + 
-                                           networkConfig.learningRate * gradient;
-            
-            const weightUpdate = momentum.hiddenToOutput[o][h];
-            
-            // Check for NaN
-            if (isNaN(weightUpdate)) {
-                console.error('NaN in weight update!');
-                continue;
-            }
-            
-            // Store weight change for pedagogical visualization
-            const oldWeight = weights.hiddenToOutput[o][h];
-            weights.hiddenToOutput[o][h] += weightUpdate;
-            
-            // Ensure weight stays within reasonable bounds
-            weights.hiddenToOutput[o][h] = clampWeight(weights.hiddenToOutput[o][h], -3, 3);
-            
-            // Track the actual change that occurred
-            weightChanges.hiddenToOutput[o][h] = weights.hiddenToOutput[o][h] - weightChanges.lastWeights.hiddenToOutput[o][h];
-        }
-    }
+    // Variable layer backpropagation - work backwards from output
+    const layerErrors = [];
+    const totalLayers = networkConfig.hiddenLayers.length + 1; // +1 for output layer
     
-    // Calculate hidden layer errors (backpropagated)
-    const hiddenErrors = [];
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        let error = 0;
-        for (let o = 0; o < networkConfig.outputSize; o++) {
-            error += outputErrors[o] * weights.hiddenToOutput[o][h];
-        }
-        // Leaky ReLU derivative: 1 if hidden activation > 0, 0.1 otherwise
-        hiddenErrors[h] = error * leakyReLUDerivative(activations.hidden[h]);
+    // Start with output layer errors
+    layerErrors[totalLayers - 1] = outputErrors;
+    
+    // Backpropagate through all layers (output and hidden)
+    for (let layerIndex = totalLayers - 1; layerIndex >= 0; layerIndex--) {
+        const currentErrors = layerErrors[layerIndex];
+        const isOutputLayer = (layerIndex === totalLayers - 1);
+        const currentLayerSize = isOutputLayer ? networkConfig.outputSize : networkConfig.hiddenLayers[layerIndex];
         
-        // Check for NaN
-        if (isNaN(hiddenErrors[h])) {
-            console.error('NaN in hidden error!');
-            hiddenErrors[h] = 0;
+        // Determine previous layer info
+        let previousLayerActivations, previousLayerSize;
+        if (layerIndex === 0) {
+            // First hidden layer connects to input
+            previousLayerActivations = activations.input;
+            previousLayerSize = networkConfig.inputSize;
+        } else {
+            // Other layers connect to previous hidden layer
+            previousLayerActivations = activations.hiddenLayers[layerIndex - 1];
+            previousLayerSize = networkConfig.hiddenLayers[layerIndex - 1];
+        }
+        
+        // Update weights for current layer
+        for (let current = 0; current < currentLayerSize; current++) {
+            for (let prev = 0; prev < previousLayerSize; prev++) {
+                let gradient = currentErrors[current] * previousLayerActivations[prev];
+                
+                // Add L2 regularization (weight decay)
+                const l2Lambda = 0.001;
+                gradient -= l2Lambda * weights.layers[layerIndex][current][prev] / networkConfig.learningRate;
+                
+                // Gradient clipping
+                gradient = Math.max(-5, Math.min(5, gradient));
+                
+                // Momentum update
+                const momentumFactor = 0.5;
+                momentum.layers[layerIndex][current][prev] = momentumFactor * momentum.layers[layerIndex][current][prev] + 
+                                                           networkConfig.learningRate * gradient;
+                
+                const weightUpdate = momentum.layers[layerIndex][current][prev];
+                
+                // Check for NaN
+                if (isNaN(weightUpdate)) {
+                    console.error(`NaN in layer ${layerIndex} weight update!`);
+                    continue;
+                }
+                
+                // Update weight
+                weights.layers[layerIndex][current][prev] += weightUpdate;
+                
+                // Ensure weight stays within bounds
+                weights.layers[layerIndex][current][prev] = clampWeight(weights.layers[layerIndex][current][prev], -3, 3);
+                
+                // Track change for visualization
+                if (weightChanges.layers && weightChanges.layers[layerIndex]) {
+                    weightChanges.layers[layerIndex][current][prev] = 
+                        weights.layers[layerIndex][current][prev] - weightChanges.lastWeights.layers[layerIndex][current][prev];
+                }
+            }
+        }
+        
+        // Calculate errors for previous layer (if not input layer)
+        if (layerIndex > 0) {
+            const prevLayerSize = layerIndex === 1 ? networkConfig.inputSize : networkConfig.hiddenLayers[layerIndex - 1];
+            layerErrors[layerIndex - 1] = [];
+            
+            for (let prev = 0; prev < prevLayerSize; prev++) {
+                let error = 0;
+                for (let current = 0; current < currentLayerSize; current++) {
+                    error += currentErrors[current] * weights.layers[layerIndex][current][prev];
+                }
+                
+                // Apply activation derivative (Leaky ReLU for hidden layers)
+                if (layerIndex > 0) { // Previous layer is hidden
+                    const activation = layerIndex === 1 ? activations.input[prev] : activations.hiddenLayers[layerIndex - 1][prev];
+                    layerErrors[layerIndex - 1][prev] = error * leakyReLUDerivative(activation);
+                } else {
+                    layerErrors[layerIndex - 1][prev] = error; // Input layer (no activation derivative)
+                }
+                
+                // Check for NaN
+                if (isNaN(layerErrors[layerIndex - 1][prev])) {
+                    console.error(`NaN in layer ${layerIndex - 1} error!`);
+                    layerErrors[layerIndex - 1][prev] = 0;
+                }
+            }
         }
     }
     
-    // Update input to hidden weights with gradient clipping
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        for (let i = 0; i < networkConfig.inputSize; i++) {
-            let gradient = hiddenErrors[h] * activations.input[i];
-            
-            // Add L2 regularization (weight decay) to prevent overfitting
-            const l2Lambda = 0.001; // Very light regularization for better generalization
-            gradient -= l2Lambda * weights.inputToHidden[h][i] / networkConfig.learningRate;
-            
-            // Gradient clipping to prevent explosion
-            gradient = Math.max(-5, Math.min(5, gradient));
-            
-            // Simple momentum update with lower momentum for better generalization
-            const momentumFactor = 0.5; // Reduced momentum for stability
-            momentum.inputToHidden[h][i] = momentumFactor * momentum.inputToHidden[h][i] + 
-                                          networkConfig.learningRate * gradient;
-            
-            const weightUpdate = momentum.inputToHidden[h][i];
-            
-            // Check for NaN
-            if (isNaN(weightUpdate)) {
-                console.error('NaN in input weight update!');
-                continue;
+    // Backward compatibility: populate old weight change structures
+    if (networkConfig.hiddenLayers.length > 0 && weightChanges.inputToHidden && weightChanges.hiddenToOutput) {
+        // Copy first hidden layer changes
+        for (let h = 0; h < networkConfig.hiddenLayers[0] && h < weightChanges.inputToHidden.length; h++) {
+            for (let i = 0; i < networkConfig.inputSize && i < weightChanges.inputToHidden[h].length; i++) {
+                weightChanges.inputToHidden[h][i] = weightChanges.layers[0][h][i] || 0;
             }
-            
-            // Store weight change for pedagogical visualization
-            const oldWeight = weights.inputToHidden[h][i];
-            weights.inputToHidden[h][i] += weightUpdate;
-            
-            // Ensure weight stays within reasonable bounds
-            weights.inputToHidden[h][i] = clampWeight(weights.inputToHidden[h][i], -3, 3);
-            
-            // Track the actual change that occurred
-            weightChanges.inputToHidden[h][i] = weights.inputToHidden[h][i] - weightChanges.lastWeights.inputToHidden[h][i];
+        }
+        
+        // Copy last hidden to output changes
+        const lastHiddenIndex = networkConfig.hiddenLayers.length - 1;
+        const outputIndex = networkConfig.hiddenLayers.length;
+        for (let o = 0; o < networkConfig.outputSize && o < weightChanges.hiddenToOutput.length; o++) {
+            for (let h = 0; h < networkConfig.hiddenLayers[lastHiddenIndex] && h < weightChanges.hiddenToOutput[o].length; h++) {
+                weightChanges.hiddenToOutput[o][h] = weightChanges.layers[outputIndex][o][h] || 0;
+            }
         }
     }
     
@@ -299,29 +345,75 @@ function backpropagationSilent(target, debugMode = false) {
 }
 
 function initializeMomentum() {
-    if (!momentum.inputToHidden) {
-        momentum.inputToHidden = Array.from({length: networkConfig.hiddenSize}, () =>
-            Array.from({length: networkConfig.inputSize}, () => 0)
-        );
-    }
-    if (!momentum.hiddenToOutput) {
-        momentum.hiddenToOutput = Array.from({length: networkConfig.outputSize}, () =>
-            Array.from({length: networkConfig.hiddenSize}, () => 0)
-        );
+    // Initialize momentum for variable layer structure
+    if (!momentum.layers) {
+        momentum.layers = [];
+        const totalLayers = networkConfig.hiddenLayers.length + 1; // +1 for output layer
+        
+        for (let layerIndex = 0; layerIndex < totalLayers; layerIndex++) {
+            const isOutputLayer = (layerIndex === totalLayers - 1);
+            const currentLayerSize = isOutputLayer ? networkConfig.outputSize : networkConfig.hiddenLayers[layerIndex];
+            const previousLayerSize = layerIndex === 0 ? networkConfig.inputSize : networkConfig.hiddenLayers[layerIndex - 1];
+            
+            momentum.layers[layerIndex] = Array.from({length: currentLayerSize}, () =>
+                Array.from({length: previousLayerSize}, () => 0)
+            );
+        }
     }
     
-    // Initialize weight change tracking
-    if (!weightChanges.inputToHidden) {
-        weightChanges.inputToHidden = Array.from({length: networkConfig.hiddenSize}, () =>
-            Array.from({length: networkConfig.inputSize}, () => 0)
-        );
-        weightChanges.lastWeights.inputToHidden = JSON.parse(JSON.stringify(weights.inputToHidden));
+    // Initialize weight change tracking for variable layers
+    if (!weightChanges.layers) {
+        weightChanges.layers = [];
+        weightChanges.lastWeights.layers = [];
+        const totalLayers = networkConfig.hiddenLayers.length + 1;
+        
+        for (let layerIndex = 0; layerIndex < totalLayers; layerIndex++) {
+            const isOutputLayer = (layerIndex === totalLayers - 1);
+            const currentLayerSize = isOutputLayer ? networkConfig.outputSize : networkConfig.hiddenLayers[layerIndex];
+            const previousLayerSize = layerIndex === 0 ? networkConfig.inputSize : networkConfig.hiddenLayers[layerIndex - 1];
+            
+            weightChanges.layers[layerIndex] = Array.from({length: currentLayerSize}, () =>
+                Array.from({length: previousLayerSize}, () => 0)
+            );
+            
+            if (weights.layers && weights.layers[layerIndex]) {
+                weightChanges.lastWeights.layers[layerIndex] = JSON.parse(JSON.stringify(weights.layers[layerIndex]));
+            }
+        }
     }
-    if (!weightChanges.hiddenToOutput) {
-        weightChanges.hiddenToOutput = Array.from({length: networkConfig.outputSize}, () =>
-            Array.from({length: networkConfig.hiddenSize}, () => 0)
-        );
-        weightChanges.lastWeights.hiddenToOutput = JSON.parse(JSON.stringify(weights.hiddenToOutput));
+    
+    // Backward compatibility: initialize old structures if they exist
+    if (networkConfig.hiddenLayers.length > 0) {
+        if (!momentum.inputToHidden) {
+            momentum.inputToHidden = Array.from({length: networkConfig.hiddenLayers[0]}, () =>
+                Array.from({length: networkConfig.inputSize}, () => 0)
+            );
+        }
+        if (!momentum.hiddenToOutput) {
+            const lastHiddenSize = networkConfig.hiddenLayers[networkConfig.hiddenLayers.length - 1];
+            momentum.hiddenToOutput = Array.from({length: networkConfig.outputSize}, () =>
+                Array.from({length: lastHiddenSize}, () => 0)
+            );
+        }
+        
+        // Initialize weight change tracking for backward compatibility
+        if (!weightChanges.inputToHidden) {
+            weightChanges.inputToHidden = Array.from({length: networkConfig.hiddenLayers[0]}, () =>
+                Array.from({length: networkConfig.inputSize}, () => 0)
+            );
+            if (weights.inputToHidden) {
+                weightChanges.lastWeights.inputToHidden = JSON.parse(JSON.stringify(weights.inputToHidden));
+            }
+        }
+        if (!weightChanges.hiddenToOutput) {
+            const lastHiddenSize = networkConfig.hiddenLayers[networkConfig.hiddenLayers.length - 1];
+            weightChanges.hiddenToOutput = Array.from({length: networkConfig.outputSize}, () =>
+                Array.from({length: lastHiddenSize}, () => 0)
+            );
+            if (weights.hiddenToOutput) {
+                weightChanges.lastWeights.hiddenToOutput = JSON.parse(JSON.stringify(weights.hiddenToOutput));
+            }
+        }
     }
 }
 

@@ -189,25 +189,171 @@ let expertPanelVisible = false;
 // ============================================================================
 
 // Network structure optimized for stable learning - VISUAL FEATURES
+// Network configuration with variable layer support (0-3 hidden layers, max 8 neurons each)
 const networkConfig = {
     inputSize: 4, // 4 abstract feature patterns: [Pattern_A, Pattern_B, Pattern_C, Pattern_D]
-    hiddenSize: 4, // Optimal size: enough capacity without overfitting
     outputSize: 2,  // dog/not-dog
-    learningRate: 0.1 // Conservative learning rate for better generalization
+    learningRate: 0.1, // Conservative learning rate for better generalization
+    
+    // Variable hidden layer architecture
+    hiddenLayers: [4], // Array of hidden layer sizes. Examples:
+                       // [] = no hidden layers (direct input->output)
+                       // [4] = 1 hidden layer with 4 neurons (current)
+                       // [6, 3] = 2 hidden layers with 6 and 3 neurons
+                       // [8, 6, 4] = 3 hidden layers with 8, 6, and 4 neurons
+    
+    // Constraints
+    maxHiddenLayers: 3,
+    maxNeuronsPerLayer: 8,
+    
+    // Backward compatibility
+    get hiddenSize() { 
+        return this.hiddenLayers.length > 0 ? this.hiddenLayers[0] : 0; 
+    },
+    set hiddenSize(value) {
+        this.hiddenLayers = value > 0 ? [value] : [];
+    }
 };
 
-// Network weights
+// Network weights - supports variable layer architecture
 let weights = {
-    inputToHidden: [],
-    hiddenToOutput: []
+    // For backward compatibility, maintain these properties but make them dynamic
+    get inputToHidden() { 
+        return this.layers.length > 0 ? this.layers[0] : []; 
+    },
+    set inputToHidden(value) { 
+        if (this.layers.length > 0) this.layers[0] = value; 
+    },
+    get hiddenToOutput() { 
+        return this.layers.length > 0 ? this.layers[this.layers.length - 1] : []; 
+    },
+    set hiddenToOutput(value) { 
+        if (this.layers.length > 0) this.layers[this.layers.length - 1] = value; 
+    },
+    
+    // New structure: array of weight matrices between each layer pair
+    layers: [] // Will be initialized based on networkConfig.hiddenLayers
+    // layers[0] = input -> first hidden (or output if no hidden)
+    // layers[1] = first hidden -> second hidden
+    // layers[n] = last hidden -> output
 };
 
-// Network activations
+// Network activations - supports variable layer architecture  
 let activations = {
     input: [1.0, 1.0, 1.0, 1.0], // Will be updated with abstract patterns: [Pattern_A, Pattern_B, Pattern_C, Pattern_D]
-    hidden: [0, 0, 0, 0], // 4 hidden neurons - optimal for this task
-    output: [0, 0]
+    output: [0, 0],
+    
+    // For backward compatibility
+    get hidden() { 
+        return this.hiddenLayers.length > 0 ? this.hiddenLayers[0] : []; 
+    },
+    set hidden(value) { 
+        if (this.hiddenLayers.length > 0) this.hiddenLayers[0] = value; 
+    },
+    
+    // New structure: array of hidden layer activations
+    hiddenLayers: [] // Will be initialized based on networkConfig.hiddenLayers
 };
+
+// ============================================================================
+// VARIABLE LAYER ARCHITECTURE UTILITIES
+// ============================================================================
+
+// Initialize network structure based on current configuration
+function initializeNetworkStructure() {
+    const { inputSize, outputSize, hiddenLayers } = networkConfig;
+    
+    console.log(`🧠 Initializing network: ${inputSize} → [${hiddenLayers.join(', ')}] → ${outputSize}`);
+    
+    // Initialize hidden layer activations
+    activations.hiddenLayers = hiddenLayers.map(size => new Array(size).fill(0));
+    
+    // Initialize weight matrices between each layer pair
+    weights.layers = [];
+    
+    if (hiddenLayers.length === 0) {
+        // Direct input -> output connection (no hidden layers)
+        weights.layers[0] = initializeWeightMatrix(outputSize, inputSize);
+    } else {
+        // Input -> first hidden layer
+        weights.layers[0] = initializeWeightMatrix(hiddenLayers[0], inputSize);
+        
+        // Hidden layer -> hidden layer connections
+        for (let i = 1; i < hiddenLayers.length; i++) {
+            weights.layers[i] = initializeWeightMatrix(hiddenLayers[i], hiddenLayers[i-1]);
+        }
+        
+        // Last hidden layer -> output
+        weights.layers[hiddenLayers.length] = initializeWeightMatrix(outputSize, hiddenLayers[hiddenLayers.length - 1]);
+    }
+    
+    // Backward compatibility: maintain old weight structure references for UI
+    if (networkConfig.hiddenLayers.length > 0) {
+        // First hidden layer weights (input -> first hidden)
+        weights.inputToHidden = weights.layers[0];
+        
+        // Last hidden layer to output weights
+        const outputLayerIndex = networkConfig.hiddenLayers.length;
+        weights.hiddenToOutput = weights.layers[outputLayerIndex];
+    } else {
+        // No hidden layers: direct input to output
+        weights.inputToHidden = null;
+        weights.hiddenToOutput = weights.layers[0]; // Direct input->output connection
+    }
+    
+    console.log(`✅ Network structure initialized with ${weights.layers.length} weight matrices`);
+}
+
+// Initialize a weight matrix with random values
+function initializeWeightMatrix(outputSize, inputSize) {
+    const matrix = [];
+    for (let i = 0; i < outputSize; i++) {
+        matrix[i] = [];
+        for (let j = 0; j < inputSize; j++) {
+            // Xavier/Glorot initialization for better training stability
+            const limit = Math.sqrt(6 / (inputSize + outputSize));
+            matrix[i][j] = (Math.random() * 2 - 1) * limit;
+        }
+    }
+    return matrix;
+}
+
+// Validate and set new network architecture
+function setNetworkArchitecture(hiddenLayerSizes) {
+    const { maxHiddenLayers, maxNeuronsPerLayer } = networkConfig;
+    
+    // Validate constraints
+    if (hiddenLayerSizes.length > maxHiddenLayers) {
+        throw new Error(`Maximum ${maxHiddenLayers} hidden layers allowed`);
+    }
+    
+    for (const size of hiddenLayerSizes) {
+        if (size > maxNeuronsPerLayer || size < 1) {
+            throw new Error(`Each hidden layer must have 1-${maxNeuronsPerLayer} neurons`);
+        }
+    }
+    
+    // Update configuration
+    networkConfig.hiddenLayers = [...hiddenLayerSizes];
+    
+    // Reinitialize network structure
+    initializeNetworkStructure();
+    
+    console.log(`🔄 Network architecture updated to: [${hiddenLayerSizes.join(', ')}]`);
+}
+
+// Get current network architecture info
+function getNetworkInfo() {
+    const { inputSize, outputSize, hiddenLayers } = networkConfig;
+    return {
+        inputSize,
+        hiddenLayers: [...hiddenLayers],
+        outputSize,
+        totalLayers: hiddenLayers.length + 2, // +2 for input and output
+        totalConnections: weights.layers.reduce((sum, matrix) => 
+            sum + matrix.length * matrix[0].length, 0)
+    };
+}
 
 // Network positions for SVG drawing - optimized spacing with more vertical room
 const positions = {
@@ -307,7 +453,12 @@ window.networkConfig = {
     syncExpertConfigToLegacy: syncExpertConfigToLegacy,
     updateExpertConfig: updateExpertConfig,
     resetExpertDefaults: resetExpertDefaults,
-    applyExpertConfig: applyExpertConfig
+    applyExpertConfig: applyExpertConfig,
+    
+    // Variable architecture functions
+    setNetworkArchitecture: setNetworkArchitecture,
+    initializeNetworkStructure: initializeNetworkStructure,
+    getNetworkInfo: getNetworkInfo
 };
 
 window.uiControls = {

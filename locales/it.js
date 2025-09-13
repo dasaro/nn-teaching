@@ -86,8 +86,9 @@ window.i18nLocales.it = {
     "expertPanel.batchSize": "Dimensione Batch:",
     "expertPanel.networkArchitecture": "🏗️ Architettura Rete (Solo Lettura)",
     "expertPanel.inputSize": "Dimensione Input:",
-    "expertPanel.hiddenSize": "Dimensione Nascosto:",
+    "expertPanel.architecture": "Architettura:",
     "expertPanel.outputSize": "Dimensione Output:",
+    "expertPanel.totalWeights": "Pesi Totali:",
     "expertPanel.resetDefaults": "🔄 Reimposta Predefiniti",
     "expertPanel.apply": "✅ Applica e Riavvia Rete",
     

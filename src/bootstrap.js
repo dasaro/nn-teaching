@@ -5,22 +5,29 @@
 
 // Initialize network with properly scaled random weights
 function initializeNetwork() {
-    // Very small random weights to prevent bias
-    const scale = 0.1; // Much smaller weights
-    
     console.log('🔧 ===== NETWORK INITIALIZATION DEBUG =====');
     console.log(`🎲 Random seed check: ${Math.random().toFixed(6)}, ${Math.random().toFixed(6)}, ${Math.random().toFixed(6)}`);
     
-    weights.inputToHidden = Array.from({length: networkConfig.hiddenSize}, () =>
-        Array.from({length: networkConfig.inputSize}, () => 
-            (Math.random() * 2 - 1) * scale)
-    );
-    
-    // Initialize output weights even smaller and with slight bias toward balanced prediction
-    weights.hiddenToOutput = Array.from({length: networkConfig.outputSize}, (_, i) =>
-        Array.from({length: networkConfig.hiddenSize}, () => 
-            (Math.random() * 2 - 1) * scale * 0.5) // Even smaller output weights
-    );
+    // Use new variable architecture initialization if available
+    if (typeof initializeNetworkStructure === 'function') {
+        console.log('🔧 Using new variable architecture initialization');
+        initializeNetworkStructure();
+    } else {
+        console.log('🔧 Falling back to legacy initialization');
+        // Legacy initialization for backward compatibility
+        const scale = 0.1; // Much smaller weights
+        
+        weights.inputToHidden = Array.from({length: networkConfig.hiddenSize}, () =>
+            Array.from({length: networkConfig.inputSize}, () => 
+                (Math.random() * 2 - 1) * scale)
+        );
+        
+        // Initialize output weights even smaller
+        weights.hiddenToOutput = Array.from({length: networkConfig.outputSize}, (_, i) =>
+            Array.from({length: networkConfig.hiddenSize}, () => 
+                (Math.random() * 2 - 1) * scale * 0.5) // Even smaller output weights
+        );
+    }
     
     // DEBUG: Detailed weight analysis
     debugWeightInitialization();
@@ -170,6 +177,73 @@ console.log('  - animationEngine:', typeof window.animationEngine, `(${Object.ke
 console.log('🎯 All 7 modules initialized and ready for extraction!');
 
 // ============================================================================
+// DYNAMIC HTML UPDATES FOR VARIABLE ARCHITECTURE
+// ============================================================================
+
+/**
+ * Update HTML elements to reflect current network architecture
+ */
+function updateArchitectureDisplay() {
+    // Check if NetworkAPI is available and properly initialized
+    if (typeof NetworkAPI === 'undefined' || typeof NetworkAPI.getArchitecture !== 'function') {
+        console.warn('⚠️ NetworkAPI not available yet, skipping architecture display update');
+        return;
+    }
+    
+    try {
+        const arch = NetworkAPI.getArchitecture();
+        const stats = NetworkAPI.getStats();
+        
+        // Update expert panel displays
+        const inputSizeDisplay = document.getElementById('inputSizeDisplay');
+        const architectureDisplay = document.getElementById('architectureDisplay');
+        const outputSizeDisplay = document.getElementById('outputSizeDisplay');
+        const totalWeightsDisplay = document.getElementById('totalWeightsDisplay');
+        
+        if (inputSizeDisplay) inputSizeDisplay.textContent = arch.inputSize;
+        if (outputSizeDisplay) outputSizeDisplay.textContent = arch.outputSize;
+        if (totalWeightsDisplay) totalWeightsDisplay.textContent = stats.totalWeights;
+        
+        if (architectureDisplay) {
+            // Format: 4→[6,3]→2 or 4→[]→2 (no hidden layers)
+            const hiddenStr = arch.hiddenLayers.length > 0 ? 
+                `[${arch.hiddenLayers.join(',')}]` : '[]';
+            architectureDisplay.textContent = `${arch.inputSize}→${hiddenStr}→${arch.outputSize}`;
+        }
+        
+        console.log(`🔄 Architecture display updated: ${arch.inputSize}→[${arch.hiddenLayers.join(',')}]→${arch.outputSize}`);
+        
+    } catch (error) {
+        console.error('Error updating architecture display:', error);
+    }
+}
+
+/**
+ * Update connection editor with dynamic neuron labels
+ * @param {string} fromLayer - Source layer ('input', 'hidden', etc.)
+ * @param {string} fromNeuron - Source neuron label
+ * @param {string} toLayer - Target layer ('hidden', 'output', etc.)
+ * @param {string} toNeuron - Target neuron label
+ */
+function updateConnectionEditor(fromLayer, fromNeuron, toLayer, toNeuron) {
+    const fromLayerElement = document.getElementById('connectionFromLayer');
+    const fromNeuronElement = document.getElementById('connectionFromNeuron');
+    const toLayerElement = document.getElementById('connectionToLayer');
+    const toNeuronElement = document.getElementById('connectionToNeuron');
+    
+    if (fromLayerElement) fromLayerElement.textContent = fromLayer;
+    if (fromNeuronElement) fromNeuronElement.textContent = fromNeuron;
+    if (toLayerElement) toLayerElement.textContent = toLayer;
+    if (toNeuronElement) toNeuronElement.textContent = toNeuron;
+}
+
+// Export to global scope
+if (typeof window !== 'undefined') {
+    window.updateArchitectureDisplay = updateArchitectureDisplay;
+    window.updateConnectionEditor = updateConnectionEditor;
+}
+
+// ============================================================================
 // DOM CONTENT LOADED - MAIN APP INITIALIZATION
 // ============================================================================
 
@@ -193,6 +267,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     drawNetwork();
     setupEventListeners();
     resetDemo();
+    
+    // Update architecture display after everything is initialized
+    updateArchitectureDisplay();
     
     // Initialize auto-scroll button text after i18n is loaded
     setTimeout(() => {

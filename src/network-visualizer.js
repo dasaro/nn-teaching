@@ -28,8 +28,9 @@ function drawConnections() {
     const svg = document.getElementById('networkSvg');
     
     // Input to Hidden connections
-    for (let i = 0; i < networkConfig.inputSize; i++) {
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
+    const arch = NetworkAPI.getArchitecture();
+    for (let i = 0; i < arch.inputSize; i++) {
+        for (let h = 0; h < arch.hiddenSize; h++) {
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', positions.input[i].x + 25);
             line.setAttribute('y1', positions.input[i].y);
@@ -39,7 +40,7 @@ function drawConnections() {
             line.setAttribute('id', `conn-input-${i}-hidden-${h}`);
             
             // Apply visual weight encoding (thickness, color, opacity)
-            const weight = weights.inputToHidden[h][i];
+            const weight = NetworkAPI.getWeight('input', i, 'hidden', h);
             applyWeightVisualization(line, weight);
             
             // Add hover tooltip for exact weight value
@@ -50,8 +51,8 @@ function drawConnections() {
     }
     
     // Hidden to Output connections
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        for (let o = 0; o < networkConfig.outputSize; o++) {
+    for (let h = 0; h < arch.hiddenSize; h++) {
+        for (let o = 0; o < arch.outputSize; o++) {
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', positions.hidden[h].x + 25);
             line.setAttribute('y1', positions.hidden[h].y);
@@ -61,7 +62,7 @@ function drawConnections() {
             line.setAttribute('id', `conn-hidden-${h}-output-${o}`);
             
             // Apply visual weight encoding (thickness, color, opacity)
-            const weight = weights.hiddenToOutput[o][h];
+            const weight = NetworkAPI.getWeight('hidden', h, 'output', o);
             applyWeightVisualization(line, weight);
             
             // Add hover tooltip for exact weight value
@@ -76,7 +77,8 @@ function drawConnections() {
 function drawNeurons() {
     const svg = document.getElementById('networkSvg');
     const layers = ['input', 'hidden', 'output'];
-    const sizes = [networkConfig.inputSize, networkConfig.hiddenSize, networkConfig.outputSize];
+    const arch = NetworkAPI.getArchitecture();
+    const sizes = [arch.inputSize, arch.hiddenSize, arch.outputSize];
     const labels = [['A', 'B', 'C', 'D'], ['H1', 'H2', 'H3', 'H4'], ['Dog', 'Not Dog']];
     
     layers.forEach((layer, layerIndex) => {
@@ -538,7 +540,7 @@ function getCurrentWeightForConnection(connectionLabel) {
         if (inputMatch && hiddenMatch) {
             const inputIndex = ['A', 'B', 'C', 'D'].indexOf(inputMatch[1]);
             const hiddenIndex = parseInt(hiddenMatch[1]) - 1; // Convert to 0-based
-            return weights.inputToHidden[hiddenIndex][inputIndex];
+            return NetworkAPI.getWeight('input', inputIndex, 'hidden', hiddenIndex);
         }
     } else if (connectionLabel.includes('Hidden') && (connectionLabel.includes('Dog') || connectionLabel.includes('Not Dog'))) {
         // Hidden to Output connection
@@ -548,7 +550,7 @@ function getCurrentWeightForConnection(connectionLabel) {
         if (hiddenMatch) {
             const hiddenIndex = parseInt(hiddenMatch[1]) - 1; // Convert to 0-based
             const outputIndex = isDogOutput ? 0 : 1;
-            return weights.hiddenToOutput[outputIndex][hiddenIndex];
+            return NetworkAPI.getWeight('hidden', hiddenIndex, 'output', outputIndex);
         }
     }
     
@@ -559,24 +561,25 @@ function getCurrentWeightForConnection(connectionLabel) {
 
 function refreshAllConnectionVisuals() {
     // Update all input to hidden connections
-    for (let h = 0; h < networkConfig.hiddenSize; h++) {
-        for (let i = 0; i < networkConfig.inputSize; i++) {
+    const arch = NetworkAPI.getArchitecture();
+    for (let h = 0; h < arch.hiddenSize; h++) {
+        for (let i = 0; i < arch.inputSize; i++) {
             const connectionId = `conn-input-${i}-hidden-${h}`;
             const connection = document.getElementById(connectionId);
             if (connection) {
-                const weight = weights.inputToHidden[h][i];
+                const weight = NetworkAPI.getWeight('input', i, 'hidden', h);
                 applyWeightVisualization(connection, weight);
             }
         }
     }
     
     // Update all hidden to output connections
-    for (let o = 0; o < networkConfig.outputSize; o++) {
-        for (let h = 0; h < networkConfig.hiddenSize; h++) {
+    for (let o = 0; o < arch.outputSize; o++) {
+        for (let h = 0; h < arch.hiddenSize; h++) {
             const connectionId = `conn-hidden-${h}-output-${o}`;
             const connection = document.getElementById(connectionId);
             if (connection) {
-                const weight = weights.hiddenToOutput[o][h];
+                const weight = NetworkAPI.getWeight('hidden', h, 'output', o);
                 applyWeightVisualization(connection, weight);
             }
         }

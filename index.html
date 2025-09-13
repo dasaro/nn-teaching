@@ -281,10 +281,13 @@
                             <label><span data-i18n="expertPanel.inputSize">Input Size:</span> <span id="inputSizeDisplay">4</span></label>
                         </div>
                         <div class="param-group">
-                            <label><span data-i18n="expertPanel.hiddenSize">Hidden Size:</span> <span id="hiddenSizeDisplay">4</span></label>
+                            <label><span data-i18n="expertPanel.architecture">Architecture:</span> <span id="architectureDisplay">4→[4]→2</span></label>
                         </div>
                         <div class="param-group">
                             <label><span data-i18n="expertPanel.outputSize">Output Size:</span> <span id="outputSizeDisplay">2</span></label>
+                        </div>
+                        <div class="param-group">
+                            <label><span data-i18n="expertPanel.totalWeights">Total Weights:</span> <span id="totalWeightsDisplay">24</span></label>
                         </div>
                     </div>
                 </div>
@@ -301,13 +304,13 @@
     <div id="connectionEditor" class="connection-editor">
         <div class="connection-info">
             <div class="connection-from">
-                <span class="connection-label">Input</span>
-                <div class="connection-neuron input-neuron">A</div>
+                <span class="connection-label" id="connectionFromLayer" data-i18n="network.inputLayer">Input</span>
+                <div class="connection-neuron input-neuron" id="connectionFromNeuron">A</div>
             </div>
             <div class="connection-arrow">→</div>
             <div class="connection-to">
-                <div class="connection-neuron hidden-neuron">H1</div>
-                <span class="connection-label">Hidden</span>
+                <div class="connection-neuron hidden-neuron" id="connectionToNeuron">H1</div>
+                <span class="connection-label" id="connectionToLayer" data-i18n="network.hiddenLayer">Hidden</span>
             </div>
         </div>
         
@@ -339,6 +342,8 @@
     <script defer src="src/image-processor.js"></script>
     <script defer src="src/utilities.js"></script>
     <script defer src="src/globals-and-config.js"></script>
+    <script defer src="src/network-api.js"></script>
+    <script defer src="src/module-interfaces.js"></script>
     <script defer src="src/bootstrap.js"></script>
 </body>
 </html>

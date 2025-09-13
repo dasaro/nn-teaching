@@ -86,8 +86,9 @@ window.i18nLocales.en = {
     "expertPanel.batchSize": "Batch Size:",
     "expertPanel.networkArchitecture": "🏗️ Network Architecture (Read-Only)",
     "expertPanel.inputSize": "Input Size:",
-    "expertPanel.hiddenSize": "Hidden Size:",
+    "expertPanel.architecture": "Architecture:",
     "expertPanel.outputSize": "Output Size:",
+    "expertPanel.totalWeights": "Total Weights:",
     "expertPanel.resetDefaults": "🔄 Reset to Defaults",
     "expertPanel.apply": "✅ Apply & Restart Network",
     
