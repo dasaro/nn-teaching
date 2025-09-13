@@ -1167,10 +1167,17 @@ async function trainToPerfection() {
                     }
                     preventAutoLabeling = false;
                     
-                    // Ensure buttons are properly enabled after restoration
-                    document.getElementById('forwardBtn').disabled = false;
-                    document.getElementById('fullDemoBtn').disabled = false;
-                    document.getElementById('backwardBtn').disabled = true;
+                    // Use button state manager for consistent state management
+                    if (window.buttonStateManager) {
+                        window.buttonStateManager.setButtonStateImmediate('forwardBtn', false);
+                        window.buttonStateManager.setButtonStateImmediate('fullDemoBtn', false);
+                        window.buttonStateManager.setLearnButtonState('disabled');
+                    } else {
+                        // Fallback to direct DOM manipulation
+                        document.getElementById('forwardBtn').disabled = false;
+                        document.getElementById('fullDemoBtn').disabled = false;
+                        document.getElementById('backwardBtn').disabled = true;
+                    }
                     
                     console.log(`✅ Restoration complete: image=${currentImage}, label=${trueLabel}`);
                 }, 100);
@@ -1212,10 +1219,17 @@ async function trainToPerfection() {
         }
         preventAutoLabeling = false;
         
-        // Ensure buttons are properly enabled after restoration
-        document.getElementById('forwardBtn').disabled = false;
-        document.getElementById('fullDemoBtn').disabled = false;
-        document.getElementById('backwardBtn').disabled = true;
+        // Use button state manager for consistent state management
+        if (window.buttonStateManager) {
+            window.buttonStateManager.setButtonStateImmediate('forwardBtn', false);
+            window.buttonStateManager.setButtonStateImmediate('fullDemoBtn', false);
+            window.buttonStateManager.setLearnButtonState('disabled');
+        } else {
+            // Fallback to direct DOM manipulation
+            document.getElementById('forwardBtn').disabled = false;
+            document.getElementById('fullDemoBtn').disabled = false;
+            document.getElementById('backwardBtn').disabled = true;
+        }
         
         console.log(`✅ Restoration complete: image=${currentImage}, label=${trueLabel}`);
     }, 100);

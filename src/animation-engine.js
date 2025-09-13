@@ -135,10 +135,11 @@ function resetDemo() {
     demoState.forwardCompleted = false;
     demoState.hasResults = false;
     
-    // Properly reset all button states
+    // Properly reset all button states - always use button manager
     if (window.buttonStateManager) {
         window.buttonStateManager.resetAll();
     } else {
+        console.warn('⚠️ ButtonStateManager not available, using direct DOM access');
         document.getElementById('forwardBtn').disabled = false;
         document.getElementById('fullDemoBtn').disabled = false;
         document.getElementById('backwardBtn').disabled = true;
@@ -826,8 +827,9 @@ async function runForwardPass() {
     // Enable backward pass if we have the correct answer
     if (trueLabel) {
         if (window.buttonStateManager) {
-            window.buttonStateManager.setLearnButtonState('ready');
+            window.buttonStateManager.setLearnButtonState('ready', true); // immediate = true
         } else {
+            console.warn('⚠️ ButtonStateManager not available, using direct DOM access');
             document.getElementById('backwardBtn').disabled = false;
         }
         safeUpdateStepInfoDual(
@@ -890,9 +892,10 @@ async function runBackwardPass() {
     
     // Use button state manager for better UX
     if (window.buttonStateManager) {
-        window.buttonStateManager.setLearnButtonState('learning');
-        window.buttonStateManager.setButtonState('fullDemoBtn', true);
+        window.buttonStateManager.setLearnButtonState('learning', true); // immediate = true
+        window.buttonStateManager.setButtonStateImmediate('fullDemoBtn', true);
     } else {
+        console.warn('⚠️ ButtonStateManager not available, using direct DOM access');
         document.getElementById('backwardBtn').disabled = true;
         document.getElementById('fullDemoBtn').disabled = true;
     }
@@ -1026,11 +1029,14 @@ async function runBackwardPass() {
     highlightSection('none');
     isAnimating = false;
     
-    // Use button state manager for better feedback
+    // Use button state manager for better feedback - CRITICAL: This shows the delayed availability issue
     if (window.buttonStateManager) {
-        window.buttonStateManager.setLearnButtonState('thinking-required');
-        window.buttonStateManager.setButtonState('fullDemoBtn', false);
+        // Use immediate state changes to prevent delay and flickering
+        window.buttonStateManager.setLearnButtonState('thinking-required', true); // immediate = true
+        window.buttonStateManager.setButtonStateImmediate('fullDemoBtn', false);
+        console.log('🎛️ Learn button set to "thinking-required" after learning complete');
     } else {
+        console.warn('⚠️ ButtonStateManager not available, using direct DOM access');
         document.getElementById('backwardBtn').disabled = true;
         document.getElementById('fullDemoBtn').disabled = false;
     }

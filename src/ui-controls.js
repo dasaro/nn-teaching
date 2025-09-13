@@ -324,10 +324,17 @@ function completeTutorial() {
         el.classList.remove('tutorial-highlight');
     });
     
-    // Enable all controls
-    document.getElementById('forwardBtn').disabled = false;
-    document.getElementById('backwardBtn').disabled = true; // Will be enabled after forward pass
-    document.getElementById('fullDemoBtn').disabled = false;
+    // Use button state manager for consistent state management
+    if (window.buttonStateManager) {
+        window.buttonStateManager.setButtonStateImmediate('forwardBtn', false);
+        window.buttonStateManager.setLearnButtonState('disabled');
+        window.buttonStateManager.setButtonStateImmediate('fullDemoBtn', false);
+    } else {
+        // Fallback to direct DOM manipulation
+        document.getElementById('forwardBtn').disabled = false;
+        document.getElementById('backwardBtn').disabled = true; // Will be enabled after forward pass
+        document.getElementById('fullDemoBtn').disabled = false;
+    }
     
     updateStepInfo('🎓 Tutorial complete! You can now explore on your own. Try the "Watch AI Think" button to see the magic happen!');
 }
