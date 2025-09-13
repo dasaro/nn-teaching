@@ -174,8 +174,17 @@ console.log('🎯 All 7 modules initialized and ready for extraction!');
 // ============================================================================
 
 // Initialize the app
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log("DOM Content Loaded - Initializing app");
+    
+    // Initialize image data module first
+    if (window.imageData) {
+        await window.imageData.initialize();
+        console.log("✅ Image data module initialized");
+    } else {
+        console.warn("⚠️ Image data module not available");
+    }
+    
     initializeNetwork();
     createImage(currentImage);
     console.log("After createImage, trueLabel is:", trueLabel);
