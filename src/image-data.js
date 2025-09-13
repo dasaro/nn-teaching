@@ -2,10 +2,9 @@
 // This module provides base64 data URLs for all application images to avoid CORS issues
 // Since the app runs from file:// URLs, we need embedded base64 data to avoid CORS restrictions
 
-// Pre-encoded base64 image data to avoid CORS issues with file:// protocol
-const imageData = {
-    // Real base64 image data will be loaded dynamically to avoid huge file size
-};
+// Pre-encoded base64 image data to avoid CORS issues with file:// protocol  
+// Real Creative Commons stock photos from Pexels
+const imageData = {};
 
 // Create a simple colored canvas as fallback/placeholder image
 function createFallbackImage(imageName) {
@@ -80,21 +79,34 @@ function adjustBrightness(hex, amount) {
     return `rgb(${r}, ${g}, ${b})`;
 }
 
-// Initialize image data with high-quality procedural images
+// Initialize image data with real stock photos when available
 function initializeImageData() {
     const imageNames = ['dog1', 'dog2', 'dog3', 'cat', 'bird', 'fish', 'car', 'tree'];
     
-    console.log('🖼️ Initializing high-quality procedural images...');
+    console.log('🖼️ Initializing image data...');
     
-    imageNames.forEach(name => {
-        if (!imageData[name]) {
+    // Check if real stock image data is available
+    if (window.realImageData && window.realImageData.hasData()) {
+        console.log('📸 Using real Creative Commons stock photos from Pexels');
+        imageNames.forEach(name => {
+            const realImage = window.realImageData.getDataUrl(name);
+            if (realImage) {
+                imageData[name] = realImage;
+                console.log(`✅ Loaded real stock photo: ${name}`);
+            } else {
+                imageData[name] = createFallbackImage(name);
+                console.log(`⚠️ Using procedural fallback for ${name}`);
+            }
+        });
+    } else {
+        console.log('🎨 Using high-quality procedural images');
+        imageNames.forEach(name => {
             imageData[name] = createFallbackImage(name);
-            console.log(`✅ Generated high-quality image for ${name}`);
-        }
-    });
+            console.log(`✅ Generated procedural image for ${name}`);
+        });
+    }
     
     console.log('✅ Image data initialization complete');
-    console.log('ℹ️  Using procedural images to avoid CORS restrictions with file:// protocol');
     return Promise.resolve(imageData);
 }
 

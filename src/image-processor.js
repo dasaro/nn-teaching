@@ -308,6 +308,7 @@ function createImage(imageType) {
     
     // Use base64 image data to avoid CORS issues
     if (window.imageData) {
+        console.log('✅ Image data module available, creating rich image for:', imageType);
         const img = new Image();
         
         img.onload = function() {
@@ -359,20 +360,35 @@ function createImage(imageType) {
         // Get base64 data URL from image data module
         img.src = window.imageData.getDataUrl(imageType);
     } else {
-        console.error('Image data module not loaded, using fallback');
-        // Direct fallback if image data module isn't available
-        ctx.clearRect(0, 0, 140, 140);
-        ctx.fillStyle = getImageColor(imageType);
-        ctx.fillRect(0, 0, 140, 140);
+        console.error('❌ Image data module not loaded, using rich inline fallback for:', imageType);
         
-        // Large emoji fallback
-        ctx.fillStyle = '#333';
-        ctx.font = '40px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(getImageEmoji(imageType), 70, 85);
+        // Create rich fallback inline (same as image-data.js but embedded here)
+        const richFallbackDataUrl = createRichFallbackInline(imageType);
+        const img = new Image();
         
-        // CRITICAL: Set visual features even on fallback!
-        setVisualFeaturesAndLabel(imageType);
+        img.onload = function() {
+            console.log(`✅ Successfully loaded inline rich image: ${imageType}`);
+            
+            // Clear canvas and draw the loaded image
+            ctx.clearRect(0, 0, 140, 140);
+            ctx.drawImage(img, 0, 0, 140, 140);
+            
+            // Add a subtle border
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(1, 1, 138, 138);
+            
+            // Add success indicator
+            ctx.fillStyle = '#22c55e';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('✓', 135, 15);
+            
+            // CRITICAL: Set visual features based on image type!
+            setVisualFeaturesAndLabel(imageType);
+        };
+        
+        img.src = richFallbackDataUrl;
     }
     
     // Set the visual features and labels based on image type
@@ -807,6 +823,79 @@ function getImageEmoji(imageType) {
         car: '🚗', tree: '🌳'
     };
     return emojis[imageType] || '❓';
+}
+
+// Create rich fallback image inline (backup for when image-data.js module fails)
+function createRichFallbackInline(imageName) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 140;
+    canvas.height = 140;
+    const ctx = canvas.getContext('2d');
+    
+    // Color and pattern based on image type
+    const colors = {
+        dog1: '#8B4513', dog2: '#A0522D', dog3: '#CD853F',  // Brown shades for dogs
+        cat: '#696969',     // Gray for cat
+        bird: '#87CEEB',    // Sky blue for bird  
+        fish: '#4169E1',    // Royal blue for fish
+        car: '#FF4500',     // Orange red for car
+        tree: '#228B22'     // Forest green for tree
+    };
+    
+    const color = colors[imageName] || '#666666';
+    
+    // Create a gradient background
+    const gradient = ctx.createLinearGradient(0, 0, 140, 140);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, adjustBrightnessInline(color, -30));
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 140, 140);
+    
+    // Add a subtle pattern
+    ctx.fillStyle = adjustBrightnessInline(color, 20);
+    for (let i = 0; i < 140; i += 20) {
+        for (let j = 0; j < 140; j += 20) {
+            if ((i + j) % 40 === 0) {
+                ctx.fillRect(i, j, 8, 8);
+            }
+        }
+    }
+    
+    // Add text label with shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(imageName.toUpperCase(), 71, 76);
+    
+    ctx.fillStyle = 'white';
+    ctx.fillText(imageName.toUpperCase(), 70, 75);
+    
+    // Add icon/emoji if available
+    const icons = {
+        dog1: '🐕', dog2: '🐶', dog3: '🦮',
+        cat: '🐱',
+        bird: '🐦',
+        fish: '🐟',
+        car: '🚗',
+        tree: '🌳'
+    };
+    
+    if (icons[imageName]) {
+        ctx.font = '30px Arial';
+        ctx.fillText(icons[imageName], 70, 45);
+    }
+    
+    return canvas.toDataURL('image/png');
+}
+
+// Helper function to adjust color brightness (inline version)
+function adjustBrightnessInline(hex, amount) {
+    const num = parseInt(hex.slice(1), 16);
+    const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+    const g = Math.max(0, Math.min(255, (num >> 8 & 0x00FF) + amount));
+    const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
+    return `rgb(${r}, ${g}, ${b})`;
 }
 
 function drawNumberGrid() {

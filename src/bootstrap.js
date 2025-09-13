@@ -180,9 +180,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Initialize image data module first
     if (window.imageData) {
         await window.imageData.initialize();
-        console.log("✅ Image data module initialized");
+        console.log("✅ Image data module initialized successfully");
+        console.log("✅ Image data ready:", window.imageData.isReady());
     } else {
-        console.warn("⚠️ Image data module not available");
+        console.error("❌ CRITICAL: Image data module not available in bootstrap!");
+        console.log("Available on window:", Object.keys(window).filter(k => k.includes('image')));
     }
     
     initializeNetwork();
