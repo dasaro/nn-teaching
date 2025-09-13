@@ -168,30 +168,22 @@ if (typeof window !== 'undefined') {
     console.log('🚀 Module initialization system ready');
 }
 
-// Auto-register core modules
+// Auto-register core modules with fallback loading detection
 if (typeof window !== 'undefined') {
-    // Register modules in dependency order
-    window.registerModule('i18n-utils', []);
-    window.registerModule('image-data', []);
-    window.registerModule('real-image-data', []);
-    window.registerModule('globals-and-config', ['i18n-utils']);
-    window.registerModule('network-api', ['globals-and-config']);
-    window.registerModule('neural-math', ['globals-and-config']);
-    window.registerModule('utilities', ['globals-and-config', 'network-api']);
-    window.registerModule('network-visualizer', ['globals-and-config', 'network-api']);
-    window.registerModule('animation-engine', ['globals-and-config', 'network-api', 'neural-math']);
-    window.registerModule('ui-controls', ['globals-and-config', 'network-api']);
-    window.registerModule('training-engine', ['globals-and-config', 'network-api', 'neural-math']);
-    window.registerModule('image-processor', ['globals-and-config', 'image-data']);
-    window.registerModule('neuron-hover', ['globals-and-config', 'network-api', 'i18n-utils']);
-    window.registerModule('activation-visualizer', ['i18n-utils']);
-    window.registerModule('bootstrap', ['globals-and-config', 'network-api', 'neural-math'], () => {
-        // Bootstrap initialization
-        if (typeof initializeNetwork === 'function') {
-            initializeNetwork();
+    // Simpler approach - just use a timeout fallback to start the app
+    setTimeout(() => {
+        console.log('🎉 Module initialization timeout - starting app anyway');
+        
+        // Trigger any waiting callbacks
+        if (window.moduleInitializer && window.moduleInitializer.initCallbacks) {
+            window.moduleInitializer.initCallbacks.forEach(callback => {
+                try {
+                    callback();
+                } catch (error) {
+                    console.error('❌ Error in delayed init callback:', error);
+                }
+            });
+            window.moduleInitializer.initCallbacks = [];
         }
-        if (typeof initializeModuleExports === 'function') {
-            initializeModuleExports();
-        }
-    });
+    }, 2000); // 2 second fallback
 }
