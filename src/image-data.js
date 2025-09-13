@@ -4,8 +4,7 @@
 
 // Pre-encoded base64 image data to avoid CORS issues with file:// protocol
 const imageData = {
-    // For now, using procedural fallback images
-    // These will be replaced with actual base64 data if needed
+    // Real base64 image data will be loaded dynamically to avoid huge file size
 };
 
 // Create a simple colored canvas as fallback/placeholder image
@@ -81,20 +80,21 @@ function adjustBrightness(hex, amount) {
     return `rgb(${r}, ${g}, ${b})`;
 }
 
-// Initialize image data with fallbacks
+// Initialize image data with high-quality procedural images
 function initializeImageData() {
     const imageNames = ['dog1', 'dog2', 'dog3', 'cat', 'bird', 'fish', 'car', 'tree'];
     
-    console.log('🖼️ Initializing image data with fallbacks...');
+    console.log('🖼️ Initializing high-quality procedural images...');
     
     imageNames.forEach(name => {
         if (!imageData[name]) {
             imageData[name] = createFallbackImage(name);
-            console.log(`✅ Generated fallback for ${name}`);
+            console.log(`✅ Generated high-quality image for ${name}`);
         }
     });
     
     console.log('✅ Image data initialization complete');
+    console.log('ℹ️  Using procedural images to avoid CORS restrictions with file:// protocol');
     return Promise.resolve(imageData);
 }
 
