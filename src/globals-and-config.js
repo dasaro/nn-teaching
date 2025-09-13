@@ -220,16 +220,23 @@ const networkConfig = {
 let weights = {
     // For backward compatibility, maintain these properties but make them dynamic
     get inputToHidden() { 
-        return this.layers.length > 0 ? this.layers[0] : []; 
+        return this.layers && this.layers.length > 0 ? this.layers[0] : null; 
     },
     set inputToHidden(value) { 
-        if (this.layers.length > 0) this.layers[0] = value; 
+        if (this.layers && this.layers.length > 0 && value) {
+            this.layers[0] = value; 
+        }
     },
     get hiddenToOutput() { 
-        return this.layers.length > 0 ? this.layers[this.layers.length - 1] : []; 
+        if (!this.layers || this.layers.length === 0) return null;
+        const lastIndex = this.layers.length - 1;
+        return this.layers[lastIndex] || null;
     },
     set hiddenToOutput(value) { 
-        if (this.layers.length > 0) this.layers[this.layers.length - 1] = value; 
+        if (this.layers && this.layers.length > 0 && value) {
+            const lastIndex = this.layers.length - 1;
+            this.layers[lastIndex] = value; 
+        }
     },
     
     // New structure: array of weight matrices between each layer pair
@@ -291,15 +298,21 @@ function initializeNetworkStructure() {
     // Backward compatibility: maintain old weight structure references for UI
     if (networkConfig.hiddenLayers.length > 0) {
         // First hidden layer weights (input -> first hidden)
-        weights.inputToHidden = weights.layers[0];
+        if (weights.layers[0]) {
+            weights.inputToHidden = weights.layers[0];
+        }
         
         // Last hidden layer to output weights
         const outputLayerIndex = networkConfig.hiddenLayers.length;
-        weights.hiddenToOutput = weights.layers[outputLayerIndex];
+        if (weights.layers[outputLayerIndex]) {
+            weights.hiddenToOutput = weights.layers[outputLayerIndex];
+        }
     } else {
         // No hidden layers: direct input to output
         weights.inputToHidden = null;
-        weights.hiddenToOutput = weights.layers[0]; // Direct input->output connection
+        if (weights.layers[0]) {
+            weights.hiddenToOutput = weights.layers[0]; // Direct input->output connection
+        }
     }
     
     console.log(`✅ Network structure initialized with ${weights.layers.length} weight matrices`);

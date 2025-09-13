@@ -196,7 +196,8 @@ console.log('🎯 All 7 modules initialized and ready for extraction!');
 function updateArchitectureDisplay() {
     // Check if NetworkAPI is available and properly initialized
     if (typeof NetworkAPI === 'undefined' || typeof NetworkAPI.getArchitecture !== 'function') {
-        console.warn('⚠️ NetworkAPI not available yet, skipping architecture display update');
+        console.warn('⚠️ NetworkAPI not available yet, scheduling retry in 100ms');
+        setTimeout(updateArchitectureDisplay, 100);
         return;
     }
     
@@ -285,8 +286,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupEventListeners();
     resetDemo();
     
-    // Update architecture display after everything is initialized
-    updateArchitectureDisplay();
+    // Update architecture display after everything is initialized (with delay to ensure all modules are loaded)
+    setTimeout(() => {
+        updateArchitectureDisplay();
+    }, 500);
     
     // Initialize auto-scroll button text after i18n is loaded
     setTimeout(() => {

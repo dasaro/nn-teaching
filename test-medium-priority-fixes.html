@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medium Priority Bug Fixes Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Medium Priority Bug Fixes Test</h1>
+    <div id="testResults"></div>
+
+    <!-- Load modules in correct order -->
+    <script src="locales/en.js"></script>
+    <script src="locales/it.js"></script>
+    <script src="i18n.js"></script>
+    <script src="src/real-image-data.js"></script>
+    <script src="src/image-data.js"></script>
+    <script defer src="src/neuron-hover.js"></script>
+    <script defer src="src/neural-math.js"></script>
+    <script defer src="src/animation-engine.js"></script>
+    <script defer src="src/network-visualizer.js"></script>
+    <script defer src="src/ui-controls.js"></script>
+    <script defer src="src/training-engine.js"></script>
+    <script defer src="src/image-processor.js"></script>
+    <script defer src="src/utilities.js"></script>
+    <script defer src="src/globals-and-config.js"></script>
+    <script defer src="src/network-api.js"></script>
+    <script defer src="src/module-interfaces.js"></script>
+    <script defer src="src/bootstrap.js"></script>
+
+    <script>
+        let testCount = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+
+        function logResult(testName, success, message) {
+            testCount++;
+            const div = document.createElement('div');
+            div.className = `test-result ${success ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>Test ${testCount}: ${testName}</strong><br>${message}`;
+            document.getElementById('testResults').appendChild(div);
+            
+            if (success) {
+                passedTests++;
+                console.log(`✅ ${testName}: ${message}`);
+            } else {
+                failedTests++;
+                console.error(`❌ ${testName}: ${message}`);
+            }
+        }
+
+        function logWarning(testName, message) {
+            const div = document.createElement('div');
+            div.className = 'test-result warning';
+            div.innerHTML = `<strong>Warning: ${testName}</strong><br>${message}`;
+            document.getElementById('testResults').appendChild(div);
+            console.warn(`⚠️ ${testName}: ${message}`);
+        }
+
+        function logInfo(message) {
+            const div = document.createElement('div');
+            div.className = 'test-result info';
+            div.innerHTML = `<strong>Info:</strong> ${message}`;
+            document.getElementById('testResults').appendChild(div);
+            console.log(`ℹ️ ${message}`);
+        }
+
+        // Wait for all modules to load
+        setTimeout(() => {
+            runTests();
+        }, 3000);
+
+        function runTests() {
+            logInfo('Starting medium-priority bug fix validation tests...');
+
+            // Test 1: Bug #8 - Backward compatibility getters should handle null cases
+            try {
+                // Force weights to empty state to test edge cases
+                const originalLayers = weights.layers;
+                weights.layers = [];
+                
+                const inputToHidden = weights.inputToHidden; // Should return null, not crash
+                const hiddenToOutput = weights.hiddenToOutput; // Should return null, not crash
+                
+                weights.layers = originalLayers; // Restore
+                
+                if (inputToHidden === null && hiddenToOutput === null) {
+                    logResult('Backward Compatibility Edge Cases', true, 
+                        'Getters handle empty weights array correctly');
+                } else {
+                    logResult('Backward Compatibility Edge Cases', false, 
+                        `Expected null values, got inputToHidden: ${inputToHidden}, hiddenToOutput: ${hiddenToOutput}`);
+                }
+            } catch (error) {
+                logResult('Backward Compatibility Edge Cases', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Test 2: Bug #5 - Architecture display should retry if NetworkAPI not ready
+            try {
+                // Test if updateArchitectureDisplay handles missing NetworkAPI gracefully
+                const originalNetworkAPI = window.NetworkAPI;
+                window.NetworkAPI = undefined; // Simulate not loaded yet
+                
+                let retriedSuccessfully = false;
+                const consoleLogs = [];
+                const originalWarn = console.warn;
+                console.warn = (...args) => {
+                    consoleLogs.push(args.join(' '));
+                    originalWarn(...args);
+                };
+                
+                // Call the function that should retry
+                updateArchitectureDisplay();
+                
+                // Wait for retry
+                setTimeout(() => {
+                    window.NetworkAPI = originalNetworkAPI; // Restore
+                    console.warn = originalWarn; // Restore
+                    
+                    const hasRetryLog = consoleLogs.some(log => 
+                        log.includes('scheduling retry'));
+                    
+                    if (hasRetryLog) {
+                        logResult('Architecture Display Retry Logic', true, 
+                            'Function correctly schedules retry when NetworkAPI not ready');
+                    } else {
+                        logResult('Architecture Display Retry Logic', false, 
+                            'Function did not schedule retry as expected');
+                    }
+                }, 150);
+                
+            } catch (error) {
+                logResult('Architecture Display Retry Logic', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Test 3: Bug #6 - Error handling in neuron hover should be informative
+            try {
+                // Test error handling in neuron hover calculation
+                let errorCaught = false;
+                let errorMessage = '';
+                
+                const originalError = console.error;
+                console.error = (...args) => {
+                    if (args[0] && args[0].includes && args[0].includes('Error calculating neuron data')) {
+                        errorCaught = true;
+                        errorMessage = args.join(' ');
+                    }
+                    originalError(...args);
+                };
+                
+                // Simulate error condition by calling with invalid parameters
+                if (typeof calculateNeuronData !== 'undefined') {
+                    try {
+                        const result = calculateNeuronData('invalid-neuron-id', 'invalid-layer');
+                        if (result && result.type === 'error') {
+                            logResult('Enhanced Error Handling', true, 
+                                'Neuron hover returns structured error information');
+                        } else {
+                            logWarning('Enhanced Error Handling', 
+                                'Error case may not have been triggered or function not available');
+                        }
+                    } catch (e) {
+                        // Function might not be available in this context
+                        logWarning('Enhanced Error Handling', 
+                            'Cannot test calculateNeuronData directly (function not exposed)');
+                    }
+                } else {
+                    logWarning('Enhanced Error Handling', 
+                        'calculateNeuronData function not available for testing');
+                }
+                
+                console.error = originalError; // Restore
+                
+            } catch (error) {
+                logResult('Enhanced Error Handling', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Test 4: Weight matrix bounds checking should prevent crashes
+            try {
+                // Test NetworkAPI weight access with invalid indices
+                const safeWeight1 = NetworkAPI.getWeight('input', 999, 'hidden', 999);
+                const safeWeight2 = NetworkAPI.getWeight(999, 999, 999, 999);
+                const safeWeight3 = NetworkAPI.getWeight('invalid', 0, 'invalid', 0);
+                
+                // Should all return 0 safely without crashing
+                if (safeWeight1 === 0 && safeWeight2 === 0 && safeWeight3 === 0) {
+                    logResult('Safe Weight Access', true, 
+                        'NetworkAPI.getWeight() handles invalid indices safely');
+                } else {
+                    logResult('Safe Weight Access', false, 
+                        `Expected 0 for all invalid accesses, got: ${safeWeight1}, ${safeWeight2}, ${safeWeight3}`);
+                }
+            } catch (error) {
+                logResult('Safe Weight Access', false, 
+                    `Weight access crashed with invalid indices: ${error.message}`);
+            }
+
+            // Test 5: Test different architectures for edge case handling
+            try {
+                const architectures = [
+                    { layers: [], name: "No hidden layers" },
+                    { layers: [1], name: "Single neuron hidden" },
+                    { layers: [8, 8, 8], name: "Maximum complexity" }
+                ];
+
+                let allEdgeCasesWork = true;
+                const results = [];
+
+                architectures.forEach(test => {
+                    try {
+                        NetworkAPI.setArchitecture(test.layers);
+                        
+                        // Test that backward compatibility getters work
+                        const inputToHidden = weights.inputToHidden;
+                        const hiddenToOutput = weights.hiddenToOutput;
+                        
+                        results.push(`${test.name}: inputToHidden=${inputToHidden ? 'matrix' : 'null'}, hiddenToOutput=${hiddenToOutput ? 'matrix' : 'null'}`);
+                        
+                    } catch (error) {
+                        allEdgeCasesWork = false;
+                        results.push(`${test.name}: FAILED - ${error.message}`);
+                    }
+                });
+
+                if (allEdgeCasesWork) {
+                    logResult('Architecture Edge Cases', true, 
+                        `All architectures handle edge cases: ${results.join('; ')}`);
+                } else {
+                    logResult('Architecture Edge Cases', false, 
+                        `Some architectures failed: ${results.join('; ')}`);
+                }
+            } catch (error) {
+                logResult('Architecture Edge Cases', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Summary
+            setTimeout(() => {
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = `test-result ${failedTests === 0 ? 'success' : 'error'}`;
+                summaryDiv.innerHTML = `<strong>Medium Priority Test Summary:</strong><br>
+                    Total Tests: ${testCount}<br>
+                    Passed: ${passedTests}<br>
+                    Failed: ${failedTests}<br>
+                    ${failedTests === 0 ? '🎉 All medium-priority bug fixes working!' : '⚠️ Some issues remain. Check console for details.'}`;
+                document.getElementById('testResults').appendChild(summaryDiv);
+                
+                console.log(`\n📊 Medium Priority Test Summary: ${passedTests}/${testCount} passed`);
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

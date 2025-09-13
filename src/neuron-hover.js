@@ -151,7 +151,19 @@ function getNeuronCalculation(layerType, layerIndex, neuronIndex) {
         }
         
     } catch (error) {
-        console.warn('Error calculating neuron data:', error);
+        console.error('Error calculating neuron data for', { neuronId, layerType }, error);
+        console.error('Current state:', {
+            activations: typeof activations !== 'undefined' ? 'available' : 'undefined',
+            weights: typeof weights !== 'undefined' ? 'available' : 'undefined',
+            networkConfig: typeof networkConfig !== 'undefined' ? 'available' : 'undefined'
+        });
+        
+        return {
+            type: 'error',
+            layerName: t('neuronHover.error'),
+            message: `Calculation error: ${error.message}`,
+            value: 0
+        };
     }
     
     return {
@@ -181,6 +193,16 @@ function generateTooltipContent(data, layerType) {
     if (data.type === 'unknown') {
         return `
             <div class="tooltip-header">${t('neuronHover.noCalculation')}</div>
+        `;
+    }
+    
+    if (data.type === 'error') {
+        return `
+            <div class="tooltip-header" style="color: #dc3545;">${data.layerName}</div>
+            <div class="tooltip-section">
+                <div class="tooltip-label">${t('neuronHover.errorMessage')}:</div>
+                <div class="tooltip-value" style="color: #dc3545;">${data.message}</div>
+            </div>
         `;
     }
     
