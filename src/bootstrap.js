@@ -73,7 +73,7 @@ function initializeModuleExports() {
     // Update animation engine exports with functions defined later
     if (window.animationEngine) {
         window.animationEngine.startFullDemo = startFullDemo;
-        window.animationEngine.startDemo = startDemo;
+        // startDemo is defined in animation-engine.js
         window.animationEngine.resetDemo = resetDemo;
         window.animationEngine.animateInputActivation = animateInputActivation;
         window.animationEngine.animateForwardPropagation = animateForwardPropagation;
@@ -129,7 +129,7 @@ function initializeModuleExports() {
     
     // Add any additional functions that need to be exposed globally for HTML
     window.selectImage = selectImage;
-    window.startDemo = startDemo;
+    // startDemo is exported by animation-engine.js
     window.resetDemo = resetDemo;
     window.trainToPerfection = trainToPerfection;
     window.toggleExpertPanel = toggleExpertPanel;
