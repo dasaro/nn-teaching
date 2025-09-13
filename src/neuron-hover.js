@@ -60,20 +60,31 @@ function updateTooltipPosition(event) {
 
 // Get calculation data for a specific neuron
 function getNeuronCalculation(layerType, layerIndex, neuronIndex) {
-    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : key; // Translation function
+    // Use centralized translation function
+    const t = window.i18nUtils ? window.i18nUtils.initModuleTranslation('neuron-hover') : (key) => key;
     
     try {
         if (layerType === 'input') {
+            // Defensive checks for input neurons
+            if (!activations || !activations.input || isNaN(neuronIndex) || neuronIndex < 0 || neuronIndex >= activations.input.length) {
+                throw new Error(`Invalid input neuron access: neuronIndex=${neuronIndex}, activations.input available=${!!(activations && activations.input)}`);
+            }
+            
             return {
                 type: 'input',
                 layerName: t('neuronHover.inputLayer'),
-                value: activations.input ? activations.input[neuronIndex] : 0,
+                value: activations.input[neuronIndex],
                 explanation: t('neuronHover.directInput')
             };
         }
         
         if (layerType === 'output') {
-            const outputValue = activations.output ? activations.output[neuronIndex] : 0;
+            // Defensive checks for output neurons
+            if (!activations || !activations.output || !networkConfig || isNaN(neuronIndex) || neuronIndex < 0 || neuronIndex >= activations.output.length) {
+                throw new Error(`Invalid output neuron access: neuronIndex=${neuronIndex}, activations.output available=${!!(activations && activations.output)}, networkConfig available=${!!networkConfig}`);
+            }
+            
+            const outputValue = activations.output[neuronIndex];
             
             // Get inputs for output calculation
             let inputs, inputWeights;
@@ -175,7 +186,8 @@ function getNeuronCalculation(layerType, layerIndex, neuronIndex) {
 
 // Generate HTML content for tooltip
 function generateTooltipContent(data, layerType) {
-    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : key;
+    // Use centralized translation function
+    const t = window.i18nUtils ? window.i18nUtils.initModuleTranslation('neuron-hover') : (key) => key;
     
     if (data.type === 'input') {
         return `

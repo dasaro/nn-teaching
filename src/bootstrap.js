@@ -172,8 +172,25 @@ console.log('   • debugWeightInitialization() - Check weight initialization is
 console.log('   • enableConvergenceAnalysis() - Track convergence during training');
 console.log('🔧 ===================================================\n');
 
-// Initialize all module exports now that all functions are defined
-initializeModuleExports();
+// Report module loading and use initialization system
+if (typeof window !== 'undefined' && window.moduleLoaded) {
+    window.moduleLoaded('bootstrap');
+}
+
+// Use the new initialization system instead of immediate initialization
+if (typeof window !== 'undefined' && window.onAllModulesReady) {
+    window.onAllModulesReady(() => {
+        console.log('🎉 All modules ready - Running final initialization');
+        initializeModuleExports();
+        updateArchitectureDisplay();
+    });
+} else {
+    // Fallback for compatibility
+    setTimeout(() => {
+        initializeModuleExports();
+        updateArchitectureDisplay();
+    }, 1000);
+}
 
 // Verify module exports are working
 console.log('🔍 Module verification:');
@@ -258,45 +275,68 @@ if (typeof window !== 'undefined') {
 // DOM CONTENT LOADED - MAIN APP INITIALIZATION
 // ============================================================================
 
-// Initialize the app
+// Initialize the app when DOM and all modules are ready
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log("DOM Content Loaded - Initializing app");
+    console.log("DOM Content Loaded - Waiting for modules");
     
-    // Initialize image data module first
-    if (window.imageData) {
-        await window.imageData.initialize();
-        console.log("✅ Image data module initialized successfully");
-        console.log("✅ Image data ready:", window.imageData.isReady());
+    // Wait for all modules to be ready before initializing the app
+    if (typeof window !== 'undefined' && window.onAllModulesReady) {
+        window.onAllModulesReady(async () => {
+            console.log("🎉 DOM loaded and all modules ready - Initializing app");
+            
+            // Initialize image data module first
+            if (window.imageData) {
+                await window.imageData.initialize();
+                console.log("✅ Image data module initialized successfully");
+                console.log("✅ Image data ready:", window.imageData.isReady());
+            } else {
+                console.error("❌ CRITICAL: Image data module not available in bootstrap!");
+                console.log("Available on window:", Object.keys(window).filter(k => k.includes('image')));
+            }
+            
+            // Use safe function calls with existence checks
+            if (typeof initializeNetwork === 'function') {
+                initializeNetwork();
+            }
+            if (typeof createImage === 'function' && typeof currentImage !== 'undefined') {
+                createImage(currentImage);
+                console.log("After createImage, trueLabel is:", trueLabel);
+            }
+            
+            // Initialize neuron hover tooltips
+            if (window.neuronHover && typeof window.neuronHover.initialize === 'function') {
+                window.neuronHover.initialize();
+                console.log("✅ Neuron hover tooltips initialized");
+            }
+            
+            // Safe function calls for UI initialization
+            if (typeof drawNetwork === 'function') {
+                drawNetwork();
+            }
+            if (typeof setupEventListeners === 'function') {
+                setupEventListeners();
+            }
+            if (typeof resetDemo === 'function') {
+                resetDemo();
+                console.log("After resetDemo, trueLabel is:", trueLabel);
+            }
+            
+            // Initialize auto-scroll button text after i18n is loaded
+            if (window.updateAutoScrollButtonText) {
+                window.updateAutoScrollButtonText();
+            }
+        });
     } else {
-        console.error("❌ CRITICAL: Image data module not available in bootstrap!");
-        console.log("Available on window:", Object.keys(window).filter(k => k.includes('image')));
+        // Fallback for compatibility
+        console.warn("⚠️ Module initialization system not available, using fallback");
+        setTimeout(async () => {
+            // Simplified fallback initialization
+            if (window.imageData && window.imageData.initialize) {
+                await window.imageData.initialize();
+            }
+            if (typeof initializeNetwork === 'function') {
+                initializeNetwork();
+            }
+        }, 2000);
     }
-    
-    initializeNetwork();
-    createImage(currentImage);
-    console.log("After createImage, trueLabel is:", trueLabel);
-    
-    // Initialize neuron hover tooltips
-    if (window.neuronHover && typeof window.neuronHover.initialize === 'function') {
-        window.neuronHover.initialize();
-        console.log("✅ Neuron hover tooltips initialized");
-    }
-    
-    drawNetwork();
-    setupEventListeners();
-    resetDemo();
-    
-    // Update architecture display after everything is initialized (with delay to ensure all modules are loaded)
-    setTimeout(() => {
-        updateArchitectureDisplay();
-    }, 500);
-    
-    // Initialize auto-scroll button text after i18n is loaded
-    setTimeout(() => {
-        if (window.updateAutoScrollButtonText) {
-            window.updateAutoScrollButtonText();
-        }
-    }, 100);
-    
-    console.log("After resetDemo, trueLabel is:", trueLabel);
 });

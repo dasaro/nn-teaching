@@ -317,3 +317,8 @@ if (typeof window !== 'undefined') {
 }
 
 console.log('📡 Network API module loaded - Abstraction layer ready');
+
+// Report to module initialization system
+if (typeof window !== 'undefined' && window.moduleLoaded) {
+    window.moduleLoaded('network-api');
+}

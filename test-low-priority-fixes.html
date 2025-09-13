@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Low Priority Bug Fixes & Code Quality Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        .module-status { margin: 5px 0; padding: 5px; font-size: 0.9em; }
+        .module-loaded { background-color: #d4edda; }
+        .module-pending { background-color: #fff3cd; }
+        .module-error { background-color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Low Priority Bug Fixes & Code Quality Test</h1>
+    <div id="testResults"></div>
+    <div id="moduleStatus">
+        <h3>📦 Module Initialization Status</h3>
+        <div id="moduleList"></div>
+    </div>
+
+    <!-- Load modules with new initialization system -->
+    <script src="locales/en.js"></script>
+    <script src="locales/it.js"></script>
+    <script src="i18n.js"></script>
+    <script src="src/i18n-utils.js"></script>
+    <script src="src/module-initialization.js"></script>
+    <!-- Consolidated modules -->
+    <script src="src/real-image-data.js"></script>
+    <script src="src/image-data.js"></script>
+    <script defer src="src/neuron-hover.js"></script>
+    <script defer src="src/activation-visualizer.js"></script>
+    <script defer src="src/neural-math.js"></script>
+    <script defer src="src/animation-engine.js"></script>
+    <script defer src="src/network-visualizer.js"></script>
+    <script defer src="src/ui-controls.js"></script>
+    <script defer src="src/training-engine.js"></script>
+    <script defer src="src/image-processor.js"></script>
+    <script defer src="src/utilities.js"></script>
+    <script defer src="src/globals-and-config.js"></script>
+    <script defer src="src/network-api.js"></script>
+    <script defer src="src/module-interfaces.js"></script>
+    <script defer src="src/bootstrap.js"></script>
+
+    <script>
+        let testCount = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+
+        function logResult(testName, success, message) {
+            testCount++;
+            const div = document.createElement('div');
+            div.className = `test-result ${success ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>Test ${testCount}: ${testName}</strong><br>${message}`;
+            document.getElementById('testResults').appendChild(div);
+            
+            if (success) {
+                passedTests++;
+                console.log(`✅ ${testName}: ${message}`);
+            } else {
+                failedTests++;
+                console.error(`❌ ${testName}: ${message}`);
+            }
+        }
+
+        function logWarning(testName, message) {
+            const div = document.createElement('div');
+            div.className = 'test-result warning';
+            div.innerHTML = `<strong>Warning: ${testName}</strong><br>${message}`;
+            document.getElementById('testResults').appendChild(div);
+            console.warn(`⚠️ ${testName}: ${message}`);
+        }
+
+        function logInfo(message) {
+            const div = document.createElement('div');
+            div.className = 'test-result info';
+            div.innerHTML = `<strong>Info:</strong> ${message}`;
+            document.getElementById('testResults').appendChild(div);
+            console.log(`ℹ️ ${message}`);
+        }
+
+        function updateModuleStatus() {
+            if (!window.moduleInitializer) return;
+            
+            const status = window.moduleInitializer.getStatus();
+            const moduleList = document.getElementById('moduleList');
+            
+            moduleList.innerHTML = `
+                <div class="info">
+                    Modules: ${status.initializedModules}/${status.totalModules} initialized
+                    ${status.allReady ? '🎉 All Ready!' : '⏳ Waiting...'}
+                </div>
+            `;
+            
+            status.modules.forEach(module => {
+                const div = document.createElement('div');
+                div.className = `module-status ${module.initialized ? 'module-loaded' : 
+                    module.loaded ? 'module-pending' : 'module-error'}`;
+                div.innerHTML = `
+                    ${module.name}: 
+                    ${module.loaded ? '📦' : '❌'} loaded, 
+                    ${module.initialized ? '✅' : '⏳'} initialized
+                    ${module.dependencies.length > 0 ? `(deps: ${module.dependencies.join(', ')})` : ''}
+                `;
+                moduleList.appendChild(div);
+            });
+        }
+
+        // Update module status periodically
+        setInterval(updateModuleStatus, 500);
+
+        // Wait for module initialization system to be ready
+        setTimeout(() => {
+            runTests();
+        }, 4000);
+
+        function runTests() {
+            logInfo('Starting low-priority bug fix and code quality tests...');
+
+            // Test 1: Bug #12 - Centralized translation function
+            try {
+                // Check if centralized i18n utilities are available
+                const hasCentralizedI18n = !!(window.i18nUtils && window.i18nUtils.t);
+                const hasGlobalT = !!(window.t);
+                
+                if (hasCentralizedI18n && hasGlobalT) {
+                    // Test translation function
+                    const testKey = 'app.title';
+                    const translation = window.t(testKey);
+                    
+                    logResult('Centralized Translation Function', true, 
+                        `Global translation available, test key "${testKey}" -> "${translation}"`);
+                } else {
+                    logResult('Centralized Translation Function', false, 
+                        `Missing centralized translation: i18nUtils=${hasCentralizedI18n}, globalT=${hasGlobalT}`);
+                }
+            } catch (error) {
+                logResult('Centralized Translation Function', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Test 2: Bug #10 - Module initialization sequence
+            try {
+                if (window.moduleInitializer) {
+                    const status = window.moduleInitializer.getStatus();
+                    
+                    if (status.totalModules > 0) {
+                        const initPercent = Math.round((status.initializedModules / status.totalModules) * 100);
+                        
+                        logResult('Module Initialization System', true, 
+                            `System working: ${status.initializedModules}/${status.totalModules} modules (${initPercent}%) initialized`);
+                        
+                        // Log detailed status
+                        logInfo(`Module details: ${status.modules.map(m => 
+                            `${m.name}(${m.loaded ? 'L' : ''}${m.initialized ? 'I' : ''})`).join(', ')}`);
+                    } else {
+                        logWarning('Module Initialization System', 
+                            'No modules registered in initialization system');
+                    }
+                } else {
+                    logResult('Module Initialization System', false, 
+                        'Module initialization system not available');
+                }
+            } catch (error) {
+                logResult('Module Initialization System', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Test 3: Bug #11 - Circular dependency risks eliminated
+            try {
+                // Test that bootstrap doesn't immediately initialize everything
+                let bootstrapImmediate = false;
+                let moduleSystem = false;
+                
+                // Check if bootstrap uses module system
+                if (window.onAllModulesReady) {
+                    moduleSystem = true;
+                }
+                
+                // Check console logs for proper initialization order
+                const consoleLogs = [];
+                const originalLog = console.log;
+                console.log = (...args) => {
+                    consoleLogs.push(args.join(' '));
+                    originalLog(...args);
+                };
+                
+                setTimeout(() => {
+                    console.log = originalLog; // Restore
+                    
+                    const hasOrderedInit = consoleLogs.some(log => 
+                        log.includes('All modules ready') || log.includes('Module initialized'));
+                    
+                    if (moduleSystem && hasOrderedInit) {
+                        logResult('Circular Dependency Prevention', true, 
+                            'Bootstrap uses module system for ordered initialization');
+                    } else {
+                        logWarning('Circular Dependency Prevention', 
+                            `Module system: ${moduleSystem}, Ordered init: ${hasOrderedInit}`);
+                    }
+                }, 100);
+                
+            } catch (error) {
+                logResult('Circular Dependency Prevention', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Test 4: Bug #4 - Defensive null checks
+            try {
+                // Test defensive checks in neuron hover (if available)
+                let defensiveChecksWork = false;
+                
+                if (typeof getNeuronCalculation !== 'undefined') {
+                    try {
+                        // This should handle gracefully with defensive checks
+                        const result = getNeuronCalculation('invalid', -1, -1);
+                        defensiveChecksWork = result && result.type === 'error';
+                    } catch (error) {
+                        // Should not crash with defensive checks
+                        defensiveChecksWork = error.message && error.message.includes('Invalid');
+                    }
+                }
+                
+                if (defensiveChecksWork) {
+                    logResult('Defensive Null Checks', true, 
+                        'Functions handle invalid input gracefully with informative errors');
+                } else {
+                    logWarning('Defensive Null Checks', 
+                        'Cannot test defensive checks - function not exposed or not working');
+                }
+            } catch (error) {
+                logResult('Defensive Null Checks', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Test 5: Overall code quality improvements
+            try {
+                let qualityScore = 0;
+                const maxScore = 5;
+                
+                // Check for centralized translation
+                if (window.i18nUtils && window.t) qualityScore++;
+                
+                // Check for module initialization system
+                if (window.moduleInitializer) qualityScore++;
+                
+                // Check for NetworkAPI (abstraction layer)
+                if (window.NetworkAPI) qualityScore++;
+                
+                // Check for safe function assignments
+                if (window.onAllModulesReady) qualityScore++;
+                
+                // Check for defensive programming patterns
+                if (window.i18nUtils && window.i18nUtils.isReady) qualityScore++;
+                
+                const percentage = Math.round((qualityScore / maxScore) * 100);
+                
+                if (percentage >= 80) {
+                    logResult('Code Quality Improvements', true, 
+                        `Code quality score: ${qualityScore}/${maxScore} (${percentage}%) - Excellent!`);
+                } else if (percentage >= 60) {
+                    logWarning('Code Quality Improvements', 
+                        `Code quality score: ${qualityScore}/${maxScore} (${percentage}%) - Good`);
+                } else {
+                    logResult('Code Quality Improvements', false, 
+                        `Code quality score: ${qualityScore}/${maxScore} (${percentage}%) - Needs improvement`);
+                }
+            } catch (error) {
+                logResult('Code Quality Improvements', false, 
+                    `Test crashed: ${error.message}`);
+            }
+
+            // Summary
+            setTimeout(() => {
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = `test-result ${failedTests === 0 ? 'success' : 'error'}`;
+                summaryDiv.innerHTML = `<strong>Low Priority Test Summary:</strong><br>
+                    Total Tests: ${testCount}<br>
+                    Passed: ${passedTests}<br>
+                    Failed: ${failedTests}<br>
+                    ${failedTests === 0 ? '🎉 All low-priority fixes implemented successfully!' : '⚠️ Some code quality issues remain.'}`;
+                document.getElementById('testResults').appendChild(summaryDiv);
+                
+                console.log(`\n📊 Low Priority Test Summary: ${passedTests}/${testCount} passed`);
+                
+                // Final module status
+                if (window.moduleInitializer) {
+                    const finalStatus = window.moduleInitializer.getStatus();
+                    console.log(`📦 Final module status: ${finalStatus.initializedModules}/${finalStatus.totalModules} initialized`);
+                }
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

@@ -32,7 +32,7 @@ function hideActivationFunctionModal() {
 
 // Create the modal DOM structure
 function createActivationModal() {
-    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : key;
+    const t = window.i18nUtils ? window.i18nUtils.initModuleTranslation('activation-visualizer') : (key) => key;
     
     activationModal = document.createElement('div');
     activationModal.className = 'modal activation-modal';
@@ -505,7 +505,7 @@ function updateFunctionDescription() {
     const descElement = document.getElementById('functionDescription');
     if (!descElement) return;
     
-    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : key;
+    const t = window.i18nUtils ? window.i18nUtils.initModuleTranslation('activation-visualizer') : (key) => key;
     
     let description = '';
     switch (currentActivationFunction) {
@@ -533,7 +533,7 @@ function updateNeuronVisualization() {
     
     if (!neuronBody || !responseText) return;
     
-    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : key;
+    const t = window.i18nUtils ? window.i18nUtils.initModuleTranslation('activation-visualizer') : (key) => key;
     const input = interactivePoint.x;
     const output = interactivePoint.y;
     
@@ -559,7 +559,7 @@ function addActivationFunctionButton() {
     const toolButtons = document.querySelector('.tool-buttons');
     if (!toolButtons) return;
     
-    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : key;
+    const t = window.i18nUtils ? window.i18nUtils.initModuleTranslation('activation-visualizer') : (key) => key;
     
     const button = document.createElement('button');
     button.className = 'tool-btn';
