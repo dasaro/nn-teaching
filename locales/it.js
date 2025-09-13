@@ -233,6 +233,7 @@ window.i18nLocales.it = {
     
     // UI state messages
     "ui.thinking": "Pensando...",
+    "ui.confidenceCalculation": "Calcolo della Sicurezza",
     "ui.readyToExplore": "🎮 <strong>Pronto per Esplorare!</strong><br>🚀 Scegli \"Guarda l'AI Pensare\" per vedere come l'AI prende decisioni, o \"Guarda l'AI Imparare\" per vedere come diventa più intelligente. Prova la demo completa per l'esperienza completa!",
     "ui.pickAction": "🎮 <strong>Pronto per Esplorare!</strong><br>🚀 Scegli \"Guarda l'AI Pensare\", \"Guarda l'AI Imparare\", o \"Demo Completa\" per vedere la rete neurale in azione!",
     "ui.systemReady": "🎮 <strong>Sistema Pronto</strong><br>📊 Tutti i parametri della rete inizializzati. Pronto per dimostrare propagazione in avanti, retropropagazione, o ciclo completo di addestramento.",

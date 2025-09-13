@@ -233,6 +233,7 @@ window.i18nLocales.en = {
     
     // UI state messages
     "ui.thinking": "Thinking...",
+    "ui.confidenceCalculation": "Confidence Calculation",
     "ui.readyToExplore": "🎮 <strong>Ready to Explore!</strong><br>🚀 Choose \"Watch AI Think\" to see how the AI makes decisions, or \"Watch AI Learn\" to see how it gets smarter. Try the full demo for the complete experience!",
     "ui.pickAction": "🎮 <strong>Ready to Explore!</strong><br>🚀 Pick \"Watch AI Think\", \"Watch AI Learn\", or \"Full Demo\" to see the neural network in action!",
     "ui.systemReady": "🎮 <strong>System Ready</strong><br>📊 All network parameters initialized. Ready to demonstrate forward propagation, backpropagation, or full training cycle.",

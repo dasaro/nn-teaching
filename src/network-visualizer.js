@@ -398,6 +398,36 @@ function drawPrediction() {
     const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : (key === 'ui.thinking' ? 'Thinking...' : key);
     result.textContent = t('ui.thinking');
     svg.appendChild(result);
+    
+    // Add confidence degree display below the circle
+    const confidenceDisplay = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    confidenceDisplay.setAttribute('x', pos.x);
+    confidenceDisplay.setAttribute('y', pos.y + 60); // Position below the circle
+    confidenceDisplay.setAttribute('text-anchor', 'middle');
+    confidenceDisplay.setAttribute('dominant-baseline', 'middle');
+    confidenceDisplay.setAttribute('font-size', '14px');
+    confidenceDisplay.setAttribute('font-weight', 'bold');
+    confidenceDisplay.setAttribute('fill', '#1f2937');
+    confidenceDisplay.setAttribute('id', 'predictionConfidence');
+    confidenceDisplay.textContent = '—'; // Initial placeholder
+    svg.appendChild(confidenceDisplay);
+    
+    // Add hover tooltip for confidence calculation explanation
+    const hoverArea = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    hoverArea.setAttribute('cx', pos.x);
+    hoverArea.setAttribute('cy', pos.y + 60);
+    hoverArea.setAttribute('r', 25); // Larger hover area
+    hoverArea.setAttribute('fill', 'transparent');
+    hoverArea.setAttribute('stroke', 'none');
+    hoverArea.setAttribute('id', 'confidenceHoverArea');
+    hoverArea.style.cursor = 'help';
+    
+    // Add hover events for confidence explanation
+    hoverArea.addEventListener('mouseenter', showConfidenceTooltip);
+    hoverArea.addEventListener('mouseleave', hideConfidenceTooltip);
+    hoverArea.addEventListener('mousemove', updateConfidenceTooltipPosition);
+    
+    svg.appendChild(hoverArea);
 }
 
 function updatePrediction() {
@@ -425,7 +455,7 @@ function updatePrediction() {
         }
         
         // Color based on correctness
-        circleColor = isCorrect ? '#10b981' : '#ef4444'; // green for correct, red for incorrect
+        circleColor = isCorrect ? '#ef4444' : '#10b981'; // red for correct, green for incorrect
     }
     
     // Update elements
@@ -444,6 +474,20 @@ function updatePrediction() {
         } else {
             const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : (key === 'ui.thinking' ? 'Thinking...' : key);
             predictionResult.textContent = t('ui.thinking');
+        }
+    }
+    
+    // Update confidence degree display
+    const predictionConfidence = document.getElementById('predictionConfidence');
+    if (predictionConfidence) {
+        if (maxProb > 0.01) {
+            // Calculate confidence as the difference between highest and lowest probability
+            const confidenceDegree = Math.abs(dogProb - notDogProb) * 100;
+            predictionConfidence.textContent = `${confidenceDegree.toFixed(1)}%`;
+            predictionConfidence.setAttribute('fill', confidenceDegree > 70 ? '#059669' : confidenceDegree > 40 ? '#d97706' : '#dc2626');
+        } else {
+            predictionConfidence.textContent = '—';
+            predictionConfidence.setAttribute('fill', '#6b7280');
         }
     }
 }
@@ -948,6 +992,85 @@ function refreshVisualization() {
     updateNeuronValues();
     refreshAllConnectionVisuals();
     updatePrediction();
+}
+
+// ============================================================================
+// CONFIDENCE TOOLTIP FUNCTIONALITY
+// ============================================================================
+
+let confidenceTooltip = null;
+
+function showConfidenceTooltip(event) {
+    // Create tooltip if it doesn't exist
+    if (!confidenceTooltip) {
+        confidenceTooltip = document.createElement('div');
+        confidenceTooltip.className = 'confidence-tooltip';
+        confidenceTooltip.style.cssText = `
+            position: absolute;
+            background: #1f2937;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: monospace;
+            max-width: 280px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+        `;
+        document.body.appendChild(confidenceTooltip);
+    }
+    
+    // Get current output probabilities for explanation
+    const outputActivations = NetworkAPI.getLayerActivations('output');
+    const dogProb = (outputActivations[0] || 0) * 100;
+    const notDogProb = (outputActivations[1] || 0) * 100;
+    const confidenceDegree = Math.abs(dogProb - notDogProb);
+    
+    // Generate explanation content
+    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key) : key;
+    const content = `
+        <div style="font-weight: bold; margin-bottom: 8px;">🎯 ${t('ui.confidenceCalculation') || 'Confidence Calculation'}</div>
+        <div style="margin-bottom: 6px;"><strong>Dog probability:</strong> ${dogProb.toFixed(1)}%</div>
+        <div style="margin-bottom: 6px;"><strong>Not-Dog probability:</strong> ${notDogProb.toFixed(1)}%</div>
+        <div style="margin-bottom: 8px; border-top: 1px solid #374151; padding-top: 6px;">
+            <strong>Confidence = |${dogProb.toFixed(1)}% - ${notDogProb.toFixed(1)}%| = ${confidenceDegree.toFixed(1)}%</strong>
+        </div>
+        <div style="font-size: 11px; color: #d1d5db; line-height: 1.3;">
+            Higher confidence means the network is more certain about its prediction. 
+            When both probabilities are close (e.g., 52% vs 48%), confidence is low.
+        </div>
+    `;
+    
+    confidenceTooltip.innerHTML = content;
+    confidenceTooltip.style.display = 'block';
+    
+    updateConfidenceTooltipPosition(event);
+}
+
+function hideConfidenceTooltip() {
+    if (confidenceTooltip) {
+        confidenceTooltip.style.display = 'none';
+    }
+}
+
+function updateConfidenceTooltipPosition(event) {
+    if (!confidenceTooltip) return;
+    
+    const rect = confidenceTooltip.getBoundingClientRect();
+    let x = event.clientX + 15;
+    let y = event.clientY - rect.height - 10;
+    
+    // Keep tooltip within viewport
+    if (x + rect.width > window.innerWidth) {
+        x = event.clientX - rect.width - 15;
+    }
+    if (y < 0) {
+        y = event.clientY + 15;
+    }
+    
+    confidenceTooltip.style.left = x + 'px';
+    confidenceTooltip.style.top = y + 'px';
 }
 
 // ============================================================================
