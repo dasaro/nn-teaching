@@ -42,7 +42,7 @@
                     
                     <!-- Compact teaching buttons -->
                     <div class="compact-teaching">
-                        <label data-i18n="controls.teaching.title">🎓 Correct Answer:</label>
+                        <h4 data-i18n="controls.teaching.title">🎓 Correct Answer:</h4>
                         <div class="label-buttons">
                             <button id="labelDog" class="label-btn" onclick="setTrueLabel('dog')" data-i18n="controls.teaching.dog">🐕 Dog</button>
                             <button id="labelNotDog" class="label-btn" onclick="setTrueLabel('not-dog')" data-i18n="controls.teaching.notdog">❌ Not Dog</button>
@@ -281,7 +281,7 @@
                         
                         <!-- Preset Architecture Selection -->
                         <div class="param-group">
-                            <label data-i18n="expertPanel.presetArchitectures">Quick Presets:</label>
+                            <h4 data-i18n="expertPanel.presetArchitectures">Quick Presets:</h4>
                             <div class="preset-buttons">
                                 <button onclick="setArchitecturePreset([])" class="preset-btn" title="Direct input to output">
                                     📍 Direct
@@ -300,7 +300,7 @@
 
                         <!-- Custom Architecture Builder -->
                         <div class="param-group">
-                            <label data-i18n="expertPanel.customArchitecture">Custom Hidden Layers:</label>
+                            <h4 data-i18n="expertPanel.customArchitecture">Custom Hidden Layers:</h4>
                             <div class="architecture-builder">
                                 <div class="layer-controls">
                                     <div class="layer-item">
@@ -326,7 +326,7 @@
 
                         <!-- Current Architecture Display -->
                         <div class="param-group">
-                            <label data-i18n="expertPanel.currentArchitecture">Current Architecture:</label>
+                            <h4 data-i18n="expertPanel.currentArchitecture">Current Architecture:</h4>
                             <div class="architecture-display">
                                 <span id="architectureDisplay">4→[4]→2</span>
                                 <button onclick="applyArchitectureChanges()" class="apply-btn">
