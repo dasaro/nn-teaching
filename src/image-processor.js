@@ -301,47 +301,69 @@ function createImage(imageType) {
     ctx.textAlign = 'center';
     ctx.fillText('Loading...', 70, 70);
     
-    // Load stock photo
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // Initialize image data if not ready
+    if (window.imageData && !window.imageData.isReady()) {
+        window.imageData.initialize();
+    }
     
-    img.onload = function() {
-        console.log(`✅ Successfully loaded image: ${imageType} from ${img.src}`);
+    // Use base64 image data to avoid CORS issues
+    if (window.imageData) {
+        const img = new Image();
         
-        // Clear canvas and draw the loaded image
-        ctx.clearRect(0, 0, 140, 140);
-        ctx.drawImage(img, 0, 0, 140, 140);
+        img.onload = function() {
+            console.log(`✅ Successfully loaded image: ${imageType} (base64 data)`);
+            
+            // Clear canvas and draw the loaded image
+            ctx.clearRect(0, 0, 140, 140);
+            ctx.drawImage(img, 0, 0, 140, 140);
+            
+            // Add a subtle border
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(1, 1, 138, 138);
+            
+            // Add success indicator
+            ctx.fillStyle = '#22c55e';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('✓', 135, 15);
+            
+            // CRITICAL: Set visual features based on image type!
+            setVisualFeaturesAndLabel(imageType);
+        };
         
-        // Add a subtle border
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(1, 1, 138, 138);
+        img.onerror = function(error) {
+            console.error(`❌ Failed to load base64 image: ${imageType}`, error);
+            
+            // Fallback to solid color with emoji if image fails to load
+            ctx.clearRect(0, 0, 140, 140);
+            ctx.fillStyle = getImageColor(imageType);
+            ctx.fillRect(0, 0, 140, 140);
+            
+            // Add error indicator in corner
+            ctx.fillStyle = '#ef4444';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('IMG ERR', 5, 12);
+            
+            // Large emoji fallback
+            ctx.fillStyle = '#333';
+            ctx.font = '40px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(getImageEmoji(imageType), 70, 85);
+            
+            // CRITICAL: Set visual features even on fallback!
+            setVisualFeaturesAndLabel(imageType);
+        };
         
-        // Add success indicator
-        ctx.fillStyle = '#22c55e';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'right';
-        ctx.fillText('✓', 135, 15);
-        
-        // CRITICAL: Set visual features based on image type!
-        setVisualFeaturesAndLabel(imageType);
-    };
-    
-    img.onerror = function(error) {
-        console.error(`❌ Failed to load image: ${imageType} from ${img.src}`, error);
-        console.log(`Current page location: ${window.location.href}`);
-        console.log(`Image path: ${img.src}`);
-        
-        // Fallback to solid color with emoji if image fails to load
+        // Get base64 data URL from image data module
+        img.src = window.imageData.getDataUrl(imageType);
+    } else {
+        console.error('Image data module not loaded, using fallback');
+        // Direct fallback if image data module isn't available
         ctx.clearRect(0, 0, 140, 140);
         ctx.fillStyle = getImageColor(imageType);
         ctx.fillRect(0, 0, 140, 140);
-        
-        // Add error indicator in corner
-        ctx.fillStyle = '#ef4444';
-        ctx.font = '10px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('IMG ERR', 5, 12);
         
         // Large emoji fallback
         ctx.fillStyle = '#333';
@@ -351,9 +373,7 @@ function createImage(imageType) {
         
         // CRITICAL: Set visual features even on fallback!
         setVisualFeaturesAndLabel(imageType);
-    };
-    
-    img.src = imageUrls[imageType];
+    }
     
     // Set the visual features and labels based on image type
     setVisualFeaturesAndLabel(imageType);

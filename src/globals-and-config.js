@@ -220,6 +220,8 @@ const positions = {
 };
 
 // Image URLs for different image types
+// Note: These file URLs don't work due to CORS restrictions
+// The actual image data is now handled by src/image-data.js module
 const imageUrls = {
     dog1: 'images/dog1.jpg',
     dog2: 'images/dog2.jpg', 
